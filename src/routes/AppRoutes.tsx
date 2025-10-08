@@ -59,12 +59,12 @@ const AppRoutes = () => {
 
         <Route path="/main" element={<MainScreen />} />
 
+        
         <Route path="/create-post" element={
           <ProtectedRoute>
             <CreatePost />
           </ProtectedRoute>
         } />
-
         <Route path="/view-cart" element={
           <ProtectedRoute>
             <ViewCart />
@@ -83,12 +83,13 @@ const AppRoutes = () => {
           </ProtectedRoute>
         } />
 
-        <Route path="/membership" element={
+
+
+<Route path="/membership" element={
           <ProtectedRoute>
             <Membership />
           </ProtectedRoute>
         } />
-
         <Route path="/favorited" element={
           <ProtectedRoute>
             <Favorited />
