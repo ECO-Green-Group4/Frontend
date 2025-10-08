@@ -1,10 +1,7 @@
-// Cấu hình router cho app
 import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
 import DefaultLayout from '../layouts/DefaultLayout';
 import ProtectedRoute from './ProtectedRoute';
 import PublicRoute from './PublicRoute';
-
-// Import các trang
 import Home from '../pages/Home';
 import Login from '../pages/Login';
 import Register from '../pages/Register';

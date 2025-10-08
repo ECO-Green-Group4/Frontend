@@ -1,11 +1,13 @@
-import React from "react";
-import { Link, useLocation } from "react-router-dom";
+import { Link } from "react-router-dom";
+import { Button } from "@/components/ui/button";
+import { 
+  Bell, 
+  Settings, 
+  User
+} from 'lucide-react';
 import ecoLogo from "@/assets/logo/eco_green.png";
 
 export default function Header() {
-  const location = useLocation();
-
-  
 
   return (
     <header className="bg-white shadow-md sticky top-0 z-50">
@@ -18,7 +20,64 @@ export default function Header() {
           </span>
         </Link>
 
-        
+        {/* Center - Navigation Links */}
+        <nav className="flex items-center space-x-6">
+          <Link 
+            to="/create-post" 
+            className="text-black hover:text-gray-600 font-medium transition-colors px-3 py-2 rounded-md hover:bg-gray-50"
+          >
+            Create Post
+          </Link>
+          <Link 
+            to="/view-cart" 
+            className="text-black hover:text-gray-600 font-medium transition-colors px-3 py-2 rounded-md hover:bg-gray-50"
+          >
+            View cart
+          </Link>
+          <Link 
+            to="/electric-vehicle" 
+            className="text-black hover:text-gray-600 font-medium transition-colors px-3 py-2 rounded-md hover:bg-gray-50"
+          >
+            Electric Vehicle
+          </Link>
+          <Link 
+            to="/battery" 
+            className="text-black hover:text-gray-600 font-medium transition-colors px-3 py-2 rounded-md hover:bg-gray-50"
+          >
+            Battery
+          </Link>
+          <Link 
+            to="/membership" 
+            className="text-black hover:text-gray-600 font-medium transition-colors px-3 py-2 rounded-md hover:bg-gray-50"
+          >
+            Membership
+          </Link>
+          <Link 
+            to="/favorited" 
+            className="text-black hover:text-gray-600 font-medium transition-colors px-3 py-2 rounded-md hover:bg-gray-50"
+          >
+            Favorited
+          </Link>
+          <Link 
+            to="/history" 
+            className="text-black hover:text-gray-600 font-medium transition-colors px-3 py-2 rounded-md hover:bg-gray-50"
+          >
+            History
+          </Link>
+        </nav>
+
+        {/* Right side - User Actions */}
+        <div className="flex items-center space-x-4">
+          <Button variant="ghost" size="icon" className="text-gray-600 hover:text-gray-800">
+            <Bell className="w-5 h-5" />
+          </Button>
+          <Button variant="ghost" size="icon" className="text-gray-600 hover:text-gray-800">
+            <Settings className="w-5 h-5" />
+          </Button>
+          <Button variant="ghost" size="icon" className="text-gray-600 hover:text-gray-800">
+            <User className="w-5 h-5" />
+          </Button>
+        </div>
       </div>
     </header>
   );

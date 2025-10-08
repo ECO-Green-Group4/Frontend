@@ -1,17 +1,13 @@
 import { useState } from 'react';
-import { Link } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
+import Header from "../components/ui/Header"; 
 import { 
-  Bell, 
-  Settings, 
-  User, 
   Search, 
   Filter,
   Zap
 } from 'lucide-react';
-import ecoLogo from '@/assets/logo/eco_green.png';
 
 const MainScreen = () => {
   const [activeFilter, setActiveFilter] = useState('All');
@@ -30,83 +26,7 @@ const MainScreen = () => {
   return (
     <div className="min-h-screen bg-gray-50">
       {/* Header */}
-      <header className="bg-white shadow-sm border-b">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="flex justify-between items-center h-16">
-            {/* Left side - Logo and Create Post Button */}
-            <div className="flex items-center space-x-4">
-              <div className="flex items-center space-x-3">
-                <div className="w-10 h-10 rounded-lg overflow-hidden">
-                  <img 
-                    src={ecoLogo} 
-                    alt="ECO Logo" 
-                    className="w-full h-full object-cover"
-                  />
-                </div>
-              </div>
-            </div>
-
-            {/* Center - Navigation Links */}
-            <nav className="flex items-center space-x-6">
-              <Link 
-                to="/create-post" 
-                className="text-black hover:text-gray-600 font-medium transition-colors px-3 py-2 rounded-md hover:bg-gray-50"
-              >
-                Create Post
-              </Link>
-              <Link 
-                to="/view-cart" 
-                className="text-black hover:text-gray-600 font-medium transition-colors px-3 py-2 rounded-md hover:bg-gray-50"
-              >
-                View cart
-              </Link>
-              <Link 
-                to="/electric-vehicle" 
-                className="text-black hover:text-gray-600 font-medium transition-colors px-3 py-2 rounded-md hover:bg-gray-50"
-              >
-                Electric Vehicle
-              </Link>
-              <Link 
-                to="/battery" 
-                className="text-black hover:text-gray-600 font-medium transition-colors px-3 py-2 rounded-md hover:bg-gray-50"
-              >
-                Battery
-              </Link>
-              <Link 
-                to="/membership" 
-                className="text-black hover:text-gray-600 font-medium transition-colors px-3 py-2 rounded-md hover:bg-gray-50"
-              >
-                Membership
-              </Link>
-              <Link 
-                to="/favorited" 
-                className="text-black hover:text-gray-600 font-medium transition-colors px-3 py-2 rounded-md hover:bg-gray-50"
-              >
-                Favorited
-              </Link>
-              <Link 
-                to="/history" 
-                className="text-black hover:text-gray-600 font-medium transition-colors px-3 py-2 rounded-md hover:bg-gray-50"
-              >
-                History
-              </Link>
-            </nav>
-
-            {/* Right side - User Actions */}
-            <div className="flex items-center space-x-4">
-              <Button variant="ghost" size="icon" className="text-gray-600 hover:text-gray-800">
-                <Bell className="w-5 h-5" />
-              </Button>
-              <Button variant="ghost" size="icon" className="text-gray-600 hover:text-gray-800">
-                <Settings className="w-5 h-5" />
-              </Button>
-              <Button variant="ghost" size="icon" className="text-gray-600 hover:text-gray-800">
-                <User className="w-5 h-5" />
-              </Button>
-            </div>
-          </div>
-        </div>
-      </header>
+      <Header />
 
       {/* Main Content */}
       <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
