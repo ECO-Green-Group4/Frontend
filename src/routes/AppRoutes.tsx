@@ -16,6 +16,7 @@ import Membership from '../pages/Membership';
 import Favorited from '../pages/Favorited';
 import History from '../pages/History';
 import NotFound from '../pages/NotFound';
+import Waiting from '@/pages/Waiting';
 
 const AppRoutes = () => {
   return (
@@ -58,9 +59,9 @@ const AppRoutes = () => {
 
         
         <Route path="/create-post" element={
-          <ProtectedRoute>
+          
             <CreatePost />
-          </ProtectedRoute>
+          
         } />
         <Route path="/view-cart" element={
           <ProtectedRoute>
@@ -92,7 +93,11 @@ const AppRoutes = () => {
             <Favorited />
           </ProtectedRoute>
         } />
-
+<Route path="/waiting" element={
+          
+            <Waiting />
+          
+        } />
         <Route path="/history" element={
           <ProtectedRoute>
             <History />
