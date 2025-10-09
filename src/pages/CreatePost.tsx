@@ -1,4 +1,5 @@
 import React, { useState } from "react";
+import { useNavigate } from "react-router-dom";
 import VehicleForm from "./VehicleForm";
 import BatteryForm from "./BatteryForm";
 import Header from "../components/ui/Header"; 
@@ -6,6 +7,7 @@ import Header from "../components/ui/Header";
 export default function CreatePost() {
   const [category, setCategory] = useState<"EV" | "Battery">("EV");
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const navigate = useNavigate();
 
   const handleFormSubmit = async (data: any) => {
     setIsSubmitting(true);
@@ -18,6 +20,8 @@ export default function CreatePost() {
     try {
       console.log("🚀 Submitting post:", payload);
       alert("✅ Post submitted successfully!");
+      // Redirect to waiting page after successful submission
+      navigate("/waiting");
     } catch (err) {
       console.error(err);
       alert("❌ Something went wrong, please try again!");
@@ -28,7 +32,7 @@ export default function CreatePost() {
 
   return (
     <div className="min-h-screen bg-gray-50">
-      {/* ✅ Header hiển thị trên cùng */}
+      {/*  chỗ này để header hiển thị  */}
       <Header />
 
       <div className="p-6 bg-white rounded-xl shadow-md max-w-4xl mx-auto border border-gray-100 mt-6">
