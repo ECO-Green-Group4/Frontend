@@ -10,25 +10,56 @@ import { Separator } from "@/components/ui/separator";
 import { validateForm } from '@/utils/validateEmail';
 import { VALIDATION_RULES } from '@/utils/constants';
 import ecoLogo from '@/assets/logo/eco_green.png';
+import AuthService from '@/services/AuthService';
+import type { RegisterData } from '@/types';
 
 const Register = () => {
   const navigate = useNavigate();
-  const [formData, setFormData] = useState({
+  const [formData, setFormData] = useState<RegisterData>({
+    username: '',
+    password: '',
+    confirmPassword: '',
     fullName: '',
-    phoneOrEmail: '',
-    password: ''
+    dateOfBirth: '',
+    sex: '',
+    identityCard: '',
+    email: '',
+    address: '',
+    phoneNumber: ''
   });
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [loading, setLoading] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
 
   const validationRules = {
+    username: [
+      { type: 'required', message: 'Tên đăng nhập là bắt buộc' },
+      { type: 'minLength', value: 3, message: 'Tên đăng nhập phải có ít nhất 3 ký tự' }
+    ],
     fullName: [
       { type: 'required', message: 'Họ tên là bắt buộc' },
       { type: 'minLength', value: 2, message: 'Họ tên phải có ít nhất 2 ký tự' }
     ],
-    phoneOrEmail: [VALIDATION_RULES.EMAIL.REQUIRED],
-    password: [VALIDATION_RULES.PASSWORD.REQUIRED]
+    email: [VALIDATION_RULES.EMAIL.REQUIRED],
+    password: [VALIDATION_RULES.PASSWORD.REQUIRED],
+    confirmPassword: [
+      { type: 'required', message: 'Xác nhận mật khẩu là bắt buộc' }
+    ],
+    phoneNumber: [
+      { type: 'required', message: 'Số điện thoại là bắt buộc' }
+    ],
+    identityCard: [
+      { type: 'required', message: 'CMND/CCCD là bắt buộc' }
+    ],
+    address: [
+      { type: 'required', message: 'Địa chỉ là bắt buộc' }
+    ],
+    dateOfBirth: [
+      { type: 'required', message: 'Ngày sinh là bắt buộc' }
+    ],
+    sex: [
+      { type: 'required', message: 'Giới tính là bắt buộc' }
+    ]
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -42,20 +73,28 @@ const Register = () => {
       return;
     }
 
+    // Kiểm tra password match
+    if (formData.password !== formData.confirmPassword) {
+      setErrors({ confirmPassword: 'Mật khẩu xác nhận không khớp' });
+      return;
+    }
+
     setLoading(true);
     try {
-      // Gọi API đăng ký (sẽ implement sau)
-      console.log('Register data:', formData);
+      console.log('Sending register data:', formData);
+      const result = await AuthService.register(formData);
+      console.log('Register successful:', result);
       alert('Đăng ký thành công! Vui lòng đăng nhập.');
       navigate('/login');
     } catch (error: any) {
+      console.error('Register error:', error);
       setErrors({ general: error.message });
     } finally {
       setLoading(false);
     }
   };
 
-  const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
     const { name, value } = e.target;
     setFormData(prev => ({
       ...prev,
@@ -102,65 +141,199 @@ const Register = () => {
             </div>
           )}
 
-          <form onSubmit={handleSubmit} className="space-y-6">
+          <form onSubmit={handleSubmit} className="space-y-4">
+            {/* Username Field */}
+            <div className="space-y-2">
+              <Label htmlFor="username" className="text-gray-700 font-medium">
+                Tên đăng nhập
+              </Label>
+              <Input
+                id="username"
+                name="username"
+                type="text"
+                placeholder="Tên đăng nhập"
+                value={formData.username}
+                onChange={handleChange}
+                className={`h-10 text-sm ${
+                  errors.username ? 'border-red-500 focus-visible:ring-red-500' : ''
+                }`}
+                required
+              />
+              {errors.username && (
+                <p className="text-red-500 text-xs">{errors.username}</p>
+              )}
+            </div>
+
             {/* Full Name Field */}
             <div className="space-y-2">
               <Label htmlFor="fullName" className="text-gray-700 font-medium">
-                Full Name
+                Họ và tên
               </Label>
               <Input
                 id="fullName"
                 name="fullName"
                 type="text"
-                placeholder="Full Name"
+                placeholder="Họ và tên"
                 value={formData.fullName}
                 onChange={handleChange}
-                className={`h-12 text-base ${
+                className={`h-10 text-sm ${
                   errors.fullName ? 'border-red-500 focus-visible:ring-red-500' : ''
                 }`}
                 required
               />
               {errors.fullName && (
-                <p className="text-red-500 text-sm">{errors.fullName}</p>
+                <p className="text-red-500 text-xs">{errors.fullName}</p>
               )}
             </div>
 
-            {/* Phone or Email Field */}
+            {/* Email Field */}
             <div className="space-y-2">
-              <Label htmlFor="phoneOrEmail" className="text-gray-700 font-medium">
-                Phone or Email
+              <Label htmlFor="email" className="text-gray-700 font-medium">
+                Email
               </Label>
               <Input
-                id="phoneOrEmail"
-                name="phoneOrEmail"
-                type="text"
-                placeholder="Phone or Email"
-                value={formData.phoneOrEmail}
+                id="email"
+                name="email"
+                type="email"
+                placeholder="Email"
+                value={formData.email}
                 onChange={handleChange}
-                className={`h-12 text-base ${
-                  errors.phoneOrEmail ? 'border-red-500 focus-visible:ring-red-500' : ''
+                className={`h-10 text-sm ${
+                  errors.email ? 'border-red-500 focus-visible:ring-red-500' : ''
                 }`}
                 required
               />
-              {errors.phoneOrEmail && (
-                <p className="text-red-500 text-sm">{errors.phoneOrEmail}</p>
+              {errors.email && (
+                <p className="text-red-500 text-xs">{errors.email}</p>
+              )}
+            </div>
+
+            {/* Phone Number Field */}
+            <div className="space-y-2">
+              <Label htmlFor="phoneNumber" className="text-gray-700 font-medium">
+                Số điện thoại
+              </Label>
+              <Input
+                id="phoneNumber"
+                name="phoneNumber"
+                type="tel"
+                placeholder="Số điện thoại"
+                value={formData.phoneNumber}
+                onChange={handleChange}
+                className={`h-10 text-sm ${
+                  errors.phoneNumber ? 'border-red-500 focus-visible:ring-red-500' : ''
+                }`}
+                required
+              />
+              {errors.phoneNumber && (
+                <p className="text-red-500 text-xs">{errors.phoneNumber}</p>
+              )}
+            </div>
+
+            {/* Identity Card Field */}
+            <div className="space-y-2">
+              <Label htmlFor="identityCard" className="text-gray-700 font-medium">
+                CMND/CCCD
+              </Label>
+              <Input
+                id="identityCard"
+                name="identityCard"
+                type="text"
+                placeholder="CMND/CCCD"
+                value={formData.identityCard}
+                onChange={handleChange}
+                className={`h-10 text-sm ${
+                  errors.identityCard ? 'border-red-500 focus-visible:ring-red-500' : ''
+                }`}
+                required
+              />
+              {errors.identityCard && (
+                <p className="text-red-500 text-xs">{errors.identityCard}</p>
+              )}
+            </div>
+
+            {/* Date of Birth Field */}
+            <div className="space-y-2">
+              <Label htmlFor="dateOfBirth" className="text-gray-700 font-medium">
+                Ngày sinh
+              </Label>
+              <Input
+                id="dateOfBirth"
+                name="dateOfBirth"
+                type="date"
+                value={formData.dateOfBirth}
+                onChange={handleChange}
+                className={`h-10 text-sm ${
+                  errors.dateOfBirth ? 'border-red-500 focus-visible:ring-red-500' : ''
+                }`}
+                required
+              />
+              {errors.dateOfBirth && (
+                <p className="text-red-500 text-xs">{errors.dateOfBirth}</p>
+              )}
+            </div>
+
+            {/* Sex Field */}
+            <div className="space-y-2">
+              <Label htmlFor="sex" className="text-gray-700 font-medium">
+                Giới tính
+              </Label>
+              <select
+                id="sex"
+                name="sex"
+                value={formData.sex}
+                onChange={handleChange}
+                className={`w-full h-10 px-3 border rounded-md text-sm ${
+                  errors.sex ? 'border-red-500 focus:ring-red-500' : 'border-gray-300 focus:ring-green-500'
+                }`}
+                required
+              >
+                <option value="">Chọn giới tính</option>
+                <option value="Nam">Nam</option>
+                <option value="Nữ">Nữ</option>
+                <option value="Khác">Khác</option>
+              </select>
+              {errors.sex && (
+                <p className="text-red-500 text-xs">{errors.sex}</p>
+              )}
+            </div>
+
+            {/* Address Field */}
+            <div className="space-y-2">
+              <Label htmlFor="address" className="text-gray-700 font-medium">
+                Địa chỉ
+              </Label>
+              <Input
+                id="address"
+                name="address"
+                type="text"
+                placeholder="Địa chỉ"
+                value={formData.address}
+                onChange={handleChange}
+                className={`h-10 text-sm ${
+                  errors.address ? 'border-red-500 focus-visible:ring-red-500' : ''
+                }`}
+                required
+              />
+              {errors.address && (
+                <p className="text-red-500 text-xs">{errors.address}</p>
               )}
             </div>
 
             {/* Password Field */}
             <div className="space-y-2">
               <Label htmlFor="password" className="text-gray-700 font-medium">
-                Password
+                Mật khẩu
               </Label>
               <div className="relative">
                 <Input
                   id="password"
                   name="password"
                   type={showPassword ? "text" : "password"}
-                  placeholder="Password"
+                  placeholder="Mật khẩu"
                   value={formData.password}
                   onChange={handleChange}
-                  className={`h-12 text-base pr-10 ${
+                  className={`h-10 text-sm pr-10 ${
                     errors.password ? 'border-red-500 focus-visible:ring-red-500' : ''
                   }`}
                   required
@@ -171,14 +344,36 @@ const Register = () => {
                   className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-gray-600"
                 >
                   {showPassword ? (
-                    <EyeOff className="h-5 w-5" />
+                    <EyeOff className="h-4 w-4" />
                   ) : (
-                    <Eye className="h-5 w-5" />
+                    <Eye className="h-4 w-4" />
                   )}
                 </button>
               </div>
               {errors.password && (
-                <p className="text-red-500 text-sm">{errors.password}</p>
+                <p className="text-red-500 text-xs">{errors.password}</p>
+              )}
+            </div>
+
+            {/* Confirm Password Field */}
+            <div className="space-y-2">
+              <Label htmlFor="confirmPassword" className="text-gray-700 font-medium">
+                Xác nhận mật khẩu
+              </Label>
+              <Input
+                id="confirmPassword"
+                name="confirmPassword"
+                type="password"
+                placeholder="Xác nhận mật khẩu"
+                value={formData.confirmPassword}
+                onChange={handleChange}
+                className={`h-10 text-sm ${
+                  errors.confirmPassword ? 'border-red-500 focus-visible:ring-red-500' : ''
+                }`}
+                required
+              />
+              {errors.confirmPassword && (
+                <p className="text-red-500 text-xs">{errors.confirmPassword}</p>
               )}
             </div>
 

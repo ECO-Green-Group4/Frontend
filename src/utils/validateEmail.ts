@@ -31,7 +31,7 @@ export const validateMaxLength = (value: string, maxLength: number): boolean => 
 };
 
 export const validateForm = (
-  formData: FormData, 
+  formData: Record<string, any>, 
   rules: Record<string, ValidationRule[]>
 ): ValidationResult => {
   const errors: Record<string, string> = {};

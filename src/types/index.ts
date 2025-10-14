@@ -31,10 +31,16 @@ export interface LoginCredentials {
 }
 
 export interface RegisterData {
-  name: string;
-  email: string;
+  username: string;
   password: string;
   confirmPassword: string;
+  fullName: string;
+  dateOfBirth: string;
+  sex: string;
+  identityCard: string;
+  email: string;
+  address: string;
+  phoneNumber: string;
 }
 
 export interface ThemeContextType {
