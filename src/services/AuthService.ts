@@ -1,26 +1,13 @@
 // Service xử lý authentication
-import type { User, AuthResponse, LoginCredentials, RegisterData } from '@/types';
-
-const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:3000/api';
+import type { User, AuthResponse, RegisterData } from '@/types';
+import api from './axios';
 
 class AuthService {
   // Đăng nhập
   async login(email: string, password: string): Promise<AuthResponse> {
     try {
-      const response = await fetch(`${API_BASE_URL}/auth/login`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({ email, password }),
-      });
-
-      if (!response.ok) {
-        const errorData = await response.json();
-        throw new Error(errorData.message || 'Đăng nhập thất bại');
-      }
-
-      const data: AuthResponse = await response.json();
+      const response = await api.post('/auth/login', { email, password });
+      const data: AuthResponse = response.data;
       
       // Lưu token vào localStorage
       if (data.token) {
@@ -31,28 +18,16 @@ class AuthService {
       }
 
       return data;
-    } catch (error) {
-      throw error;
+    } catch (error: any) {
+      throw new Error(error.response?.data?.message || 'Đăng nhập thất bại');
     }
   }
 
   // Đăng ký
   async register(userData: RegisterData): Promise<AuthResponse> {
     try {
-      const response = await fetch(`${API_BASE_URL}/auth/register`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify(userData),
-      });
-
-      if (!response.ok) {
-        const errorData = await response.json();
-        throw new Error(errorData.message || 'Đăng ký thất bại');
-      }
-
-      const data: AuthResponse = await response.json();
+      const response = await api.post('/auth/register', userData);
+      const data: AuthResponse = response.data;
       
       // Lưu token vào localStorage
       if (data.token) {
@@ -63,8 +38,8 @@ class AuthService {
       }
 
       return data;
-    } catch (error) {
-      throw error;
+    } catch (error: any) {
+      throw new Error(error.response?.data?.message || 'Đăng ký thất bại');
     }
   }
 
@@ -95,23 +70,14 @@ class AuthService {
       const token = this.getToken();
       if (!token) return null;
 
-      const response = await fetch(`${API_BASE_URL}/auth/me`, {
-        headers: {
-          'Authorization': `Bearer ${token}`,
-        },
-      });
-
-      if (!response.ok) {
-        if (response.status === 401) {
-          this.logout();
-        }
-        throw new Error('Không thể lấy thông tin user');
-      }
-
-      const user: User = await response.json();
+      const response = await api.get('/auth/me');
+      const user: User = response.data;
       return user;
-    } catch (error) {
-      throw error;
+    } catch (error: any) {
+      if (error.response?.status === 401) {
+        this.logout();
+      }
+      throw new Error('Không thể lấy thông tin user');
     }
   }
 
@@ -121,24 +87,11 @@ class AuthService {
       const token = this.getToken();
       if (!token) throw new Error('Chưa đăng nhập');
 
-      const response = await fetch(`${API_BASE_URL}/auth/profile`, {
-        method: 'PUT',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${token}`,
-        },
-        body: JSON.stringify(userData),
-      });
-
-      if (!response.ok) {
-        const errorData = await response.json();
-        throw new Error(errorData.message || 'Không thể cập nhật thông tin');
-      }
-
-      const updatedUser: User = await response.json();
+      const response = await api.put('/auth/profile', userData);
+      const updatedUser: User = response.data;
       return updatedUser;
-    } catch (error) {
-      throw error;
+    } catch (error: any) {
+      throw new Error(error.response?.data?.message || 'Không thể cập nhật thông tin');
     }
   }
 
@@ -148,20 +101,9 @@ class AuthService {
       const refreshToken = this.getRefreshToken();
       if (!refreshToken) return null;
 
-      const response = await fetch(`${API_BASE_URL}/auth/refresh`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({ refreshToken }),
-      });
-
-      if (!response.ok) {
-        this.logout();
-        return null;
-      }
-
-      const data = await response.json();
+      const response = await api.post('/auth/refresh', { refreshToken });
+      const data = response.data;
+      
       if (data.token) {
         localStorage.setItem('token', data.token);
         return data.token;
