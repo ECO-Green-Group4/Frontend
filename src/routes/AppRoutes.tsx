@@ -27,13 +27,13 @@ const AppRoutes = () => {
 
         {/* Auth Routes - Không dùng layout */}
         <Route path="/login" element={
-          <PublicRoute redirectTo="/dashboard">
+          <PublicRoute redirectTo="/main">
             <Login />
           </PublicRoute>
         } />
 
         <Route path="/register" element={
-          <PublicRoute redirectTo="/dashboard">
+          <PublicRoute redirectTo="/main">
             <Register />
           </PublicRoute>
         } />
@@ -59,8 +59,10 @@ const AppRoutes = () => {
 
         
         <Route path="/create-post" element={
-          
-            <CreatePost />
+          <ProtectedRoute>
+          <CreatePost />
+        </ProtectedRoute>
+            
           
         } />
         <Route path="/view-cart" element={
