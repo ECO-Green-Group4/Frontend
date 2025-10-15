@@ -33,32 +33,32 @@ const Register = () => {
 
   const validationRules = {
     username: [
-      { type: 'required', message: 'Tên đăng nhập là bắt buộc' },
-      { type: 'minLength', value: 3, message: 'Tên đăng nhập phải có ít nhất 3 ký tự' }
+      { type: 'required' as const, message: 'Tên đăng nhập là bắt buộc' },
+      { type: 'minLength' as const, value: 3, message: 'Tên đăng nhập phải có ít nhất 3 ký tự' }
     ],
     fullName: [
-      { type: 'required', message: 'Họ tên là bắt buộc' },
-      { type: 'minLength', value: 2, message: 'Họ tên phải có ít nhất 2 ký tự' }
+      { type: 'required' as const, message: 'Họ tên là bắt buộc' },
+      { type: 'minLength' as const, value: 2, message: 'Họ tên phải có ít nhất 2 ký tự' }
     ],
     email: [VALIDATION_RULES.EMAIL.REQUIRED],
     password: [VALIDATION_RULES.PASSWORD.REQUIRED],
     confirmPassword: [
-      { type: 'required', message: 'Xác nhận mật khẩu là bắt buộc' }
+      { type: 'required' as const, message: 'Xác nhận mật khẩu là bắt buộc' }
     ],
     phoneNumber: [
-      { type: 'required', message: 'Số điện thoại là bắt buộc' }
+      { type: 'required' as const, message: 'Số điện thoại là bắt buộc' }
     ],
     identityCard: [
-      { type: 'required', message: 'CMND/CCCD là bắt buộc' }
+      { type: 'required' as const, message: 'CMND/CCCD là bắt buộc' }
     ],
     address: [
-      { type: 'required', message: 'Địa chỉ là bắt buộc' }
+      { type: 'required' as const, message: 'Địa chỉ là bắt buộc' }
     ],
     dateOfBirth: [
-      { type: 'required', message: 'Ngày sinh là bắt buộc' }
+      { type: 'required' as const, message: 'Ngày sinh là bắt buộc' }
     ],
     sex: [
-      { type: 'required', message: 'Giới tính là bắt buộc' }
+      { type: 'required' as const, message: 'Giới tính là bắt buộc' }
     ]
   };
 
