@@ -29,24 +29,6 @@ export default function Header() {
             Create Post
           </Link>
           <Link 
-            to="/view-cart" 
-            className="text-black hover:text-gray-600 font-medium transition-colors px-3 py-2 rounded-md hover:bg-gray-50"
-          >
-            View cart
-          </Link>
-          <Link 
-            to="/electric-vehicle" 
-            className="text-black hover:text-gray-600 font-medium transition-colors px-3 py-2 rounded-md hover:bg-gray-50"
-          >
-            Electric Vehicle
-          </Link>
-          <Link 
-            to="/battery" 
-            className="text-black hover:text-gray-600 font-medium transition-colors px-3 py-2 rounded-md hover:bg-gray-50"
-          >
-            Battery
-          </Link>
-          <Link 
             to="/membership" 
             className="text-black hover:text-gray-600 font-medium transition-colors px-3 py-2 rounded-md hover:bg-gray-50"
           >
@@ -64,6 +46,7 @@ export default function Header() {
           >
             History
           </Link>
+          
         </nav>
 
         {/* Right side - User Actions */}

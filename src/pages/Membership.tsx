@@ -1,67 +1,61 @@
 import React from "react";
 import Header from "../components/ui/Header";
 
-// Định nghĩa cấu trúc dữ liệu cho mỗi gói thành viên
+// Defines the data structure for each membership plan
 interface MembershipPlan {
-  name: string;
-  price: string;
+  name:string;
+  price:string;
   color: "cyan" | "fuchsia" | "pink";
   features: {
-    description: string;
-    included: boolean;
+    description:string;
+    included:boolean;
   }[];
 }
 
-// Dữ liệu gói
+// Plan data, now in English
 const plans: MembershipPlan[] = [
   {
-    name: "Basic",
+    name: "Standard",
     price: "39K",
     color: "cyan",
     features: [
-      { description: "Monthly Package", included: true },
-      { description: "VIP Gold Post [visible for 7 days]", included: false },
-      { description: "VIP Silver Post [visible for 7 days]", included: false },
-      { description: "15 Regular Posts [visible for 10 days]", included: true },
-      { description: "15 Boosts for Regular Posts Features", included: true },
-      { description: "Image copyright protection", included: false },
-      { description: "Scheduled posting", included: false },
-      { description: "Performance report", included: false },
-    ],
-  },
-  {
-    name: "Standard",
-    price: "99K",
-    color: "fuchsia",
-    features: [
-      { description: "Monthly Package", included: true },
-      { description: "1 VIP Gold Post [visible for 7 days]", included: false },
-      { description: "1 VIP Silver Post [visible for 7 days]", included: true },
-      { description: "30 Regular Posts [visible for 10 days]", included: true },
-      { description: "30 Boosts for Regular Posts Features", included: true },
-      { description: "Image copyright protection", included: true },
-      { description: "Scheduled posting", included: false },
-      { description: "Performance report", included: false },
+      { description: "'Trusted Seller' Badge", included: true },
+      { description: "Up to 20 photos per listing", included: true },
+      { description: "Highlighted with a Blue Border", included: true },
+      { description: "Post in the 'Standard' section", included: false },
+      { description: "Upload video showcase", included: false },
+      { description: "Add 'Urgent' tag to listings", included: false },
     ],
   },
   {
     name: "Premium",
-    price: "199K",
+    price: "79K",
+    color: "fuchsia",
+    features: [
+      { description: "'Top Seller' Badge", included: true },
+      { description: "Up to 30 photos per listing", included: true },
+      { description: "Highlighted with a Gold Border", included: true },
+      { description: "Post in the 'Standard' section", included: true },
+      { description: "Upload video showcase", included: true },
+      { description: "Add 'Urgent' & 'Best Deal' tags", included: true },
+    ],
+  },
+  {
+    name: "VIP",
+    price: "149K",
     color: "pink",
     features: [
-      { description: "Monthly Package", included: true },
-      { description: "1 VIP Gold Post [visible for 7 days]", included: true },
-      { description: "2 VIP Silver Posts [visible for 7 days]", included: true },
-      { description: "50 Regular Posts [visible for 10 days]", included: true },
-      { description: "50 Boosts for Regular Posts Features", included: true },
-      { description: "Image copyright protection", included: true },
-      { description: "Scheduled posting", included: true },
-      { description: "Performance report", included: true },
+      { description: "Prestigious 'Pro Seller' Badge", included: true },
+      { description: "Unlimited photos and videos", included: true },
+      { description: "Special glow effect on listing", included: true },
+      { description: "Post in the homepage 'VIP' section", included: true },
+      { description: "Upload video showcase", included: true },
+      { description: "Access to all listing tags", included: true },
     ],
   },
 ];
 
-// Hàm màu sắc
+// Color function (no changes needed)
 const getColorClasses = (color: "cyan" | "fuchsia" | "pink") => {
   switch (color) {
     case "cyan":
@@ -73,7 +67,7 @@ const getColorClasses = (color: "cyan" | "fuchsia" | "pink") => {
   }
 };
 
-// Thẻ PlanCard
+// PlanCard Component
 const PlanCard: React.FC<{ plan: MembershipPlan }> = ({ plan }) => {
   const classes = getColorClasses(plan.color);
   const bgColorClass = classes.bg;
@@ -82,10 +76,10 @@ const PlanCard: React.FC<{ plan: MembershipPlan }> = ({ plan }) => {
 
   return (
     <div
-      className={`relative p-0 pt-0 shadow-2xl rounded-3xl transition-all duration-300 transform hover:scale-[1.03] ${bgColorClass} flex flex-col h-full`} // ✅ thêm flex + flex-col + h-full
+      className={`relative p-0 pt-0 shadow-2xl rounded-3xl transition-all duration-300 transform hover:scale-[1.03] ${bgColorClass} flex flex-col h-full`}
       style={{ boxShadow: `0 20px 50px -12px rgba(0, 0, 0, 0.4)` }}
     >
-      {/* Phần đầu */}
+      {/* Top Section */}
       <div className="p-6 pb-10 bg-white rounded-t-3xl text-center relative">
         <div className="mx-auto w-24 h-24 bg-gray-200 rounded-full mb-3 flex items-center justify-center border-4 border-white shadow-inner">
           <svg
@@ -103,9 +97,9 @@ const PlanCard: React.FC<{ plan: MembershipPlan }> = ({ plan }) => {
         </h3>
       </div>
 
-      {/* Nội dung */}
-      <div className="pt-10 pb-6 text-white text-center px-6 flex-grow"> {/* ✅ flex-grow để giãn ra */}
-        <p className="text-sm font-medium opacity-80 mb-1">Price:</p>
+      {/* Content */}
+      <div className="pt-10 pb-6 text-white text-center px-6 flex-grow">
+        <p className="text-sm font-medium opacity-80 mb-1">Price per month:</p>
         <p className="text-5xl font-extrabold mb-6">{plan.price}</p>
 
         <ul className="text-left space-y-2 mt-4 text-sm font-medium">
@@ -122,20 +116,20 @@ const PlanCard: React.FC<{ plan: MembershipPlan }> = ({ plan }) => {
         </ul>
       </div>
 
-      {/* Nút */}
-      <div className="p-6 pt-0 text-center mt-auto"> {/* ✅ mt-auto để nút dính xuống đáy */}
+      {/* Button */}
+      <div className="p-6 pt-0 text-center mt-auto">
         <button
-          onClick={() => alert(`Purchasing ${plan.name} plan...`)}
+          onClick={() => alert(`You have selected the ${plan.name} plan!`)}
           className={`w-full py-3 rounded-full text-lg font-bold shadow-xl transition transform hover:scale-[1.05] ${btnColorClass}`}
         >
-          Purchase
+          Choose Plan
         </button>
       </div>
     </div>
   );
 };
 
-// ✅ Trang Membership có Header + layout gọn
+// Membership Page Component
 const Membership: React.FC = () => {
   return (
     <div className="min-h-screen bg-gray-50">
@@ -144,11 +138,11 @@ const Membership: React.FC = () => {
       <div className="p-6 sm:p-10">
         <div className="text-center mb-12">
           <h1 className="inline-block text-3xl font-extrabold text-white py-2 px-6 rounded-full bg-green-500 shadow-xl border-4 border-white/50">
-            Membership
+            Membership Plans
           </h1>
         </div>
 
-        {/* Các gói nằm ngang giữa màn hình */}
+        {/* Plan Cards Grid */}
         <div className="flex flex-wrap justify-center items-stretch gap-10">
           {plans.map((plan) => (
             <div key={plan.name} className="w-[320px] flex">

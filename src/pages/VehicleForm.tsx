@@ -2,21 +2,25 @@ import React, { useState } from "react";
 
 // Định nghĩa Interface cho Dữ liệu Form (State)
 interface VehicleData {
-  postType: string;
-  carBrand: string;
-  year: string;
-  modelTrim: string;
-  origin: string;
-  bodyType: string;
-  numberOfSeats: string;
-  color: string;
-  licensePlate: string;
-  mileage: string;
-  accessories: string;
-  inspection: string;
-  price: string;
+  title: string;
   description: string;
   images: File[];
+  location: string;
+  price: string;
+  brand: string;
+  model: string;
+  year: string;
+  bodyType: string;
+  color: string;
+  mileage: string;
+  inspection: string;
+  origin: string;
+  numberOfSeats: string;
+  licensePlate: string;
+  accessories: string;
+  batteryCapacity: string;
+  condition: string;
+  
 }
 
 // Định nghĩa Interface cho Props của Component
@@ -26,21 +30,25 @@ interface VehicleFormProps {
 
 export default function VehicleForm({ onSubmit }: VehicleFormProps) {
   const [vehicleData, setVehicleData] = useState<VehicleData>({
-    postType: "",
-    carBrand: "",
-    year: "",
-    modelTrim: "",
-    origin: "",
-    bodyType: "",
-    numberOfSeats: "",
-    color: "",
-    licensePlate: "",
-    mileage: "",
-    accessories: "",
-    inspection: "",
-    price: "",
+    title: "",
     description: "",
     images: [] as File[],
+    location: "",
+    price: "",
+    brand: "",
+    model: "",
+    year: "",
+    bodyType: "",
+    color: "",
+    mileage: "",
+    inspection: "",
+    origin: "",
+    numberOfSeats: "",
+    licensePlate: "",
+    accessories: "",
+    batteryCapacity: "",
+    condition: "",
+    
   });
 
   const handleChange = (
@@ -69,15 +77,10 @@ export default function VehicleForm({ onSubmit }: VehicleFormProps) {
 
   return (
     <div className="max-w-4xl mx-auto p-6 bg-white shadow-xl rounded-xl border border-gray-200">
-      
-      
-
-      {/* Dropdown Loại Xe (EV - Electric Vehicle) đã chuyển thành thẻ <div> tĩnh */}
+      {/* Dropdown Loại Xe (EV - Electric Vehicle) */}
       <div className="mb-6">
-        <div
-          className="w-full border border-emerald-500 bg-emerald-50 text-emerald-800 rounded-lg p-3 font-semibold flex items-center"
-        >
-          EV - Electric Vehicle 
+        <div className="w-full border border-emerald-500 bg-emerald-50 text-emerald-800 rounded-lg p-3 font-semibold flex items-center">
+          EV - Electric Vehicle
         </div>
       </div>
 
@@ -85,33 +88,43 @@ export default function VehicleForm({ onSubmit }: VehicleFormProps) {
         onSubmit={handleSubmit}
         className="grid grid-cols-1 md:grid-cols-2 gap-x-8 gap-y-4"
       >
-        {/* POST TYPE */}
-        <div className="col-span-2">
-          <label className="block mb-1 font-bold text-gray-700">Post Type</label>
-          <select
-            name="postType"
-            value={vehicleData.postType}
-            onChange={handleChange}
-            className="w-full border border-gray-300 rounded-lg p-3 focus:ring-2 focus:ring-emerald-400 focus:border-emerald-400 outline-none transition duration-150"
-          >
-            <option value="">Select post type</option>
-            <option value="Regular">Regular Post</option>
-            <option value="VIP Silver">VIP Silver</option>
-            <option value="VIP Gold">VIP Gold</option>
-          </select>
-        </div>
-
+        
+        
         {/* BASIC VEHICLE INFO HEADER */}
         <h3 className="col-span-2 text-xl font-bold text-gray-700 border-b pb-2 mb-4 mt-6">
           Vehicle Details
         </h3>
 
+        {/* Title */}
+        <div className="col-span-2">
+          <label className="block mb-1 font-bold text-gray-700">Title</label>
+          <input
+            name="title"
+            value={vehicleData.title}
+            onChange={handleChange}
+            className="w-full border border-gray-300 rounded-lg p-3 focus:ring-2 focus:ring-emerald-400 focus:border-emerald-400 outline-none transition duration-150"
+            placeholder="Tesla Model 3 2022"
+          />
+        </div>
+
+        {/* Location */}
+        <div className="col-span-2">
+          <label className="block mb-1 font-bold text-gray-700">Location</label>
+          <input
+            name="location"
+            value={vehicleData.location}
+            onChange={handleChange}
+            className="w-full border border-gray-300 rounded-lg p-3 focus:ring-2 focus:ring-emerald-400 focus:border-emerald-400 outline-none transition duration-150"
+            placeholder="Hồ Chí Minh"
+          />
+        </div>
+
         {/* Car Brand */}
         <div>
           <label className="block mb-1 font-bold text-gray-700">Car Brand</label>
           <input
-            name="carBrand"
-            value={vehicleData.carBrand}
+            name="brand"
+            value={vehicleData.brand}
             onChange={handleChange}
             className="w-full border border-gray-300 rounded-lg p-3 focus:ring-2 focus:ring-emerald-400 focus:border-emerald-400 outline-none transition duration-150"
             placeholder="VinFast, Tesla, Yadea..."
@@ -131,12 +144,12 @@ export default function VehicleForm({ onSubmit }: VehicleFormProps) {
           />
         </div>
 
-        {/* Model Trim */}
+        {/* Model */}
         <div>
-          <label className="block mb-1 font-bold text-gray-700">Model Trim</label>
+          <label className="block mb-1 font-bold text-gray-700">Model</label>
           <input
-            name="modelTrim"
-            value={vehicleData.modelTrim}
+            name="model"
+            value={vehicleData.model}
             onChange={handleChange}
             className="w-full border border-gray-300 rounded-lg p-3 focus:ring-2 focus:ring-emerald-400 focus:border-emerald-400 outline-none transition duration-150"
             placeholder="VF e34, Model 3..."
@@ -237,7 +250,7 @@ export default function VehicleForm({ onSubmit }: VehicleFormProps) {
           />
         </div>
 
-        {/* Inspection */}
+        {/* Inspection + Battery Capacity */}
         <div>
           <label className="block mb-1 font-bold text-gray-700">
             Inspection
@@ -248,6 +261,33 @@ export default function VehicleForm({ onSubmit }: VehicleFormProps) {
             onChange={handleChange}
             className="w-full border border-gray-300 rounded-lg p-3 focus:ring-2 focus:ring-emerald-400 focus:border-emerald-400 outline-none transition duration-150"
             placeholder="Yes / No / Until 2025"
+          />
+        </div>
+
+        {/* ✅ Battery Capacity (kWh) */}
+        <div>
+          <label className="block mb-1 font-bold text-gray-700">
+            Battery Capacity (kWh)
+          </label>
+          <input
+            type="number"
+            name="batteryCapacity"
+            value={vehicleData.batteryCapacity}
+            onChange={handleChange}
+            className="w-full border border-gray-300 rounded-lg p-3 focus:ring-2 focus:ring-emerald-400 focus:border-emerald-400 outline-none transition duration-150"
+            placeholder="50"
+          />
+        </div>
+
+        {/* Condition */}
+        <div>
+          <label className="block mb-1 font-bold text-gray-700">Condition</label>
+          <input
+            name="condition"
+            value={vehicleData.condition}
+            onChange={handleChange}
+            className="w-full border border-gray-300 rounded-lg p-3 focus:ring-2 focus:ring-emerald-400 focus:border-emerald-400 outline-none transition duration-150"
+            placeholder="excellent, good, fair"
           />
         </div>
 
