@@ -2,6 +2,7 @@
 import React from 'react';
 import { useAuth } from '../hooks/useAuth';
 import Button from '../components/Button';
+import { Link } from 'react-router-dom';
 
 const Dashboard = () => {
   const { user, logout } = useAuth();
@@ -20,9 +21,17 @@ const Dashboard = () => {
           <p className="text-gray-600 mb-4">
             Chào mừng {user?.name || user?.email} đến với ECO App!
           </p>
-          <Button variant="secondary" onClick={handleLogout}>
-            Đăng xuất
-          </Button>
+          <div className="flex gap-4">
+            <Button variant="secondary" onClick={handleLogout}>
+              Đăng xuất
+            </Button>
+            {/* Temporary test link - remove when done testing */}
+            <Link to="/staff-contract">
+              <Button variant="default" className="bg-green-500 hover:bg-green-600">
+                Test Staff Contract
+              </Button>
+            </Link>
+          </div>
         </div>
 
         {/* Stats Cards */}

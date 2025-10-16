@@ -15,6 +15,7 @@ import Battery from '../pages/Battery';
 import Membership from '../pages/Membership';
 import Favorited from '../pages/Favorited';
 import History from '../pages/History';
+import StaffContract from '../pages/StaffContract';
 import NotFound from '../pages/NotFound';
 import Waiting from '@/pages/Waiting';
 
@@ -96,14 +97,22 @@ const AppRoutes = () => {
           </ProtectedRoute>
         } />
 <Route path="/waiting" element={
-          
-            <Waiting />
+          <ProtectedRoute>
+          <Waiting />
+        </ProtectedRoute>
+            
           
         } />
         <Route path="/history" element={
           <ProtectedRoute>
             <History />
           </ProtectedRoute>
+        } />
+
+        <Route path="/staff-contract" element={
+          
+            <StaffContract />
+          
         } />
 
         {/* 404 Page - Phải đặt cuối cùng */}
