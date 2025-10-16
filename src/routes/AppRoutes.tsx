@@ -16,6 +16,8 @@ import Membership from '../pages/Membership';
 import Favorited from '../pages/Favorited';
 import History from '../pages/History';
 import StaffContract from '../pages/StaffContract';
+import DescriptionEV from '../pages/DescriptionEV';
+import DescriptionBattery from '../pages/DescriptionBattery';
 import NotFound from '../pages/NotFound';
 import Waiting from '@/pages/Waiting';
 
@@ -81,6 +83,18 @@ const AppRoutes = () => {
         <Route path="/battery" element={
           <ProtectedRoute>
             <Battery />
+          </ProtectedRoute>
+        } />
+
+        <Route path="/description-ev/:id" element={
+          <ProtectedRoute>
+            <DescriptionEV />
+          </ProtectedRoute>
+        } />
+
+        <Route path="/description-battery/:id" element={
+          <ProtectedRoute>
+            <DescriptionBattery />
           </ProtectedRoute>
         } />
 
