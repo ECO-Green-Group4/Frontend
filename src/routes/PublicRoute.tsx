@@ -1,9 +1,13 @@
 // Component cho route công khai - redirect về home nếu đã đăng nhập
-import React from 'react';
 import { Navigate } from 'react-router-dom';
 import { useAuth } from '../hooks/useAuth';
 
-const PublicRoute = ({ children, redirectTo = '/' }) => {
+interface PublicRouteProps {
+  children: React.ReactNode;
+  redirectTo?: string;
+}
+
+const PublicRoute = ({ children, redirectTo = '/' }: PublicRouteProps) => {
   const { isAuthenticated, loading } = useAuth();
 
   // Hiển thị loading khi đang kiểm tra authentication

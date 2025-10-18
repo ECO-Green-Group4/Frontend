@@ -1,4 +1,4 @@
-  import React, { useState, useEffect } from "react";
+import React, { useState, useEffect } from "react";
 import { uploadImgBBMultipleFile } from "../services/imgBB";
 
   // 1. Định nghĩa Interface cho Dữ liệu Pin (State)
@@ -55,6 +55,11 @@ import { uploadImgBBMultipleFile } from "../services/imgBB";
       postType: "",
       
     });
+
+    // Thêm state cho preview images và selected image
+    const [previewImages, setPreviewImages] = useState<string[]>([]);
+    const [selectedImageIndex, setSelectedImageIndex] = useState(0);
+    const [isUploading, setIsUploading] = useState(false);
 
 
     // Handlers 

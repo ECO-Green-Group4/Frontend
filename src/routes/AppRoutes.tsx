@@ -2,7 +2,7 @@ import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
 import DefaultLayout from '../layouts/DefaultLayout';
 import ProtectedRoute from './ProtectedRoute';
 import PublicRoute from './PublicRoute';
-import Home from '../pages/Home';
+import AuthGuard from '../components/AuthGuard';
 import Login from '../pages/Login';
 import Register from '../pages/Register';
 import Dashboard from '../pages/Dashboard';
@@ -26,17 +26,17 @@ const AppRoutes = () => {
     <Router>
       <Routes>
         {/* Public Routes - Trang chủ */}
-        <Route path="/" element={<Home />} />
-
+        <Route path="/" element={<MainScreen />} />
+        
         {/* Auth Routes - Không dùng layout */}
         <Route path="/login" element={
-          <PublicRoute redirectTo="/main">
+          <PublicRoute redirectTo="/create-post">
             <Login />
           </PublicRoute>
         } />
 
         <Route path="/register" element={
-          <PublicRoute redirectTo="/main">
+          <PublicRoute redirectTo="/create-post">
             <Register />
           </PublicRoute>
         } />
@@ -58,15 +58,13 @@ const AppRoutes = () => {
           </ProtectedRoute>
         } />
 
-        <Route path="/main" element={<MainScreen />} />
+        
 
         
         <Route path="/create-post" element={
-          <ProtectedRoute>
-          <CreatePost />
-        </ProtectedRoute>
-            
-          
+          <AuthGuard>
+            <CreatePost />
+          </AuthGuard>
         } />
         <Route path="/view-cart" element={
           <ProtectedRoute>
