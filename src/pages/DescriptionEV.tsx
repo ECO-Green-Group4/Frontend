@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Zap, Bell, Settings, User, ArrowLeft } from "lucide-react";
+import ImageGallery from "../components/ImageGallery";
 import api from "../services/axios";
 
 interface EVDetails {
@@ -11,8 +12,20 @@ interface EVDetails {
   model: string;
   mileage: number;
   year: number;
-  imageUrl: string;
+  images: string[]; // Changed from single imageUrl to array of images
   description?: string;
+  brand?: string;
+  bodyType?: string;
+  color?: string;
+  inspection?: string;
+  origin?: string;
+  numberOfSeats?: number;
+  licensePlate?: string;
+  accessories?: string;
+  batteryCapacity?: string;
+  condition?: string;
+  postType?: string;
+  location?: string;
 }
 
 const DescriptionEV = () => {
@@ -53,10 +66,22 @@ const DescriptionEV = () => {
           model: vehicle.model || "Tesla Model 3",
           mileage: Number(vehicle.mileage) || 3000,
           year: Number(vehicle.year) || 2022,
-          imageUrl: vehicle.images && Array.isArray(vehicle.images) && vehicle.images.length > 0 
-            ? vehicle.images[0] 
-            : "",
-          description: vehicle.description
+          images: vehicle.images && Array.isArray(vehicle.images) && vehicle.images.length > 0 
+            ? vehicle.images 
+            : [],
+          description: vehicle.description,
+          brand: vehicle.brand,
+          bodyType: vehicle.bodyType,
+          color: vehicle.color,
+          inspection: vehicle.inspection,
+          origin: vehicle.origin,
+          numberOfSeats: Number(vehicle.numberOfSeats),
+          licensePlate: vehicle.licensePlate,
+          accessories: vehicle.accessories,
+          batteryCapacity: vehicle.batteryCapacity,
+          condition: vehicle.condition,
+          postType: vehicle.postType,
+          location: vehicle.location
         });
       } catch (err: any) {
         console.error("❌ Lỗi khi tải thông tin xe:", err);
@@ -103,7 +128,7 @@ const DescriptionEV = () => {
         <div className="flex items-center justify-center min-h-[400px]">
           <div className="text-center">
             <p className="text-red-500 mb-4">{error || "Không tìm thấy thông tin xe"}</p>
-            <Button onClick={() => navigate("/main")} variant="outline">
+            <Button onClick={() => navigate("/")} variant="outline">
               <ArrowLeft className="w-4 h-4 mr-2" />
               Quay lại
             </Button>
@@ -173,64 +198,122 @@ const DescriptionEV = () => {
 
       {/* Main Content */}
       <div className="max-w-7xl mx-auto px-6 py-8">
-        <div className="flex flex-col md:flex-row gap-8 items-stretch" style={{ display: 'flex', flexDirection: 'row', gap: '2rem', alignItems: 'stretch' }}>
-          {/* Image Section - Left */}
-          <div className="space-y-4 flex-1 w-1/2 h-full">
-            <div className="bg-green-500 rounded-xl p-8 flex items-center justify-center h-full min-h-[600px]">
-              <div className="bg-white rounded-lg p-4 flex items-center justify-center w-full h-full">
-                {evDetails.imageUrl ? (
-                  <img 
-                    src={evDetails.imageUrl} 
-                    alt={evDetails.name}
-                    className="w-full h-full object-contain rounded-lg"
-                  />
-                ) : (
-                  <div className="w-full h-full bg-gray-200 rounded-lg flex items-center justify-center">
-                    <User className="w-24 h-24 text-gray-400" />
-                  </div>
-                )}
-              </div>
-            </div>
+        <div className="flex flex-col lg:flex-row gap-8">
+          {/* Image Gallery Section - Left */}
+          <div className="flex-1 lg:w-1/2">
+            <ImageGallery 
+              images={evDetails.images}
+              title={evDetails.name}
+              className="h-full"
+            />
           </div>
 
           {/* Detail Information Card - Right */}
-          <div className="bg-white rounded-xl shadow-lg p-8 flex-1 w-1/2 h-full flex flex-col min-h-[600px]">
-            <h2 className="text-2xl font-bold text-center mb-6">Detail</h2>
-            
-            <div className="space-y-4">
-              <div>
-                <span className="font-semibold text-gray-700">Name: </span>
-                <span className="text-gray-900">{evDetails.name}</span>
-              </div>
+          <div className="flex-1 lg:w-1/2">
+            <div className="bg-white rounded-xl shadow-lg p-8 h-full flex flex-col">
+              <h2 className="text-2xl font-bold text-center mb-6 text-gray-800">Chi tiết sản phẩm</h2>
               
-              <div>
-                <span className="font-semibold text-gray-700">Price: </span>
-                <span className="text-gray-900">${new Intl.NumberFormat("en-US").format(evDetails.price)}</span>
+              <div className="space-y-4 flex-1">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div>
+                    <span className="font-semibold text-gray-700">Tên xe:</span>
+                    <p className="text-gray-900 mt-1">{evDetails.name}</p>
+                  </div>
+                  
+                  <div>
+                    <span className="font-semibold text-gray-700">Giá:</span>
+                    <p className="text-green-600 font-bold text-xl mt-1">
+                      {new Intl.NumberFormat("vi-VN").format(evDetails.price)} VNĐ
+                    </p>
+                  </div>
+                  
+                  <div>
+                    <span className="font-semibold text-gray-700">Thương hiệu:</span>
+                    <p className="text-gray-900 mt-1">{evDetails.brand || "N/A"}</p>
+                  </div>
+                  
+                  <div>
+                    <span className="font-semibold text-gray-700">Model:</span>
+                    <p className="text-gray-900 mt-1">{evDetails.model}</p>
+                  </div>
+                  
+                  <div>
+                    <span className="font-semibold text-gray-700">Năm sản xuất:</span>
+                    <p className="text-gray-900 mt-1">{evDetails.year}</p>
+                  </div>
+                  
+                  <div>
+                    <span className="font-semibold text-gray-700">Số km đã đi:</span>
+                    <p className="text-gray-900 mt-1">{new Intl.NumberFormat("vi-VN").format(evDetails.mileage)} km</p>
+                  </div>
+                  
+                  <div>
+                    <span className="font-semibold text-gray-700">Loại thân xe:</span>
+                    <p className="text-gray-900 mt-1">{evDetails.bodyType || "N/A"}</p>
+                  </div>
+                  
+                  <div>
+                    <span className="font-semibold text-gray-700">Màu sắc:</span>
+                    <p className="text-gray-900 mt-1">{evDetails.color || "N/A"}</p>
+                  </div>
+                  
+                  <div>
+                    <span className="font-semibold text-gray-700">Số chỗ ngồi:</span>
+                    <p className="text-gray-900 mt-1">{evDetails.numberOfSeats || "N/A"}</p>
+                  </div>
+                  
+                  <div>
+                    <span className="font-semibold text-gray-700">Biển số:</span>
+                    <p className="text-gray-900 mt-1">{evDetails.licensePlate || "N/A"}</p>
+                  </div>
+                  
+                  <div>
+                    <span className="font-semibold text-gray-700">Dung lượng pin:</span>
+                    <p className="text-gray-900 mt-1">{evDetails.batteryCapacity || "N/A"} kWh</p>
+                  </div>
+                  
+                  <div>
+                    <span className="font-semibold text-gray-700">Tình trạng:</span>
+                    <p className="text-gray-900 mt-1">{evDetails.condition || "N/A"}</p>
+                  </div>
+                  
+                  <div>
+                    <span className="font-semibold text-gray-700">Xuất xứ:</span>
+                    <p className="text-gray-900 mt-1">{evDetails.origin || "N/A"}</p>
+                  </div>
+                  
+                  <div>
+                    <span className="font-semibold text-gray-700">Vị trí:</span>
+                    <p className="text-gray-900 mt-1">{evDetails.location || "N/A"}</p>
+                  </div>
+                  
+                  <div>
+                    <span className="font-semibold text-gray-700">Đăng kiểm:</span>
+                    <p className="text-gray-900 mt-1">{evDetails.inspection || "N/A"}</p>
+                  </div>
+                  
+                  <div>
+                    <span className="font-semibold text-gray-700">Phụ kiện:</span>
+                    <p className="text-gray-900 mt-1">{evDetails.accessories || "N/A"}</p>
+                  </div>
+                </div>
+                
+                {evDetails.description && (
+                  <div className="mt-6">
+                    <span className="font-semibold text-gray-700">Mô tả:</span>
+                    <p className="text-gray-900 mt-2 leading-relaxed">{evDetails.description}</p>
+                  </div>
+                )}
               </div>
-              
-              <div>
-                <span className="font-semibold text-gray-700">Model: </span>
-                <span className="text-gray-900">{evDetails.model}</span>
-              </div>
-              
-              <div>
-                <span className="font-semibold text-gray-700">Mileage: </span>
-                <span className="text-gray-900">{new Intl.NumberFormat("en-US").format(evDetails.mileage)}mile</span>
-              </div>
-              
-              <div>
-                <span className="font-semibold text-gray-700">Year: </span>
-                <span className="text-gray-900">{evDetails.year}</span>
-              </div>
-            </div>
 
-            <div className="mt-auto text-center">
-              <Button 
-                onClick={handleBuyNow}
-                className="bg-green-500 hover:bg-green-600 text-white px-8 py-3 rounded-lg text-lg font-semibold"
-              >
-                Buy Now
-              </Button>
+              <div className="mt-8 text-center">
+                <Button 
+                  onClick={handleBuyNow}
+                  className="bg-green-500 hover:bg-green-600 text-white px-8 py-3 rounded-lg text-lg font-semibold w-full"
+                >
+                  Mua ngay
+                </Button>
+              </div>
             </div>
           </div>
         </div>

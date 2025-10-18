@@ -1,5 +1,6 @@
-import React, { useState, useEffect } from "react";
+import React, { useState } from "react";
 import { uploadImgBBMultipleFile } from "../services/imgBB";
+import ImageUploader from "../components/ImageUploader";
 
 // Định nghĩa Interface cho Dữ liệu Form (State)
 interface VehicleData {
@@ -54,8 +55,6 @@ export default function VehicleForm({ onSubmit }: VehicleFormProps) {
     
   });
 
-  const [previewImages, setPreviewImages] = useState<string[]>([]);
-  const [selectedImageIndex, setSelectedImageIndex] = useState(0);
   const [isUploading, setIsUploading] = useState(false);
 
   const handleChange = (
@@ -67,36 +66,11 @@ export default function VehicleForm({ onSubmit }: VehicleFormProps) {
     setVehicleData({ ...vehicleData, [name]: value });
   };
 
-  const handleImageUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
-    if (e.target.files) {
-      const files = Array.from(e.target.files) as File[];
-      setVehicleData({
-        ...vehicleData,
-        images: files,
-      });
-      
-      // Tạo preview URLs cho tất cả ảnh
-      const previewUrls = files.map(file => URL.createObjectURL(file));
-      setPreviewImages(previewUrls);
-      setSelectedImageIndex(0); // Reset về ảnh đầu tiên
-    }
-  };
-
-  const removeImage = (index: number) => {
-    // Xóa ảnh khỏi mảng
-    const newImages = vehicleData.images.filter((_, i) => i !== index);
-    const newPreviewUrls = previewImages.filter((_, i) => i !== index);
-    
-    // Giải phóng URL cũ để tránh memory leak
-    URL.revokeObjectURL(previewImages[index]);
-    
-    setVehicleData({ ...vehicleData, images: newImages });
-    setPreviewImages(newPreviewUrls);
-    
-    // Điều chỉnh selectedImageIndex nếu cần
-    if (selectedImageIndex >= newPreviewUrls.length) {
-      setSelectedImageIndex(Math.max(0, newPreviewUrls.length - 1));
-    }
+  const handleImagesChange = (images: File[]) => {
+    setVehicleData({
+      ...vehicleData,
+      images,
+    });
   };
 
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
@@ -138,12 +112,6 @@ export default function VehicleForm({ onSubmit }: VehicleFormProps) {
     }
   };
 
-  // Cleanup URLs khi component unmount
-  useEffect(() => {
-    return () => {
-      previewImages.forEach(url => URL.revokeObjectURL(url));
-    };
-  }, [previewImages]);
 
   return (
     <div className="max-w-4xl mx-auto p-6 bg-white shadow-xl rounded-xl border border-gray-200">
@@ -407,72 +375,17 @@ export default function VehicleForm({ onSubmit }: VehicleFormProps) {
           ></textarea>
         </div>
 
-        {/* UPLOAD IMAGES */}
+        {/* Upload Images */}
         <div className="col-span-2">
           <label className="block mb-1 font-bold text-gray-700">
             Upload Images
           </label>
-          <input
-            type="file"
-            multiple
-            accept="image/*"
-            onChange={handleImageUpload}
-            className="w-full border border-gray-300 rounded-lg p-2 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-emerald-50 file:text-emerald-700 hover:file:bg-emerald-100 cursor-pointer"
+          <ImageUploader
+            images={vehicleData.images}
+            onImagesChange={handleImagesChange}
+            maxImages={10}
+            className="mt-2"
           />
-          
-          {/* Preview Images - Layout nằm ngang */}
-          {previewImages.length > 0 && (
-            <div className="mt-4">
-              <p className="text-sm font-medium text-gray-700 mb-3">
-                Preview ({previewImages.length} ảnh):
-              </p>
-              
-              <div className="flex gap-4">
-                {/* Ảnh chính lớn bên trái */}
-                <div className="flex-1">
-                  <div className="relative">
-                    <img
-                      src={previewImages[selectedImageIndex]}
-                      alt={`Preview ${selectedImageIndex + 1}`}
-                      className="w-full h-64 object-cover rounded-lg border border-gray-200"
-                    />
-                    <button
-                      type="button"
-                      onClick={() => removeImage(selectedImageIndex)}
-                      className="absolute top-2 right-2 bg-red-500 text-white rounded-full w-8 h-8 flex items-center justify-center text-sm hover:bg-red-600 transition-colors"
-                    >
-                      ×
-                    </button>
-                  </div>
-                </div>
-                
-                {/* Grid ảnh nhỏ bên phải */}
-                <div className="w-32 space-y-2">
-                  {previewImages.map((url, index) => (
-                    <div key={index} className="relative group">
-                      <img
-                        src={url}
-                        alt={`Thumbnail ${index + 1}`}
-                        className={`w-full h-16 object-cover rounded-lg border-2 cursor-pointer transition-all ${
-                          index === selectedImageIndex 
-                            ? 'border-emerald-500 ring-2 ring-emerald-200' 
-                            : 'border-gray-200 hover:border-gray-300'
-                        }`}
-                        onClick={() => setSelectedImageIndex(index)}
-                      />
-                      <button
-                        type="button"
-                        onClick={() => removeImage(index)}
-                        className="absolute -top-1 -right-1 bg-red-500 text-white rounded-full w-5 h-5 flex items-center justify-center text-xs hover:bg-red-600 transition-colors opacity-0 group-hover:opacity-100"
-                      >
-                        ×
-                      </button>
-                    </div>
-                  ))}
-                </div>
-              </div>
-            </div>
-          )}
         </div>
 
         {/* SUBMIT */}

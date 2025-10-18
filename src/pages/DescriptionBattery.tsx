@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Zap, Bell, Settings, User, ArrowLeft } from "lucide-react";
+import ImageGallery from "../components/ImageGallery";
 import api from "../services/axios";
 
 interface BatteryDetails {
@@ -11,8 +12,19 @@ interface BatteryDetails {
   model: string;
   year: number;
   soh: number; // State of Health
-  imageUrl: string;
+  images: string[]; // Changed from single imageUrl to array of images
   description?: string;
+  brand?: string;
+  batteryBrand?: string;
+  voltage?: string;
+  capacity?: string;
+  healthPercent?: number;
+  chargeCycles?: number;
+  type?: string;
+  manufactureYear?: number;
+  origin?: string;
+  postType?: string;
+  location?: string;
 }
 
 const DescriptionBattery = () => {
@@ -52,11 +64,22 @@ const DescriptionBattery = () => {
           price: Number(battery.price) || 30000,
           model: battery.model || "Wuling 4",
           year: Number(battery.year) || 2022,
-          soh: Number(battery.soh) || 80, // State of Health percentage
-          imageUrl: battery.images && Array.isArray(battery.images) && battery.images.length > 0 
-            ? battery.images[0] 
-            : "",
-          description: battery.description
+          soh: Number(battery.healthPercent) || Number(battery.soh) || 80, // State of Health percentage
+          images: battery.images && Array.isArray(battery.images) && battery.images.length > 0 
+            ? battery.images 
+            : [],
+          description: battery.description,
+          brand: battery.brand,
+          batteryBrand: battery.batteryBrand,
+          voltage: battery.voltage,
+          capacity: battery.capacity,
+          healthPercent: Number(battery.healthPercent),
+          chargeCycles: Number(battery.chargeCycles),
+          type: battery.type,
+          manufactureYear: Number(battery.manufactureYear),
+          origin: battery.origin,
+          postType: battery.postType,
+          location: battery.location
         });
       } catch (err: any) {
         console.error("❌ Lỗi khi tải thông tin pin:", err);
@@ -103,7 +126,7 @@ const DescriptionBattery = () => {
         <div className="flex items-center justify-center min-h-[400px]">
           <div className="text-center">
             <p className="text-red-500 mb-4">{error || "Không tìm thấy thông tin pin"}</p>
-            <Button onClick={() => navigate("/main")} variant="outline">
+            <Button onClick={() => navigate("/")} variant="outline">
               <ArrowLeft className="w-4 h-4 mr-2" />
               Quay lại
             </Button>
@@ -173,64 +196,102 @@ const DescriptionBattery = () => {
 
       {/* Main Content */}
       <div className="max-w-7xl mx-auto px-6 py-8">
-        <div className="flex flex-col md:flex-row gap-8 items-stretch" style={{ display: 'flex', flexDirection: 'row', gap: '2rem', alignItems: 'stretch' }}>
-          {/* Image Section - Left */}
-          <div className="space-y-4 flex-1 w-1/2 h-full">
-            <div className="bg-green-500 rounded-xl p-8 flex items-center justify-center h-full min-h-[600px]">
-              <div className="bg-white rounded-lg p-4 flex items-center justify-center w-full h-full">
-                {batteryDetails.imageUrl ? (
-                  <img 
-                    src={batteryDetails.imageUrl} 
-                    alt={batteryDetails.name}
-                    className="w-full h-full object-contain rounded-lg"
-                  />
-                ) : (
-                  <div className="w-full h-full bg-gray-200 rounded-lg flex items-center justify-center">
-                    <Zap className="w-24 h-24 text-gray-400" />
-                  </div>
-                )}
-              </div>
-            </div>
+        <div className="flex flex-col lg:flex-row gap-8">
+          {/* Image Gallery Section - Left */}
+          <div className="flex-1 lg:w-1/2">
+            <ImageGallery 
+              images={batteryDetails.images}
+              title={batteryDetails.name}
+              className="h-full"
+            />
           </div>
 
           {/* Detail Information Card - Right */}
-          <div className="bg-white rounded-xl shadow-lg p-8 flex-1 w-1/2 h-full flex flex-col min-h-[600px]">
-            <h2 className="text-2xl font-bold text-center mb-6">Detail</h2>
-            
-            <div className="space-y-4">
-              <div>
-                <span className="font-semibold text-gray-700">Name: </span>
-                <span className="text-gray-900">{batteryDetails.name}</span>
-              </div>
+          <div className="flex-1 lg:w-1/2">
+            <div className="bg-white rounded-xl shadow-lg p-8 h-full flex flex-col">
+              <h2 className="text-2xl font-bold text-center mb-6 text-gray-800">Chi tiết sản phẩm</h2>
               
-              <div>
-                <span className="font-semibold text-gray-700">Price: </span>
-                <span className="text-gray-900">${new Intl.NumberFormat("en-US").format(batteryDetails.price)}</span>
+              <div className="space-y-4 flex-1">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div>
+                    <span className="font-semibold text-gray-700">Tên sản phẩm:</span>
+                    <p className="text-gray-900 mt-1">{batteryDetails.name}</p>
+                  </div>
+                  
+                  <div>
+                    <span className="font-semibold text-gray-700">Giá:</span>
+                    <p className="text-green-600 font-bold text-xl mt-1">
+                      {new Intl.NumberFormat("vi-VN").format(batteryDetails.price)} VNĐ
+                    </p>
+                  </div>
+                  
+                  <div>
+                    <span className="font-semibold text-gray-700">Thương hiệu:</span>
+                    <p className="text-gray-900 mt-1">{batteryDetails.brand || "N/A"}</p>
+                  </div>
+                  
+                  <div>
+                    <span className="font-semibold text-gray-700">Model:</span>
+                    <p className="text-gray-900 mt-1">{batteryDetails.model}</p>
+                  </div>
+                  
+                  <div>
+                    <span className="font-semibold text-gray-700">Năm sản xuất:</span>
+                    <p className="text-gray-900 mt-1">{batteryDetails.year}</p>
+                  </div>
+                  
+                  <div>
+                    <span className="font-semibold text-gray-700">Tình trạng pin:</span>
+                    <p className="text-gray-900 mt-1">{batteryDetails.soh}%</p>
+                  </div>
+                  
+                  <div>
+                    <span className="font-semibold text-gray-700">Điện áp:</span>
+                    <p className="text-gray-900 mt-1">{batteryDetails.voltage || "N/A"}V</p>
+                  </div>
+                  
+                  <div>
+                    <span className="font-semibold text-gray-700">Dung lượng:</span>
+                    <p className="text-gray-900 mt-1">{batteryDetails.capacity || "N/A"}</p>
+                  </div>
+                  
+                  <div>
+                    <span className="font-semibold text-gray-700">Loại pin:</span>
+                    <p className="text-gray-900 mt-1">{batteryDetails.type || "N/A"}</p>
+                  </div>
+                  
+                  <div>
+                    <span className="font-semibold text-gray-700">Xuất xứ:</span>
+                    <p className="text-gray-900 mt-1">{batteryDetails.origin || "N/A"}</p>
+                  </div>
+                  
+                  <div>
+                    <span className="font-semibold text-gray-700">Vị trí:</span>
+                    <p className="text-gray-900 mt-1">{batteryDetails.location || "N/A"}</p>
+                  </div>
+                  
+                  <div>
+                    <span className="font-semibold text-gray-700">Số chu kỳ sạc:</span>
+                    <p className="text-gray-900 mt-1">{batteryDetails.chargeCycles || "N/A"}</p>
+                  </div>
+                </div>
+                
+                {batteryDetails.description && (
+                  <div className="mt-6">
+                    <span className="font-semibold text-gray-700">Mô tả:</span>
+                    <p className="text-gray-900 mt-2 leading-relaxed">{batteryDetails.description}</p>
+                  </div>
+                )}
               </div>
-              
-              <div>
-                <span className="font-semibold text-gray-700">Model: </span>
-                <span className="text-gray-900">{batteryDetails.model}</span>
-              </div>
-              
-              <div>
-                <span className="font-semibold text-gray-700">Year: </span>
-                <span className="text-gray-900">{batteryDetails.year}</span>
-              </div>
-              
-              <div>
-                <span className="font-semibold text-gray-700">State of Health (SOH): </span>
-                <span className="text-gray-900">{batteryDetails.soh}%</span>
-              </div>
-            </div>
 
-            <div className="mt-auto text-center">
-              <Button 
-                onClick={handleBuyNow}
-                className="bg-green-500 hover:bg-green-600 text-white px-8 py-3 rounded-lg text-lg font-semibold"
-              >
-                Buy Now
-              </Button>
+              <div className="mt-8 text-center">
+                <Button 
+                  onClick={handleBuyNow}
+                  className="bg-green-500 hover:bg-green-600 text-white px-8 py-3 rounded-lg text-lg font-semibold w-full"
+                >
+                  Mua ngay
+                </Button>
+              </div>
             </div>
           </div>
         </div>
