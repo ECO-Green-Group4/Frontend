@@ -18,6 +18,8 @@
     type: string;
     manufactureYear: string;
     origin: string;
+    postType: string;
+    
     
   }
 
@@ -49,6 +51,7 @@
       type: "",
       manufactureYear: "",
       origin: "",
+      postType: "",
       
     });
 
@@ -279,6 +282,22 @@
               className={inputClass}
               placeholder="USA, China, Vietnam..."
             />
+          </div>
+
+          {/* Post Type */}
+          <div>
+            <label className={labelClass}>Post Type</label>
+            <select
+              name="postType"
+              value={batteryData.postType}
+              onChange={handleChange}
+              className={inputClass}
+            >
+              <option value="">Select Post Type</option>
+              <option value="vip-kim-cuong">Vip Kim cương</option>
+              <option value="vip-vang">Vip vàng</option>
+              <option value="standard">Standard</option>
+            </select>
           </div>
 
           {/* Temperature (°C) */}

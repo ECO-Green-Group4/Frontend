@@ -20,6 +20,7 @@ interface VehicleData {
   accessories: string;
   batteryCapacity: string;
   condition: string;
+  postType: string;
   
 }
 
@@ -48,6 +49,7 @@ export default function VehicleForm({ onSubmit }: VehicleFormProps) {
     accessories: "",
     batteryCapacity: "",
     condition: "",
+    postType: "",
     
   });
 
@@ -289,6 +291,22 @@ export default function VehicleForm({ onSubmit }: VehicleFormProps) {
             className="w-full border border-gray-300 rounded-lg p-3 focus:ring-2 focus:ring-emerald-400 focus:border-emerald-400 outline-none transition duration-150"
             placeholder="excellent, good, fair"
           />
+        </div>
+
+        {/* Post Type */}
+        <div>
+          <label className="block mb-1 font-bold text-gray-700">Post Type</label>
+          <select
+            name="postType"
+            value={vehicleData.postType}
+            onChange={handleChange}
+            className="w-full border border-gray-300 rounded-lg p-3 focus:ring-2 focus:ring-emerald-400 focus:border-emerald-400 outline-none transition duration-150"
+          >
+            <option value="">Select Post Type</option>
+            <option value="vip-kim-cuong">Vip Kim cương</option>
+            <option value="vip-vang">Vip vàng</option>
+            <option value="standard">Standard</option>
+          </select>
         </div>
 
         {/* Price (VND) */}
