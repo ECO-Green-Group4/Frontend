@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useState } from "react";
+import { useNavigate } from "react-router-dom";
 import api from "../services/axios";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -7,6 +8,8 @@ import Header from "../components/ui/Header";
 import { Search, Filter, Zap } from "lucide-react";
 
 const MainScreen = () => {
+  const navigate = useNavigate();
+  
   type Post = {
     id?: number | string;
     title: string;
@@ -118,9 +121,21 @@ const MainScreen = () => {
     });
   }, [posts, activeFilter, searchQuery]);
 
+  const handlePostClick = (post: Post) => {
+    console.log("🖱️ Click vào post:", post);
+    if (post.category === "EV") {
+      navigate(`/description-ev/${post.id}`);
+    } else if (post.category === "Battery") {
+      navigate(`/description-battery/${post.id}`);
+    }
+  };
+
   function PostCard({ post }: { post: Post }) {
     return (
-      <div className="group rounded-xl bg-[#D6FAD7] border border-green-200 shadow-sm hover:shadow-lg transition duration-200 p-4 flex items-center gap-4">
+      <div 
+        className="group rounded-xl bg-[#D6FAD7] border border-green-200 shadow-sm hover:shadow-lg transition duration-200 p-4 flex items-center gap-4 cursor-pointer"
+        onClick={() => handlePostClick(post)}
+      >
         <div className="w-28 h-28 rounded-lg overflow-hidden bg-white flex-shrink-0">
           <img
             src={post.imageUrl}

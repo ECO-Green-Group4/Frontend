@@ -4,7 +4,7 @@ import VehicleForm from "./VehicleForm";
 import BatteryForm from "./BatteryForm";
 import Header from "../components/ui/Header"; 
 import api from "../services/axios";
-import { mapFilesToMockUrls } from "../utils/imageUpload";
+// Không cần import mapFilesToMockUrls nữa vì đã upload thật lên ImgBB
 
 export default function CreatePost() {
   const [category, setCategory] = useState<"EV" | "Battery">("EV");
@@ -17,7 +17,7 @@ export default function CreatePost() {
   const toBatteryPayload = (data: BatteryFormData) => ({
     title: data.title,
     description: data.description,
-    images: mapFilesToMockUrls(data.images, "battery-image"),
+    images: data.images, // Đã là URLs từ ImgBB
     location: data.location,
     price: Number.parseInt(data.price) || 0,
     brand: data.brand,
@@ -37,7 +37,7 @@ export default function CreatePost() {
   const toVehiclePayload = (data: VehicleFormData) => ({
     title: data.title,
     description: data.description,
-    images: mapFilesToMockUrls(data.images, "vehicle-image"),
+    images: data.images, // Đã là URLs từ ImgBB
     location: data.location,
     price: data.price,
     brand: data.brand,
