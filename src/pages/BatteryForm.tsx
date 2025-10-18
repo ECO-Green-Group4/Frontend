@@ -19,6 +19,8 @@ import { uploadImgBBMultipleFile } from "../services/imgBB";
     type: string;
     manufactureYear: string;
     origin: string;
+    postType: string;
+    
     
   }
 
@@ -33,29 +35,27 @@ import { uploadImgBBMultipleFile } from "../services/imgBB";
 
   export default function BatteryForm({ onSubmit }: BatteryFormProps) {
     // Khởi tạo state với kiểu BatteryData
-  const [batteryData, setBatteryData] = useState<BatteryData>({
-    title: "",
-    description: "",
-    images: [] as File[],
-    location: "",
-    price: "",
-    brand: "",
-    model: "",
-    year: "",
-    batteryBrand: "",
-    voltage: "",
-    capacity: "",
-    healthPercent: "",
-    chargeCycles: "",
-    type: "",
-    manufactureYear: "",
-    origin: "",
-    
-  });
+    const [batteryData, setBatteryData] = useState<BatteryData>({
+      title: "",
+      description: "",
+      images: [] as File[],
+      location: "",
+      price: "",
+      brand: "",
+      model: "",
+      year: "",
+      batteryBrand: "",
+      voltage: "",
+      capacity: "",
+      healthPercent: "",
+      chargeCycles: "",
+      type: "",
+      manufactureYear: "",
+      origin: "",
+      postType: "",
+      
+    });
 
-  const [previewImages, setPreviewImages] = useState<string[]>([]);
-  const [selectedImageIndex, setSelectedImageIndex] = useState(0);
-  const [isUploading, setIsUploading] = useState(false);
 
     // Handlers 
     const handleChange = (
@@ -347,6 +347,22 @@ import { uploadImgBBMultipleFile } from "../services/imgBB";
               className={inputClass}
               placeholder="USA, China, Vietnam..."
             />
+          </div>
+
+          {/* Post Type */}
+          <div>
+            <label className={labelClass}>Post Type</label>
+            <select
+              name="postType"
+              value={batteryData.postType}
+              onChange={handleChange}
+              className={inputClass}
+            >
+              <option value="">Select Post Type</option>
+              <option value="vip-kim-cuong">Vip Kim cương</option>
+              <option value="vip-vang">Vip vàng</option>
+              <option value="standard">Standard</option>
+            </select>
           </div>
 
           {/* Temperature (°C) */}
