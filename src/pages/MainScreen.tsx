@@ -5,11 +5,12 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import Header from "../components/ui/Header";
+import Footer from "../components/Footer"; // Import đã có
 import { Search, Filter, Zap } from "lucide-react";
 
 const MainScreen = () => {
   const navigate = useNavigate();
-  
+
   type Post = {
     id?: number | string;
     title: string;
@@ -132,7 +133,7 @@ const MainScreen = () => {
 
   function PostCard({ post }: { post: Post }) {
     return (
-      <div 
+      <div
         className="group rounded-xl bg-[#D6FAD7] border border-green-200 shadow-sm hover:shadow-lg transition duration-200 p-4 flex items-center gap-4 cursor-pointer"
         onClick={() => handlePostClick(post)}
       >
@@ -156,9 +157,12 @@ const MainScreen = () => {
   }
 
   return (
-    <div className="min-h-screen bg-gray-50">
+    // 1. Thêm 'flex flex-col' để làm container chính
+    <div className="min-h-screen bg-gray-50 flex flex-col">
       <Header />
-      <main className="max-w-7xl mx-auto px-4 py-8">
+
+      {/* 2. Thêm 'flex-1' để <main> lấp đầy không gian và đẩy footer xuống */}
+      <main className="max-w-7xl mx-auto px-4 py-8 flex-1 w-full">
         <div className="mb-6 flex flex-col sm:flex-row sm:items-center gap-3">
           <div className="relative flex-1">
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 w-5 h-5" />
@@ -218,6 +222,9 @@ const MainScreen = () => {
           </div>
         )}
       </main>
+
+      {/* 3. Thêm <Footer /> vào đây, bên ngoài <main> */}
+      <Footer />
     </div>
   );
 };

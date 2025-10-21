@@ -1,17 +1,18 @@
 import { useEffect, useState } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
-import { Zap, Bell, Settings, User, ArrowLeft } from "lucide-react";
+import { Zap, ArrowLeft } from "lucide-react";
 import ImageGallery from "../components/ImageGallery";
 import api from "../services/axios";
+import Header from "../components/ui/Header";
 
 interface EVDetails {
   id: string | number;
   name: string;
   price: number;
   model: string;
-  mileage: number;
-  year: number;
+  mileage?: number;
+  year?: number;
   images: string[]; // Changed from single imageUrl to array of images
   description?: string;
   brand?: string;
@@ -45,43 +46,85 @@ const DescriptionEV = () => {
 
       try {
         setLoading(true);
-        
-        // Gọi API lấy danh sách xe và tìm xe theo ID
-        const response = await api.get("/seller/listings/vehicle");
-        const vehicles = response.data?.data || response.data || [];
-        
-        // Tìm xe theo ID
-        const vehicle = vehicles.find((v: any) => 
-          (v.listingId || v.id)?.toString() === id.toString()
-        );
-        
+        // Ưu tiên gọi API chi tiết theo ID; nếu thất bại fallback sang lấy danh sách rồi tìm
+        let vehicle: any | null = null;
+        try {
+          const detailRes = await api.get(`/seller/listings/vehicle/${id}`);
+          vehicle = detailRes.data?.data || detailRes.data || null;
+        } catch (_) {
+          const listRes = await api.get("/seller/listings/vehicle");
+          const vehicles = listRes.data?.data || listRes.data || [];
+          vehicle =
+            vehicles.find(
+              (v: any) => (v.listingId || v.id)?.toString() === id.toString()
+            ) || null;
+        }
+
         if (!vehicle) {
           throw new Error(`Không tìm thấy xe với ID: ${id}`);
         }
+
+        const images =
+          (Array.isArray(vehicle.images) && vehicle.images) ||
+          (Array.isArray(vehicle.imageUrls) && vehicle.imageUrls) ||
+          (vehicle.imageUrl ? [vehicle.imageUrl] : []);
+
         
+        // Thêm `vehicle.number_of_seats`
+        const rawSeats =
+          vehicle.numberOfSeats ?? vehicle.seats ?? vehicle.number_of_seats;
+        const parsedSeats =
+          rawSeats !== undefined && rawSeats !== null && rawSeats !== ""
+            ? Number(rawSeats)
+            : undefined;
+
+        const rawMileage = vehicle.mileage ?? vehicle.odometer;
+        const parsedMileage =
+          rawMileage !== undefined && rawMileage !== null && rawMileage !== ""
+            ? Number(rawMileage)
+            : undefined;
+
+        const rawYear = vehicle.year ?? vehicle.manufactureYear;
+        const parsedYear =
+          rawYear !== undefined && rawYear !== null && rawYear !== ""
+            ? Number(rawYear)
+            : undefined;
+        // ---- KẾT THÚC SỬA ĐỔI ----
+
         setEvDetails({
           id: vehicle.listingId || vehicle.id || id,
-          name: vehicle.title || "Tesla",
-          price: Number(vehicle.price) || 30000,
-          model: vehicle.model || "Tesla Model 3",
-          mileage: Number(vehicle.mileage) || 3000,
-          year: Number(vehicle.year) || 2022,
-          images: vehicle.images && Array.isArray(vehicle.images) && vehicle.images.length > 0 
-            ? vehicle.images 
-            : [],
+          name: vehicle.title || vehicle.name || "",
+          price: Number(vehicle.price) || 0,
+          model: vehicle.model || vehicle.variant || "",
+          mileage: parsedMileage,
+          year: parsedYear,
+          images,
           description: vehicle.description,
-          brand: vehicle.brand,
-          bodyType: vehicle.bodyType,
+          brand: vehicle.brand || vehicle.make || vehicle.manufacturer,
+          bodyType: vehicle.bodyType || vehicle.body_type,
           color: vehicle.color,
           inspection: vehicle.inspection,
-          origin: vehicle.origin,
-          numberOfSeats: Number(vehicle.numberOfSeats),
-          licensePlate: vehicle.licensePlate,
+          origin: vehicle.origin || vehicle.countryOfOrigin,
+
+          numberOfSeats: parsedSeats, // Đã sửa ở trên
+
+          // SỬA ĐỔI: Thêm `vehicle.license_plate`
+          licensePlate:
+            vehicle.licensePlate ||
+            vehicle.plateNumber ||
+            vehicle.license_plate,
+
           accessories: vehicle.accessories,
-          batteryCapacity: vehicle.batteryCapacity,
+
+          // SỬA ĐỔI: Thêm `vehicle.capacity`
+          batteryCapacity:
+            vehicle.batteryCapacity ||
+            vehicle.battery_capacity ||
+            vehicle.capacity,
+
           condition: vehicle.condition,
           postType: vehicle.postType,
-          location: vehicle.location
+          location: vehicle.location || vehicle.city,
         });
       } catch (err: any) {
         console.error("❌ Lỗi khi tải thông tin xe:", err);
@@ -127,7 +170,9 @@ const DescriptionEV = () => {
         </div>
         <div className="flex items-center justify-center min-h-[400px]">
           <div className="text-center">
-            <p className="text-red-500 mb-4">{error || "Không tìm thấy thông tin xe"}</p>
+            <p className="text-red-500 mb-4">
+              {error || "Không tìm thấy thông tin xe"}
+            </p>
             <Button onClick={() => navigate("/")} variant="outline">
               <ArrowLeft className="w-4 h-4 mr-2" />
               Quay lại
@@ -138,176 +183,186 @@ const DescriptionEV = () => {
     );
   }
 
+  // Helpers for safe display
+  const displayText = (value: any, fallback: string = "-") => {
+    if (value === null || value === undefined) return fallback;
+    if (typeof value === "string" && value.trim() === "") return fallback;
+    return value;
+  };
+
+  const formatNumber = (value?: number, suffix?: string) => {
+    if (value === undefined || value === null || Number.isNaN(value)) return "-";
+    const formatted = new Intl.NumberFormat("vi-VN").format(value);
+    return suffix ? `${formatted} ${suffix}` : formatted;
+  };
+
   return (
     <div className="min-h-screen bg-gray-50">
       {/* Header */}
-      <header className="bg-white shadow-md sticky top-0 z-50">
-        <div className="max-w-7xl mx-auto flex justify-between items-center px-6 py-3">
-          {/* Logo + Tên */}
-          <div className="flex items-center space-x-3">
-            <div className="w-8 h-8 bg-green-500 rounded flex items-center justify-center">
-              <Zap className="w-5 h-5 text-white" />
-            </div>
-            <span className="text-2xl font-bold text-green-500 tracking-wide">
-              EcoGreen
-            </span>
-          </div>
-
-          {/* Center - Navigation Links */}
-          <nav className="flex items-center space-x-6">
-            <a 
-              href="/create-post" 
-              className="text-black hover:text-gray-600 font-medium transition-colors px-3 py-2 rounded-md hover:bg-gray-50"
-            >
-              Create Post
-            </a>
-            <a 
-              href="/membership" 
-              className="text-black hover:text-gray-600 font-medium transition-colors px-3 py-2 rounded-md hover:bg-gray-50"
-            >
-              Membership
-            </a>
-            <a 
-              href="/favorited" 
-              className="text-black hover:text-gray-600 font-medium transition-colors px-3 py-2 rounded-md hover:bg-gray-50"
-            >
-              Favorited
-            </a>
-            <a 
-              href="/history" 
-              className="text-black hover:text-gray-600 font-medium transition-colors px-3 py-2 rounded-md hover:bg-gray-50"
-            >
-              History
-            </a>
-          </nav>
-
-          {/* Right side - User Actions */}
-          <div className="flex items-center space-x-4">
-            <Button variant="ghost" size="icon" className="text-gray-600 hover:text-gray-800">
-              <Bell className="w-5 h-5" />
-            </Button>
-            <Button variant="ghost" size="icon" className="text-gray-600 hover:text-gray-800">
-              <Settings className="w-5 h-5" />
-            </Button>
-            <Button variant="ghost" size="icon" className="text-gray-600 hover:text-gray-800">
-              <User className="w-5 h-5" />
-            </Button>
-          </div>
-        </div>
-      </header>
+      <Header />
 
       {/* Main Content */}
       <div className="max-w-7xl mx-auto px-6 py-8">
-        <div className="flex flex-col lg:flex-row gap-8">
+        <div className="grid grid-cols-12 gap-6 md:gap-8 items-stretch">
+          {" "}
           {/* Image Gallery Section - Left */}
-          <div className="flex-1 lg:w-1/2">
-            <ImageGallery 
+          <div className="col-span-6 md:col-span-5 min-h-[600px]">
+            <ImageGallery
               images={evDetails.images}
               title={evDetails.name}
               className="h-full"
             />
           </div>
-
           {/* Detail Information Card - Right */}
-          <div className="flex-1 lg:w-1/2">
-            <div className="bg-white rounded-xl shadow-lg p-8 h-full flex flex-col">
-              <h2 className="text-2xl font-bold text-center mb-6 text-gray-800">Chi tiết sản phẩm</h2>
-              
+          <div className="col-span-6 md:col-span-7">
+            <div className="bg-white rounded-xl shadow-lg p-8 h-full min-h-[600px] flex flex-col overflow-auto">
+              <h2 className="text-2xl font-bold text-center mb-6 text-gray-800">
+                Chi tiết sản phẩm
+              </h2>
+
               <div className="space-y-4 flex-1">
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
                   <div>
                     <span className="font-semibold text-gray-700">Tên xe:</span>
-                    <p className="text-gray-900 mt-1">{evDetails.name}</p>
+                    <p className="text-gray-900 mt-1">
+                      {displayText(evDetails.name)}
+                    </p>
                   </div>
-                  
+
                   <div>
                     <span className="font-semibold text-gray-700">Giá:</span>
                     <p className="text-green-600 font-bold text-xl mt-1">
-                      {new Intl.NumberFormat("vi-VN").format(evDetails.price)} VNĐ
+                      {formatNumber(evDetails.price)} VNĐ
                     </p>
                   </div>
-                  
+
                   <div>
-                    <span className="font-semibold text-gray-700">Thương hiệu:</span>
-                    <p className="text-gray-900 mt-1">{evDetails.brand || "N/A"}</p>
+                    <span className="font-semibold text-gray-700">
+                      Thương hiệu:
+                    </span>
+                    <p className="text-gray-900 mt-1">
+                      {displayText(evDetails.brand)}
+                    </p>
                   </div>
-                  
+
                   <div>
                     <span className="font-semibold text-gray-700">Model:</span>
-                    <p className="text-gray-900 mt-1">{evDetails.model}</p>
+                    <p className="text-gray-900 mt-1">
+                      {displayText(evDetails.model)}
+                    </p>
                   </div>
-                  
+
                   <div>
-                    <span className="font-semibold text-gray-700">Năm sản xuất:</span>
-                    <p className="text-gray-900 mt-1">{evDetails.year}</p>
+                    <span className="font-semibold text-gray-700">
+                      Năm sản xuất:
+                    </span>
+                    <p className="text-gray-900 mt-1">
+                      {formatNumber(evDetails.year)}
+                    </p>
                   </div>
-                  
+
                   <div>
-                    <span className="font-semibold text-gray-700">Số km đã đi:</span>
-                    <p className="text-gray-900 mt-1">{new Intl.NumberFormat("vi-VN").format(evDetails.mileage)} km</p>
+                    <span className="font-semibold text-gray-700">
+                      Số km đã đi:
+                    </span>
+                    <p className="text-gray-900 mt-1">
+                      {formatNumber(evDetails.mileage, "km")}
+                    </p>
                   </div>
-                  
+
                   <div>
-                    <span className="font-semibold text-gray-700">Loại thân xe:</span>
-                    <p className="text-gray-900 mt-1">{evDetails.bodyType || "N/A"}</p>
+                    <span className="font-semibold text-gray-700">
+                      Loại thân xe:
+                    </span>
+                    <p className="text-gray-900 mt-1">
+                      {displayText(evDetails.bodyType)}
+                    </p>
                   </div>
-                  
+
                   <div>
                     <span className="font-semibold text-gray-700">Màu sắc:</span>
-                    <p className="text-gray-900 mt-1">{evDetails.color || "N/A"}</p>
+                    <p className="text-gray-900 mt-1">
+                      {displayText(evDetails.color)}
+                    </p>
                   </div>
-                  
+
                   <div>
-                    <span className="font-semibold text-gray-700">Số chỗ ngồi:</span>
-                    <p className="text-gray-900 mt-1">{evDetails.numberOfSeats || "N/A"}</p>
+                    <span className="font-semibold text-gray-700">
+                      Số chỗ ngồi:
+                    </span>
+                    <p className="text-gray-900 mt-1">
+                      {displayText(evDetails.numberOfSeats)}
+                    </p>
                   </div>
-                  
+
                   <div>
                     <span className="font-semibold text-gray-700">Biển số:</span>
-                    <p className="text-gray-900 mt-1">{evDetails.licensePlate || "N/A"}</p>
+                    <p className="text-gray-900 mt-1">
+                      {displayText(evDetails.licensePlate)}
+                    </p>
                   </div>
-                  
+
                   <div>
-                    <span className="font-semibold text-gray-700">Dung lượng pin:</span>
-                    <p className="text-gray-900 mt-1">{evDetails.batteryCapacity || "N/A"} kWh</p>
+                    <span className="font-semibold text-gray-700">
+                      Dung lượng pin:
+                    </span>
+                    <p className="text-gray-900 mt-1">
+                      {evDetails.batteryCapacity
+                        ? `${evDetails.batteryCapacity} kWh`
+                        : "-"}
+                    </p>
                   </div>
-                  
+
                   <div>
-                    <span className="font-semibold text-gray-700">Tình trạng:</span>
-                    <p className="text-gray-900 mt-1">{evDetails.condition || "N/A"}</p>
+                    <span className="font-semibold text-gray-700">
+                      Tình trạng:
+                    </span>
+                    <p className="text-gray-900 mt-1">
+                      {displayText(evDetails.condition)}
+                    </p>
                   </div>
-                  
+
                   <div>
                     <span className="font-semibold text-gray-700">Xuất xứ:</span>
-                    <p className="text-gray-900 mt-1">{evDetails.origin || "N/A"}</p>
+                    <p className="text-gray-900 mt-1">
+                      {displayText(evDetails.origin)}
+                    </p>
                   </div>
-                  
+
                   <div>
                     <span className="font-semibold text-gray-700">Vị trí:</span>
-                    <p className="text-gray-900 mt-1">{evDetails.location || "N/A"}</p>
+                    <p className="text-gray-900 mt-1">
+                      {displayText(evDetails.location)}
+                    </p>
                   </div>
-                  
+
                   <div>
-                    <span className="font-semibold text-gray-700">Đăng kiểm:</span>
-                    <p className="text-gray-900 mt-1">{evDetails.inspection || "N/A"}</p>
+                    <span className="font-semibold text-gray-700">
+                      Đăng kiểm:
+                    </span>
+                    <p className="text-gray-900 mt-1">
+                      {displayText(evDetails.inspection)}
+                    </p>
                   </div>
-                  
+
                   <div>
                     <span className="font-semibold text-gray-700">Phụ kiện:</span>
-                    <p className="text-gray-900 mt-1">{evDetails.accessories || "N/A"}</p>
+                    <p className="text-gray-900 mt-1">
+                      {displayText(evDetails.accessories)}
+                    </p>
                   </div>
                 </div>
-                
-                {evDetails.description && (
-                  <div className="mt-6">
-                    <span className="font-semibold text-gray-700">Mô tả:</span>
-                    <p className="text-gray-900 mt-2 leading-relaxed">{evDetails.description}</p>
-                  </div>
-                )}
+
+                <div className="mt-6 lg:col-span-3">
+                  <span className="font-semibold text-gray-700">Mô tả:</span>
+                  <p className="text-gray-900 mt-2 leading-relaxed">
+                    {displayText(evDetails.description)}
+                  </p>
+                </div>
               </div>
 
               <div className="mt-8 text-center">
-                <Button 
+                <Button
                   onClick={handleBuyNow}
                   className="bg-green-500 hover:bg-green-600 text-white px-8 py-3 rounded-lg text-lg font-semibold w-full"
                 >

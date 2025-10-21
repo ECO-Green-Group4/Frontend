@@ -32,7 +32,7 @@ const Waiting: React.FC = () => {
 
         {/* Nút quay lại hoặc tiếp tục */}
         <button
-          onClick={() => navigate('/main')} // Quay lại trang chính
+          onClick={() => navigate('/')} // Quay lại trang chính
           className="w-full py-3 px-4 rounded-full text-lg font-bold text-white bg-green-400 hover:bg-green-400 shadow-lg transition duration-150 transform hover:scale-[1.02]"
         >
           Back to Home Page

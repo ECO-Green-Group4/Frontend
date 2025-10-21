@@ -2,6 +2,7 @@
 import React from 'react';
 import Navbar from '../components/Navbar';
 import Breadcrumb from '../components/Breadcrumb';
+import Footer from '../components/Footer';
 
 interface DefaultLayoutProps {
   children: React.ReactNode;
@@ -17,14 +18,7 @@ const DefaultLayout: React.FC<DefaultLayoutProps> = ({ children }) => {
           {children}
         </div>
       </main>
-      <footer className="bg-gray-800 text-white text-center py-6 mt-auto">
-        <div className="container mx-auto px-4">
-          <p>&copy; 2024 ECO App. Tất cả quyền được bảo lưu.</p>
-          <p className="text-sm text-gray-400 mt-2">
-            Cùng nhau bảo vệ môi trường cho thế hệ tương lai 🌍
-          </p>
-        </div>
-      </footer>
+      <Footer />
     </div>
   );
 };

@@ -42,26 +42,26 @@ const ImageGallery: React.FC<ImageGalleryProps> = ({
   return (
     <div className={`space-y-4 ${className}`}>
       {/* Main Image Display */}
-      <div className="relative bg-white rounded-xl overflow-hidden shadow-lg">
-        <div className="aspect-[4/3] relative">
+      <div className="relative bg-white rounded-xl overflow-hidden shadow-lg group">
+        <div className="relative w-full h-[360px] md:h-[420px] lg:h-[480px] flex items-center justify-center bg-white">
           <img
             src={images[currentImageIndex]}
             alt={`${title} ${currentImageIndex + 1}`}
             className="w-full h-full object-cover"
           />
           
-          {/* Navigation Arrows */}
+          {/* Navigation Arrows - Only show on hover */}
           {images.length > 1 && (
             <>
               <button
                 onClick={prevImage}
-                className="absolute left-4 top-1/2 -translate-y-1/2 bg-black bg-opacity-50 hover:bg-opacity-70 text-white rounded-full p-2 transition-all"
+                className="absolute left-4 top-1/2 -translate-y-1/2 bg-black bg-opacity-50 hover:bg-opacity-70 text-white rounded-full p-2 transition-all opacity-0 group-hover:opacity-100"
               >
                 <ChevronLeft className="w-6 h-6" />
               </button>
               <button
                 onClick={nextImage}
-                className="absolute right-4 top-1/2 -translate-y-1/2 bg-black bg-opacity-50 hover:bg-opacity-70 text-white rounded-full p-2 transition-all"
+                className="absolute right-4 top-1/2 -translate-y-1/2 bg-black bg-opacity-50 hover:bg-opacity-70 text-white rounded-full p-2 transition-all opacity-0 group-hover:opacity-100"
               >
                 <ChevronRight className="w-6 h-6" />
               </button>

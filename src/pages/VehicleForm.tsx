@@ -2,11 +2,11 @@ import React, { useState } from "react";
 import { uploadImgBBMultipleFile } from "../services/imgBB";
 import ImageUploader from "../components/ImageUploader";
 
-// Định nghĩa Interface cho Dữ liệu Form (State)
+// 1. Interface Dữ liệu Form
 interface VehicleData {
   title: string;
   description: string;
-  images: File[];
+  images: File[]; // State nội bộ sẽ dùng File[], gửi đi là string[]
   location: string;
   price: string;
   brand: string;
@@ -22,20 +22,25 @@ interface VehicleData {
   accessories: string;
   batteryCapacity: string;
   condition: string;
-  postType: string;
-  
 }
 
-// Định nghĩa Interface cho Props của Component
+// 2. Interface Props (Nhận từ Cha) - ***ĐÃ SỬA***
 interface VehicleFormProps {
-  onSubmit: (data: VehicleData) => void;
+  onSubmit: (data: any) => Promise<any>; // <-- SỬA: Phải là Promise
+  packageId: number | null;     // Gói tin user đã chọn ở Cha
 }
 
-export default function VehicleForm({ onSubmit }: VehicleFormProps) {
-  const [vehicleData, setVehicleData] = useState<VehicleData>({
+// Định nghĩa chung cho styling (Tùy chọn)
+const inputClass = "w-full border border-gray-300 rounded-lg p-3 focus:ring-2 focus:ring-emerald-400 focus:border-emerald-400 outline-none transition duration-150";
+const labelClass = "block mb-1 font-bold text-gray-700";
+
+// 3. Component
+export default function VehicleForm({ onSubmit, packageId }: VehicleFormProps) {
+  
+  // State quản lý dữ liệu của riêng form này
+  const [vehicleData, setVehicleData] = useState<Omit<VehicleData, 'images'>>({
     title: "",
     description: "",
-    images: [] as File[],
     location: "",
     price: "",
     brand: "",
@@ -51,12 +56,15 @@ export default function VehicleForm({ onSubmit }: VehicleFormProps) {
     accessories: "",
     batteryCapacity: "",
     condition: "",
-    postType: "",
-    
   });
 
+  // State quản lý file ảnh
+  const [images, setImages] = useState<File[]>([]);
+  
+  // State quản lý trạng thái uploading (riêng của form này)
   const [isUploading, setIsUploading] = useState(false);
 
+  // 4. Handlers (Quản lý state nội bộ)
   const handleChange = (
     e: React.ChangeEvent<
       HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement
@@ -66,17 +74,23 @@ export default function VehicleForm({ onSubmit }: VehicleFormProps) {
     setVehicleData({ ...vehicleData, [name]: value });
   };
 
-  const handleImagesChange = (images: File[]) => {
-    setVehicleData({
-      ...vehicleData,
-      images,
-    });
+  const handleImagesChange = (newImages: File[]) => {
+    setImages(newImages);
   };
 
+  // 5. Hàm Submit (Xử lý logic của form này) - ***ĐÃ SỬA***
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
+
+    // Check 1: Phải chọn gói tin (gói tin lấy từ Cha)
+    if (packageId === null) {
+      alert("Vui lòng chọn một gói đăng tin ở bên trên!");
+      document.getElementById("package-selection")?.scrollIntoView({ behavior: "smooth" });
+      return;
+    }
     
-    if (vehicleData.images.length === 0) {
+    // Check 2: Phải có ảnh
+    if (images.length === 0) {
       alert("Vui lòng chọn ít nhất một ảnh!");
       return;
     }
@@ -84,38 +98,40 @@ export default function VehicleForm({ onSubmit }: VehicleFormProps) {
     setIsUploading(true);
     
     try {
-      // Upload ảnh lên ImgBB
-      console.log("🔄 Đang upload ảnh lên ImgBB...");
-      const uploadedUrls = await uploadImgBBMultipleFile(vehicleData.images);
-      
-      // Lọc bỏ các URL null (upload thất bại)
-      const validUrls = uploadedUrls.filter(url => url !== null);
+      // 1. Upload ảnh
+      console.log("🔄 [VehicleForm] Đang upload ảnh...");
+      const uploadedUrls = await uploadImgBBMultipleFile(images);
+      const validUrls = uploadedUrls.filter(url => url !== null) as string[];
       
       if (validUrls.length === 0) {
         throw new Error("Không thể upload ảnh nào lên server");
       }
+      console.log("✅ [VehicleForm] Upload thành công:", validUrls);
       
-      console.log("✅ Upload thành công:", validUrls);
-      
-      // Tạo data với URLs đã upload
-      const dataWithImages = {
+      // 2. Tổng hợp dữ liệu
+      const finalData = {
         ...vehicleData,
-        images: validUrls // Thay thế File[] bằng string URLs
+        images: validUrls, // Gửi đi string URLs
+        packageId: packageId // Gói tin từ Cha
       };
       
-      onSubmit(dataWithImages);
+      // 3. Gửi dữ liệu tổng hợp lên Cha VÀ CHỜ
+      await onSubmit(finalData); // <-- SỬA: Thêm 'await'
+
     } catch (error) {
-      console.error("❌ Lỗi upload ảnh:", error);
-      alert(`Lỗi upload ảnh: ${error instanceof Error ? error.message : 'Unknown error'}`);
+      console.error("❌ [VehicleForm] Lỗi submit:", error);
+      // 'onSubmit' của cha đã có alert lỗi rồi, nên ở đây có thể không cần alert
+      // alert(`Lỗi: ${error instanceof Error ? error.message : 'Unknown error'}`);
     } finally {
-      setIsUploading(false);
+      // 4. LUÔN LUÔN tắt loading sau khi 'await onSubmit' xong (dù lỗi hay không)
+      setIsUploading(false); // <-- SỬA: Chuyển vào finally
     }
   };
 
-
+  // 6. JSX
   return (
     <div className="max-w-4xl mx-auto p-6 bg-white shadow-xl rounded-xl border border-gray-200">
-      {/* Dropdown Loại Xe (EV - Electric Vehicle) */}
+      {/* Box xanh "EV - Electric Vehicle" */}
       <div className="mb-6">
         <div className="w-full border border-emerald-500 bg-emerald-50 text-emerald-800 rounded-lg p-3 font-semibold flex items-center">
           EV - Electric Vehicle
@@ -127,249 +143,215 @@ export default function VehicleForm({ onSubmit }: VehicleFormProps) {
         className="grid grid-cols-1 md:grid-cols-2 gap-x-8 gap-y-4"
       >
         
-        
-        {/* BASIC VEHICLE INFO HEADER */}
         <h3 className="col-span-2 text-xl font-bold text-gray-700 border-b pb-2 mb-4 mt-6">
           Vehicle Details
         </h3>
 
         {/* Title */}
         <div className="col-span-2">
-          <label className="block mb-1 font-bold text-gray-700">Title</label>
+          <label className={labelClass}>Title</label>
           <input
             name="title"
             value={vehicleData.title}
             onChange={handleChange}
-            className="w-full border border-gray-300 rounded-lg p-3 focus:ring-2 focus:ring-emerald-400 focus:border-emerald-400 outline-none transition duration-150"
+            className={inputClass}
             placeholder="Tesla Model 3 2022"
           />
         </div>
 
         {/* Location */}
         <div className="col-span-2">
-          <label className="block mb-1 font-bold text-gray-700">Location</label>
+          <label className={labelClass}>Location</label>
           <input
             name="location"
             value={vehicleData.location}
             onChange={handleChange}
-            className="w-full border border-gray-300 rounded-lg p-3 focus:ring-2 focus:ring-emerald-400 focus:border-emerald-400 outline-none transition duration-150"
+            className={inputClass}
             placeholder="Hồ Chí Minh"
           />
         </div>
 
         {/* Car Brand */}
         <div>
-          <label className="block mb-1 font-bold text-gray-700">Car Brand</label>
+          <label className={labelClass}>Car Brand</label>
           <input
             name="brand"
             value={vehicleData.brand}
             onChange={handleChange}
-            className="w-full border border-gray-300 rounded-lg p-3 focus:ring-2 focus:ring-emerald-400 focus:border-emerald-400 outline-none transition duration-150"
+            className={inputClass}
             placeholder="VinFast, Tesla, Yadea..."
           />
         </div>
 
         {/* Year */}
         <div>
-          <label className="block mb-1 font-bold text-gray-700">Year</label>
+          <label className={labelClass}>Year</label>
           <input
             type="number"
             name="year"
             value={vehicleData.year}
             onChange={handleChange}
-            className="w-full border border-gray-300 rounded-lg p-3 focus:ring-2 focus:ring-emerald-400 focus:border-emerald-400 outline-none transition duration-150"
+            className={inputClass}
             placeholder="2024"
           />
         </div>
 
         {/* Model */}
         <div>
-          <label className="block mb-1 font-bold text-gray-700">Model</label>
+          <label className={labelClass}>Model</label>
           <input
             name="model"
             value={vehicleData.model}
             onChange={handleChange}
-            className="w-full border border-gray-300 rounded-lg p-3 focus:ring-2 focus:ring-emerald-400 focus:border-emerald-400 outline-none transition duration-150"
+            className={inputClass}
             placeholder="VF e34, Model 3..."
           />
         </div>
 
         {/* Origin */}
         <div>
-          <label className="block mb-1 font-bold text-gray-700">Origin</label>
+          <label className={labelClass}>Origin</label>
           <input
             name="origin"
             value={vehicleData.origin}
             onChange={handleChange}
-            className="w-full border border-gray-300 rounded-lg p-3 focus:ring-2 focus:ring-emerald-400 focus:border-emerald-400 outline-none transition duration-150"
+            className={inputClass}
             placeholder="Vietnam, China, Japan..."
           />
         </div>
 
         {/* Body Type */}
         <div>
-          <label className="block mb-1 font-bold text-gray-700">Body Type</label>
+          <label className={labelClass}>Body Type</label>
           <input
             name="bodyType"
             value={vehicleData.bodyType}
             onChange={handleChange}
-            className="w-full border border-gray-300 rounded-lg p-3 focus:ring-2 focus:ring-emerald-400 focus:border-emerald-400 outline-none transition duration-150"
+            className={inputClass}
             placeholder="SUV, Sedan, Scooter..."
           />
         </div>
 
         {/* Number of Seats */}
         <div>
-          <label className="block mb-1 font-bold text-gray-700">
-            Number of Seats
-          </label>
+          <label className={labelClass}>Number of Seats</label>
           <input
             type="number"
             name="numberOfSeats"
             value={vehicleData.numberOfSeats}
             onChange={handleChange}
-            className="w-full border border-gray-300 rounded-lg p-3 focus:ring-2 focus:ring-emerald-400 focus:border-emerald-400 outline-none transition duration-150"
+            className={inputClass}
             placeholder="2 / 4 / 5"
           />
         </div>
 
         {/* Color */}
         <div>
-          <label className="block mb-1 font-bold text-gray-700">Color</label>
+          <label className={labelClass}>Color</label>
           <input
             name="color"
             value={vehicleData.color}
             onChange={handleChange}
-            className="w-full border border-gray-300 rounded-lg p-3 focus:ring-2 focus:ring-emerald-400 focus:border-emerald-400 outline-none transition duration-150"
+            className={inputClass}
             placeholder="Red, Blue, White..."
           />
         </div>
 
         {/* License Plate */}
         <div>
-          <label className="block mb-1 font-bold text-gray-700">
-            License Plate
-          </label>
+          <label className={labelClass}>License Plate</label>
           <input
             name="licensePlate"
             value={vehicleData.licensePlate}
             onChange={handleChange}
-            className="w-full border border-gray-300 rounded-lg p-3 focus:ring-2 focus:ring-emerald-400 focus:border-emerald-400 outline-none transition duration-150"
-            placeholder="51F-123.45"
+            className={inputClass}
+            placeholder="51F-123.45 (Optional)"
           />
         </div>
 
         {/* Mileage (km) */}
         <div>
-          <label className="block mb-1 font-bold text-gray-700">
-            Mileage (km)
-          </label>
+          <label className={labelClass}>Mileage (km)</label>
           <input
             type="number"
             name="mileage"
             value={vehicleData.mileage}
             onChange={handleChange}
-            className="w-full border border-gray-300 rounded-lg p-3 focus:ring-2 focus:ring-emerald-400 focus:border-emerald-400 outline-none transition duration-150"
+            className={inputClass}
             placeholder="5000"
           />
         </div>
 
         {/* Accessories */}
         <div>
-          <label className="block mb-1 font-bold text-gray-700">
-            Accessories
-          </label>
+          <label className={labelClass}>Accessories</label>
           <input
             name="accessories"
             value={vehicleData.accessories}
             onChange={handleChange}
-            className="w-full border border-gray-300 rounded-lg p-3 focus:ring-2 focus:ring-emerald-400 focus:border-emerald-400 outline-none transition duration-150"
-            placeholder="Helmet, charger, etc."
+            className={inputClass}
+            placeholder="Helmet, charger, etc. (Optional)"
           />
         </div>
 
-        {/* Inspection + Battery Capacity */}
+        {/* Inspection */}
         <div>
-          <label className="block mb-1 font-bold text-gray-700">
-            Inspection
-          </label>
+          <label className={labelClass}>Inspection</label>
           <input
             name="inspection"
             value={vehicleData.inspection}
             onChange={handleChange}
-            className="w-full border border-gray-300 rounded-lg p-3 focus:ring-2 focus:ring-emerald-400 focus:border-emerald-400 outline-none transition duration-150"
+            className={inputClass}
             placeholder="Yes / No / Until 2025"
           />
         </div>
 
-        {/* ✅ Battery Capacity (kWh) */}
+        {/* Battery Capacity (kWh) */}
         <div>
-          <label className="block mb-1 font-bold text-gray-700">
-            Battery Capacity (kWh)
-          </label>
+          <label className={labelClass}>Battery Capacity (kWh)</label>
           <input
             type="number"
             name="batteryCapacity"
             value={vehicleData.batteryCapacity}
             onChange={handleChange}
-            className="w-full border border-gray-300 rounded-lg p-3 focus:ring-2 focus:ring-emerald-400 focus:border-emerald-400 outline-none transition duration-150"
+            className={inputClass}
             placeholder="50"
           />
         </div>
 
         {/* Condition */}
         <div>
-          <label className="block mb-1 font-bold text-gray-700">Condition</label>
+          <label className={labelClass}>Condition</label>
           <input
             name="condition"
             value={vehicleData.condition}
             onChange={handleChange}
-            className="w-full border border-gray-300 rounded-lg p-3 focus:ring-2 focus:ring-emerald-400 focus:border-emerald-400 outline-none transition duration-150"
+            className={inputClass}
             placeholder="excellent, good, fair"
           />
         </div>
 
-        {/* Post Type */}
-        <div>
-          <label className="block mb-1 font-bold text-gray-700">Post Type</label>
-          <select
-            name="postType"
-            value={vehicleData.postType}
-            onChange={handleChange}
-            className="w-full border border-gray-300 rounded-lg p-3 focus:ring-2 focus:ring-emerald-400 focus:border-emerald-400 outline-none transition duration-150"
-          >
-            <option value="">Select Post Type</option>
-            <option value="vip-kim-cuong">Vip Kim cương</option>
-            <option value="vip-vang">Vip vàng</option>
-            <option value="standard">Standard</option>
-          </select>
-        </div>
-
         {/* Price (VND) */}
         <div className="col-span-2">
-          <label className="block mb-1 font-bold text-gray-700">
-            Price (VND)
-          </label>
+          <label className={labelClass}>Price (VND)</label>
           <input
             type="number"
             name="price"
             value={vehicleData.price}
             onChange={handleChange}
-            className="w-full border border-gray-300 rounded-lg p-3 focus:ring-2 focus:ring-emerald-400 focus:border-emerald-400 outline-none transition duration-150"
+            className={inputClass}
             placeholder="50000000"
           />
         </div>
 
         {/* DESCRIPTION */}
         <div className="col-span-2">
-          <label className="block mb-1 font-bold text-gray-700">
-            Description
-          </label>
+          <label className={labelClass}>Description</label>
           <textarea
             name="description"
             value={vehicleData.description}
             onChange={handleChange}
-            className="w-full border border-gray-300 rounded-lg p-3 focus:ring-2 focus:ring-emerald-400 focus:border-emerald-400 outline-none transition duration-150"
+            className={inputClass}
             placeholder="Describe the condition, features, or notes..."
             rows={4}
           ></textarea>
@@ -377,11 +359,9 @@ export default function VehicleForm({ onSubmit }: VehicleFormProps) {
 
         {/* Upload Images */}
         <div className="col-span-2">
-          <label className="block mb-1 font-bold text-gray-700">
-            Upload Images
-          </label>
+          <label className={labelClass}>Upload Images</label>
           <ImageUploader
-            images={vehicleData.images}
+            images={images}
             onImagesChange={handleImagesChange}
             maxImages={10}
             className="mt-2"

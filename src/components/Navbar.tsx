@@ -11,7 +11,8 @@ const Navbar = () => {
 
   const handleLogout = () => {
     logout();
-    navigate('/');
+    navigate('/', { replace: true });
+    window.location.reload();
   };
 
   const isActive = (path) => {

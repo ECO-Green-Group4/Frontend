@@ -1,13 +1,27 @@
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
-import { 
-  Bell, 
-  Settings, 
-  User
-} from 'lucide-react';
+import { Bell, Settings, User } from 'lucide-react';
 import ecoLogo from "@/assets/logo/eco_green.png";
+import { useAuth } from "@/hooks/useAuth";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import {
+  DropdownMenu,
+  DropdownMenuTrigger,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuSeparator,
+} from "@/components/ui/dropdown-menu";
 
 export default function Header() {
+  const { user, isAuthenticated, logout } = useAuth();
+  const navigate = useNavigate();
+
+  const handleLogout = () => {
+    logout();
+    // Điều hướng về trang chủ và reload để làm sạch toàn bộ state UI
+    navigate("/", { replace: true });
+    window.location.reload();
+  };
 
   return (
     <header className="bg-white shadow-md sticky top-0 z-50">
@@ -57,9 +71,37 @@ export default function Header() {
           <Button variant="ghost" size="icon" className="text-gray-600 hover:text-gray-800">
             <Settings className="w-5 h-5" />
           </Button>
-          <Button variant="ghost" size="icon" className="text-gray-600 hover:text-gray-800">
-            <User className="w-5 h-5" />
-          </Button>
+
+          {/* Profile Dropdown like GitHub: Profile + Logout */}
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <button className="inline-flex items-center justify-center outline-none">
+                <Avatar className="h-9 w-9">
+                  <AvatarImage src={user?.avatarUrl || ""} alt={user?.name || user?.email || "User"} />
+                  <AvatarFallback>
+                    <User className="w-5 h-5 text-gray-600" />
+                  </AvatarFallback>
+                </Avatar>
+              </button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="end" className="w-48">
+              {isAuthenticated ? (
+                <>
+                  <DropdownMenuItem asChild>
+                    <Link to="/profile">Profile</Link>
+                  </DropdownMenuItem>
+                  <DropdownMenuSeparator />
+                  <DropdownMenuItem onClick={handleLogout}>Logout</DropdownMenuItem>
+                </>
+              ) : (
+                <>
+                  <DropdownMenuItem asChild>
+                    <Link to="/login">Login</Link>
+                  </DropdownMenuItem>
+                </>
+              )}
+            </DropdownMenuContent>
+          </DropdownMenu>
         </div>
       </div>
     </header>

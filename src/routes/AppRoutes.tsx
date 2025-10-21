@@ -2,7 +2,6 @@ import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
 import DefaultLayout from '../layouts/DefaultLayout';
 import ProtectedRoute from './ProtectedRoute';
 import PublicRoute from './PublicRoute';
-import AuthGuard from '../components/AuthGuard';
 import Login from '../pages/Login';
 import Register from '../pages/Register';
 import Dashboard from '../pages/Dashboard';
@@ -52,9 +51,9 @@ const AppRoutes = () => {
 
         <Route path="/profile" element={
           <ProtectedRoute>
-            <DefaultLayout>
+            
               <Profile />
-            </DefaultLayout>
+            
           </ProtectedRoute>
         } />
 
@@ -62,9 +61,10 @@ const AppRoutes = () => {
 
         
         <Route path="/create-post" element={
-          <AuthGuard>
+          
+            <ProtectedRoute>
             <CreatePost />
-          </AuthGuard>
+          </ProtectedRoute>
         } />
         <Route path="/view-cart" element={
           <ProtectedRoute>
