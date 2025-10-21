@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import Header from '@/components/ui/Header';
 import { Button } from '@/components/ui/button';
 import { Check } from 'lucide-react';
+import { showToast } from '@/utils/toast';
 
 interface ContractTerm {
   id: string;
@@ -59,7 +60,7 @@ const StaffContract: React.FC = () => {
   const handlePayment = () => {
     // Handle payment logic here
     console.log('Payment initiated');
-    alert('Payment functionality will be implemented');
+    showToast.info('Payment functionality will be implemented');
   };
 
   return (

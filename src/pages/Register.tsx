@@ -12,6 +12,7 @@ import { VALIDATION_RULES } from '@/utils/constants';
 import ecoLogo from '@/assets/logo/eco_green.png';
 import AuthService from '@/services/AuthService';
 import type { RegisterData } from '@/types';
+import { showToast } from '@/utils/toast';
 
 const Register = () => {
   const navigate = useNavigate();
@@ -84,7 +85,7 @@ const Register = () => {
       console.log('Sending register data:', formData);
       const result = await AuthService.register(formData);
       console.log('Register successful:', result);
-      alert('Đăng ký thành công! Vui lòng đăng nhập.');
+      showToast.success('Đăng ký thành công! Vui lòng đăng nhập.');
       navigate('/login');
     } catch (error: any) {
       console.error('Register error:', error);

@@ -89,7 +89,7 @@ const DescriptionEV = () => {
           rawYear !== undefined && rawYear !== null && rawYear !== ""
             ? Number(rawYear)
             : undefined;
-        // ---- KẾT THÚC SỬA ĐỔI ----
+        
 
         setEvDetails({
           id: vehicle.listingId || vehicle.id || id,
@@ -106,9 +106,9 @@ const DescriptionEV = () => {
           inspection: vehicle.inspection,
           origin: vehicle.origin || vehicle.countryOfOrigin,
 
-          numberOfSeats: parsedSeats, // Đã sửa ở trên
+          numberOfSeats: parsedSeats,
 
-          // SỬA ĐỔI: Thêm `vehicle.license_plate`
+          
           licensePlate:
             vehicle.licensePlate ||
             vehicle.plateNumber ||
@@ -116,11 +116,11 @@ const DescriptionEV = () => {
 
           accessories: vehicle.accessories,
 
-          // SỬA ĐỔI: Thêm `vehicle.capacity`
+          
           batteryCapacity:
-            vehicle.batteryCapacity ||
-            vehicle.battery_capacity ||
-            vehicle.capacity,
+              vehicle.batteryCapacity ||
+              vehicle.battery_capacity ||
+              vehicle.capacity,
 
           condition: vehicle.condition,
           postType: vehicle.postType,
@@ -206,7 +206,7 @@ const DescriptionEV = () => {
         <div className="grid grid-cols-12 gap-6 md:gap-8 items-stretch">
           {" "}
           {/* Image Gallery Section - Left */}
-          <div className="col-span-6 md:col-span-5 min-h-[600px]">
+          <div className="col-span-6 md:col-span-5 min-h-[600px] sticky top-4 self-start">
             <ImageGallery
               images={evDetails.images}
               title={evDetails.name}

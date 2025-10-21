@@ -98,6 +98,9 @@ export default function Header() {
                   <DropdownMenuItem asChild>
                     <Link to="/login">Login</Link>
                   </DropdownMenuItem>
+                  <DropdownMenuItem asChild>
+                    <Link to="/register">Register</Link>
+                  </DropdownMenuItem>
                 </>
               )}
             </DropdownMenuContent>

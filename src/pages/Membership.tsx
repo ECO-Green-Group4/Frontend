@@ -1,5 +1,6 @@
 import React from "react";
 import Header from "../components/ui/Header";
+import { showToast } from "../utils/toast";
 
 // Defines the data structure for each membership plan
 interface MembershipPlan {
@@ -20,7 +21,7 @@ const plans: MembershipPlan[] = [
     color: "cyan",
     features: [
       { description: "'Trusted Seller' Badge", included: true },
-      { description: "Up to 20 photos per listing", included: true },
+      { description: "Up to 5 photos per listing", included: true },
       { description: "Highlighted with a Blue Border", included: true },
       { description: "Post in the 'Standard' section", included: false },
       { description: "Upload video showcase", included: false },
@@ -33,7 +34,7 @@ const plans: MembershipPlan[] = [
     color: "fuchsia",
     features: [
       { description: "'Top Seller' Badge", included: true },
-      { description: "Up to 30 photos per listing", included: true },
+      { description: "Up to 15 photos per listing", included: true },
       { description: "Highlighted with a Gold Border", included: true },
       { description: "Post in the 'Standard' section", included: true },
       { description: "Upload video showcase", included: true },
@@ -119,7 +120,7 @@ const PlanCard: React.FC<{ plan: MembershipPlan }> = ({ plan }) => {
       {/* Button */}
       <div className="p-6 pt-0 text-center mt-auto">
         <button
-          onClick={() => alert(`You have selected the ${plan.name} plan!`)}
+          onClick={() => showToast.success(`You have selected the ${plan.name} plan!`)}
           className={`w-full py-3 rounded-full text-lg font-bold shadow-xl transition transform hover:scale-[1.05] ${btnColorClass}`}
         >
           Choose Plan

@@ -25,8 +25,8 @@ const Login = () => {
   const [loading, setLoading] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
 
-  // Lấy redirect path từ state hoặc mặc định về dashboard
-  const from = location.state?.from?.pathname || '/dashboard';
+  // Lấy redirect path từ state hoặc mặc định về trang chủ
+  const from = location.state?.from?.pathname || '/';
 
   const validationRules = {
     email: [VALIDATION_RULES.EMAIL.REQUIRED, VALIDATION_RULES.EMAIL.FORMAT],

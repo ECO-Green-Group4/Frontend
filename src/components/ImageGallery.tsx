@@ -43,7 +43,7 @@ const ImageGallery: React.FC<ImageGalleryProps> = ({
     <div className={`space-y-4 ${className}`}>
       {/* Main Image Display */}
       <div className="relative bg-white rounded-xl overflow-hidden shadow-lg group">
-        <div className="relative w-full h-[360px] md:h-[420px] lg:h-[480px] flex items-center justify-center bg-white">
+        <div className="relative w-full h-[400px] md:h-[500px] lg:h-[600px] flex items-center justify-center bg-white">
           <img
             src={images[currentImageIndex]}
             alt={`${title} ${currentImageIndex + 1}`}
@@ -84,7 +84,7 @@ const ImageGallery: React.FC<ImageGalleryProps> = ({
               <button
                 key={index}
                 onClick={() => goToImage(index)}
-                className={`flex-shrink-0 w-20 h-20 rounded-lg overflow-hidden border-2 transition-all ${
+                className={`flex-shrink-0 w-40 h-28 rounded-lg overflow-hidden border-2 transition-all ${
                   index === currentImageIndex
                     ? 'border-green-500 ring-2 ring-green-200'
                     : 'border-gray-200 hover:border-gray-300'

@@ -1,12 +1,13 @@
 import React, { useState } from "react";
 import { uploadImgBBMultipleFile } from "../services/imgBB";
 import ImageUploader from "../components/ImageUploader";
+import { showToast } from "../utils/toast";
 
 // 1. Interface Dữ liệu Form
 interface VehicleData {
   title: string;
   description: string;
-  images: File[]; // State nội bộ sẽ dùng File[], gửi đi là string[]
+  images: File[]; 
   location: string;
   price: string;
   brand: string;
@@ -24,20 +25,20 @@ interface VehicleData {
   condition: string;
 }
 
-// 2. Interface Props (Nhận từ Cha) - ***ĐÃ SỬA***
+// 2. Interface Props (  nhận từ Cha) 
 interface VehicleFormProps {
-  onSubmit: (data: any) => Promise<any>; // <-- SỬA: Phải là Promise
+  onSubmit: (data: any) => Promise<any>; 
   packageId: number | null;     // Gói tin user đã chọn ở Cha
 }
 
-// Định nghĩa chung cho styling (Tùy chọn)
+
 const inputClass = "w-full border border-gray-300 rounded-lg p-3 focus:ring-2 focus:ring-emerald-400 focus:border-emerald-400 outline-none transition duration-150";
 const labelClass = "block mb-1 font-bold text-gray-700";
 
 // 3. Component
 export default function VehicleForm({ onSubmit, packageId }: VehicleFormProps) {
   
-  // State quản lý dữ liệu của riêng form này
+ 
   const [vehicleData, setVehicleData] = useState<Omit<VehicleData, 'images'>>({
     title: "",
     description: "",
@@ -84,14 +85,14 @@ export default function VehicleForm({ onSubmit, packageId }: VehicleFormProps) {
 
     // Check 1: Phải chọn gói tin (gói tin lấy từ Cha)
     if (packageId === null) {
-      alert("Vui lòng chọn một gói đăng tin ở bên trên!");
+      showToast.warning("Vui lòng chọn một gói đăng tin ở bên trên!");
       document.getElementById("package-selection")?.scrollIntoView({ behavior: "smooth" });
       return;
     }
     
     // Check 2: Phải có ảnh
     if (images.length === 0) {
-      alert("Vui lòng chọn ít nhất một ảnh!");
+      showToast.warning("Vui lòng chọn ít nhất một ảnh!");
       return;
     }
 

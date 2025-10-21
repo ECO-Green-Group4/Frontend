@@ -180,7 +180,7 @@ const DescriptionBattery = () => {
       <div className="max-w-7xl mx-auto px-6 py-8">
         <div className="grid grid-cols-12 gap-6 md:gap-8 items-stretch">
           {/* Image Gallery Section - Left */}
-          <div className="col-span-6 md:col-span-5 min-h-[600px]">
+          <div className="col-span-6 md:col-span-5 min-h-[600px] sticky top-4 self-start">
             <ImageGallery
               images={batteryDetails.images}
               title={batteryDetails.name}

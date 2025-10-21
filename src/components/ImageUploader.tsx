@@ -1,5 +1,6 @@
 import React, { useState, useRef, useCallback } from 'react';
 import { Upload, X, Image as ImageIcon, Plus } from 'lucide-react';
+import { showToast } from '../utils/toast';
 
 interface ImageUploaderProps {
   images: File[];
@@ -38,14 +39,14 @@ const ImageUploader: React.FC<ImageUploaderProps> = ({
     const totalFiles = images.length + newFiles.length;
     
     if (totalFiles > maxImages) {
-      alert(`Bạn chỉ có thể upload tối đa ${maxImages} ảnh!`);
+      showToast.warning(`Bạn chỉ có thể upload tối đa ${maxImages} ảnh!`);
       return;
     }
 
     // Validate file types
     const validFiles = newFiles.filter(file => {
       if (!file.type.startsWith('image/')) {
-        alert(`File ${file.name} không phải là ảnh!`);
+        showToast.error(`File ${file.name} không phải là ảnh!`);
         return false;
       }
       return true;

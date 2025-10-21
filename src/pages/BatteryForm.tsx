@@ -1,6 +1,7 @@
 import React, { useState } from "react";
 import { uploadImgBBMultipleFile } from "../services/imgBB";
 import ImageUploader from "../components/ImageUploader";
+import { showToast } from "../utils/toast";
 
 // 1. Interface Dữ liệu Form - ***ĐÃ SỬA***
 interface BatteryData {
@@ -72,13 +73,13 @@ export default function BatteryForm({ onSubmit, packageId }: BatteryFormProps) {
     e.preventDefault();
 
     if (packageId === null) {
-      alert("Vui lòng chọn một gói đăng tin ở bên trên!");
+      showToast.warning("Vui lòng chọn một gói đăng tin ở bên trên!");
       document.getElementById("package-selection")?.scrollIntoView({ behavior: "smooth" });
       return;
     }
     
     if (images.length === 0) {
-      alert("Vui lòng chọn ít nhất một ảnh!");
+      showToast.warning("Vui lòng chọn ít nhất một ảnh!");
       return;
     }
 

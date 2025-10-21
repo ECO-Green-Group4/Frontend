@@ -5,6 +5,7 @@ import VehicleForm from "./VehicleForm";
 import BatteryForm from "./BatteryForm";
 import Header from "../components/ui/Header";
 import api from "../services/axios";
+import { showToast } from "../utils/toast";
 
 // Interface cho Gói Dịch Vụ
 // (Khớp với 'ServicePackageResponse.java')
@@ -149,14 +150,14 @@ export default function CreatePost() {
       }
       
       
-      alert("🎉 Đăng tin thành công!");
+      showToast.success("🎉 Đăng tin thành công!");
       navigate("/waiting");
 
     } catch (err: any) {
       // Báo lỗi cho user nếu thất bại
       console.error("Create listing error:", err);
       const message = err?.response?.data?.message || err?.message || "Request failed";
-      alert(`❌ Đăng tin thất bại! Lỗi: ${message}`);
+      showToast.error(`❌ Đăng tin thất bại! Lỗi: ${message}`);
     } finally {
       // Tắt loading của trang
       setIsSubmitting(false);
