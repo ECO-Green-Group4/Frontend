@@ -6,7 +6,7 @@ const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:8080
 
 class AuthService {
   //  Đăng nhập
-  async login(email: string, password: string): Promise<AuthResponse> {
+  async login(email: string, password: string): Promise<any> {
     const response = await fetch(`${API_BASE_URL}/auth/login`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
@@ -18,7 +18,7 @@ class AuthService {
       throw new Error(errorData.message || 'Đăng nhập thất bại');
     }
 
-    const data: AuthResponse = await response.json();
+    const data = await response.json();
 
     //  Lưu token vào localStorage
     if (data.token) {

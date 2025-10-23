@@ -3,6 +3,7 @@ import React, { useState } from 'react';
 import { Link, useNavigate, useLocation } from 'react-router-dom';
 import { Eye, EyeOff } from 'lucide-react';
 import { useAuth } from '@/hooks/useAuth';
+import { isAdmin } from '@/utils/adminCheck';
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -46,9 +47,15 @@ const Login = () => {
 
     setLoading(true);
     try {
-      await login(formData.email, formData.password);
-      // Redirect về trang trước đó hoặc dashboard
-      navigate(from, { replace: true });
+      const response = await login(formData.email, formData.password);
+      
+      // Kiểm tra nếu user là admin thì redirect đến admin dashboard
+      if (isAdmin(response.user)) {
+        navigate('/admin', { replace: true });
+      } else {
+        // Redirect về trang trước đó hoặc dashboard cho user thường
+        navigate(from, { replace: true });
+      }
     } catch (error: any) {
       setErrors({ 
         general: error.message || 'Đăng nhập thất bại. Vui lòng kiểm tra lại thông tin.' 

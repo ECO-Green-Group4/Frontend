@@ -6,6 +6,9 @@ export interface User {
   email: string;
   phone?: string;
   avatar?: string;
+  role?: 'user' | 'admin' | 'staff';
+  roleId?: string;
+  roleName?: 'user' | 'admin' | 'staff';
   createdAt: string;
   updatedAt: string;
 }
@@ -24,6 +27,16 @@ export interface AuthResponse {
   user: User;
   token: string;
   refreshToken?: string;
+}
+
+// API Response interface cho login
+export interface LoginApiResponse {
+  message: string;
+  role: string;
+  token: string;
+  id: number;
+  sex: string;
+  fullName: string;
 }
 
 export interface LoginCredentials {

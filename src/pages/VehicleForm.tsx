@@ -1,7 +1,7 @@
 import React, { useState } from "react";
 import { uploadImgBBMultipleFile } from "../services/imgBB";
 import ImageUploader from "../components/ImageUploader";
-import { showToast } from "../utils/toast";
+import { showToast } from "@/utils/toast";
 
 // 1. Interface Dữ liệu Form
 interface VehicleData {

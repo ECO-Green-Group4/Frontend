@@ -1,6 +1,6 @@
 import React from "react";
 import Header from "../components/ui/Header";
-import { showToast } from "../utils/toast";
+import { showToast } from "@/utils/toast";
 
 // Defines the data structure for each membership plan
 interface MembershipPlan {

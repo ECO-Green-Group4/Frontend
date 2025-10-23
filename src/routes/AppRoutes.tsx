@@ -1,10 +1,9 @@
 import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
-import DefaultLayout from '../layouts/DefaultLayout';
 import ProtectedRoute from './ProtectedRoute';
 import PublicRoute from './PublicRoute';
+import RoleRoute from './RoleRoute';
 import Login from '../pages/Login';
 import Register from '../pages/Register';
-import Dashboard from '../pages/Dashboard';
 import Profile from '../pages/Profile';
 import MainScreen from '../pages/MainScreen';
 import CreatePost from '../pages/CreatePost';
@@ -19,6 +18,10 @@ import DescriptionEV from '../pages/DescriptionEV';
 import DescriptionBattery from '../pages/DescriptionBattery';
 import NotFound from '../pages/NotFound';
 import Waiting from '@/pages/Waiting';
+import Unauthorized from '@/pages/Unauthorized';
+import AdminLayout from '@/layouts/AdminLayout';
+import UserManagement from '@/components/UserManagement';
+import PackageManagement from '@/components/PackageManagement';
 
 const AppRoutes = () => {
   return (
@@ -29,26 +32,18 @@ const AppRoutes = () => {
         
         {/* Auth Routes - Không dùng layout */}
         <Route path="/login" element={
-          <PublicRoute redirectTo="/create-post">
+          <PublicRoute redirectTo="/admin">
             <Login />
           </PublicRoute>
         } />
 
         <Route path="/register" element={
-          <PublicRoute redirectTo="/create-post">
+          <PublicRoute redirectTo="/admin">
             <Register />
           </PublicRoute>
         } />
 
         {/* Protected Routes - Chỉ hiển thị khi đã đăng nhập */}
-        <Route path="/dashboard" element={
-          <ProtectedRoute>
-            <DefaultLayout>
-              <Dashboard />
-            </DefaultLayout>
-          </ProtectedRoute>
-        } />
-
         <Route path="/profile" element={
           <ProtectedRoute>
             
@@ -126,6 +121,35 @@ const AppRoutes = () => {
             <StaffContract />
           
         } />
+
+
+        {/* Admin Routes - Chỉ dành cho Admin (roleId = '2') */}
+        <Route path="/admin" element={
+          <RoleRoute requiredRole="2">
+            <AdminLayout>
+              <UserManagement />
+            </AdminLayout>
+          </RoleRoute>
+        } />
+        
+        <Route path="/admin/users" element={
+          <RoleRoute requiredRole="2">
+            <AdminLayout>
+              <UserManagement />
+            </AdminLayout>
+          </RoleRoute>
+        } />
+        
+        <Route path="/admin/packages" element={
+          <RoleRoute requiredRole="2">
+            <AdminLayout>
+              <PackageManagement />
+            </AdminLayout>
+          </RoleRoute>
+        } />
+
+        {/* Unauthorized Page */}
+        <Route path="/unauthorized" element={<Unauthorized />} />
 
         {/* 404 Page - Phải đặt cuối cùng */}
         <Route path="*" element={<NotFound />} />

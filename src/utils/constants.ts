@@ -21,7 +21,7 @@ export const ROUTES = {
   LOGIN: '/login',
   REGISTER: '/register',
   PROFILE: '/profile',
-  DASHBOARD: '/dashboard'
+  ADMIN: '/admin'
 } as const;
 
 export const STORAGE_KEYS = {

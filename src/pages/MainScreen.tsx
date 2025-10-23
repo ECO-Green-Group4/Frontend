@@ -7,9 +7,19 @@ import { Badge } from "@/components/ui/badge";
 import Header from "../components/ui/Header";
 import Footer from "../components/Footer"; // Import đã có
 import { Search, Filter, Zap } from "lucide-react";
+import { useAuth } from "@/hooks/useAuth";
+import { isAdmin } from "@/utils/adminCheck";
 
 const MainScreen = () => {
   const navigate = useNavigate();
+  const { user } = useAuth();
+
+  // Kiểm tra nếu user là admin thì redirect về admin dashboard
+  useEffect(() => {
+    if (user && isAdmin(user)) {
+      navigate('/admin', { replace: true });
+    }
+  }, [user, navigate]);
 
   type Post = {
     id?: number | string;

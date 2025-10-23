@@ -1,5 +1,4 @@
 // Trang 404 - Not Found
-import React from 'react';
 import { Link } from 'react-router-dom';
 import Button from '../components/Button';
 
@@ -24,9 +23,9 @@ const NotFound = () => {
             </Button>
           </Link>
           
-          <Link to="/dashboard">
+          <Link to="/admin">
             <Button variant="secondary" className="w-full">
-              Đến Dashboard
+              Đến Admin Dashboard
             </Button>
           </Link>
         </div>
