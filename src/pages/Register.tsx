@@ -86,7 +86,7 @@ const Register = () => {
       console.log('Sending register data:', formData);
       const result = await AuthService.register(formData);
       console.log('Register successful:', result);
-      showToast.success('Đăng ký thành công! Vui lòng đăng nhập.');
+      showToast('Đăng ký thành công! Vui lòng đăng nhập.', 'success');
       navigate('/login');
     } catch (error: any) {
       console.error('Register error:', error);

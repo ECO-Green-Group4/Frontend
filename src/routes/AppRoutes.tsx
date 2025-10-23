@@ -22,6 +22,7 @@ import Unauthorized from '@/pages/Unauthorized';
 import AdminLayout from '@/layouts/AdminLayout';
 import UserManagement from '@/components/UserManagement';
 import PackageManagement from '@/components/PackageManagement';
+import PostManagement from '@/components/PostManagement';
 
 const AppRoutes = () => {
   return (
@@ -32,13 +33,13 @@ const AppRoutes = () => {
         
         {/* Auth Routes - Không dùng layout */}
         <Route path="/login" element={
-          <PublicRoute redirectTo="/admin">
+          <PublicRoute>
             <Login />
           </PublicRoute>
         } />
 
         <Route path="/register" element={
-          <PublicRoute redirectTo="/admin">
+          <PublicRoute>
             <Register />
           </PublicRoute>
         } />
@@ -144,6 +145,14 @@ const AppRoutes = () => {
           <RoleRoute requiredRole="2">
             <AdminLayout>
               <PackageManagement />
+            </AdminLayout>
+          </RoleRoute>
+        } />
+
+        <Route path="/admin/posts" element={
+          <RoleRoute requiredRole="2">
+            <AdminLayout>
+              <PostManagement />
             </AdminLayout>
           </RoleRoute>
         } />

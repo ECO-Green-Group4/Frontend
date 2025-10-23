@@ -122,10 +122,10 @@ const UserManagement: React.FC = () => {
     try {
       const newStatus = currentStatus === 'active' || currentStatus === 'true' ? false : true;
       await UserService.toggleUserStatus(userId, newStatus);
-      showToast.success(`Đã ${newStatus ? 'kích hoạt' : 'vô hiệu hóa'} user`);
+      showToast(`Đã ${newStatus ? 'kích hoạt' : 'vô hiệu hóa'} user`, 'success');
       fetchUsers(); // Refresh the list
     } catch (error) {
-      showToast.error('Không thể thay đổi trạng thái user');
+      showToast('Không thể thay đổi trạng thái user', 'error');
     }
   };
 

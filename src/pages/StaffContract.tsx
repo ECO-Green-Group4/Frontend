@@ -60,7 +60,7 @@ const StaffContract: React.FC = () => {
   const handlePayment = () => {
     // Handle payment logic here
     console.log('Payment initiated');
-    showToast.info('Payment functionality will be implemented');
+    showToast('Payment functionality will be implemented', 'info');
   };
 
   return (

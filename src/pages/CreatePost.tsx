@@ -150,14 +150,14 @@ export default function CreatePost() {
       }
       
       
-      showToast.success("🎉 Đăng tin thành công!");
+      showToast("🎉 Đăng tin thành công!", "success");
       navigate("/waiting");
 
     } catch (err: any) {
       // Báo lỗi cho user nếu thất bại
       console.error("Create listing error:", err);
       const message = err?.response?.data?.message || err?.message || "Request failed";
-      showToast.error(`❌ Đăng tin thất bại! Lỗi: ${message}`);
+      showToast(`❌ Đăng tin thất bại! Lỗi: ${message}`, "error");
     } finally {
       // Tắt loading của trang
       setIsSubmitting(false);

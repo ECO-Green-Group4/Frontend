@@ -85,14 +85,14 @@ export default function VehicleForm({ onSubmit, packageId }: VehicleFormProps) {
 
     // Check 1: Phải chọn gói tin (gói tin lấy từ Cha)
     if (packageId === null) {
-      showToast.warning("Vui lòng chọn một gói đăng tin ở bên trên!");
+      showToast("Vui lòng chọn một gói đăng tin ở bên trên!", "warning");
       document.getElementById("package-selection")?.scrollIntoView({ behavior: "smooth" });
       return;
     }
     
     // Check 2: Phải có ảnh
     if (images.length === 0) {
-      showToast.warning("Vui lòng chọn ít nhất một ảnh!");
+      showToast("Vui lòng chọn ít nhất một ảnh!", "warning");
       return;
     }
 

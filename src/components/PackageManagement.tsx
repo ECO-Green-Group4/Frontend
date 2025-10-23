@@ -49,7 +49,7 @@ const PackageManagement: React.FC = () => {
       console.error('Error fetching packages:', err);
       
       if (err.response?.status === 500) {
-        setError('Lỗi server: API /admin/memberships không hoạt động. Vui lòng kiểm tra backend server.');
+        setError('Lỗi server: API /admin/packages không hoạt động. Vui lòng kiểm tra backend server.');
       } else if (err.response?.status === 401) {
         setError('Bạn không có quyền truy cập API này. Vui lòng đăng nhập lại.');
       } else if (err.response?.status === 403) {

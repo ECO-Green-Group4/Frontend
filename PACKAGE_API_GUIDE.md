@@ -7,7 +7,7 @@
 
 #### Request
 - **Method**: `PUT`
-- **URL**: `/api/admin/memberships/{packageId}`
+- **URL**: `/api/admin/packages/{packageId}`
 - **Path Parameter**: `packageId` (integer) - ID của package cần cập nhật
 - **Content-Type**: `application/json`
 

@@ -120,7 +120,7 @@ const PlanCard: React.FC<{ plan: MembershipPlan }> = ({ plan }) => {
       {/* Button */}
       <div className="p-6 pt-0 text-center mt-auto">
         <button
-          onClick={() => showToast.success(`You have selected the ${plan.name} plan!`)}
+          onClick={() => showToast(`You have selected the ${plan.name} plan!`, 'success')}
           className={`w-full py-3 rounded-full text-lg font-bold shadow-xl transition transform hover:scale-[1.05] ${btnColorClass}`}
         >
           Choose Plan

@@ -1,13 +1,12 @@
 // Component cho route công khai - redirect về home nếu đã đăng nhập
-import { Navigate } from 'react-router-dom';
 import { useAuth } from '../hooks/useAuth';
+import RoleBasedRedirect from '@/components/RoleBasedRedirect';
 
 interface PublicRouteProps {
   children: React.ReactNode;
-  redirectTo?: string;
 }
 
-const PublicRoute = ({ children, redirectTo = '/' }: PublicRouteProps) => {
+const PublicRoute = ({ children }: PublicRouteProps) => {
   const { isAuthenticated, loading } = useAuth();
 
   // Hiển thị loading khi đang kiểm tra authentication
@@ -19,9 +18,9 @@ const PublicRoute = ({ children, redirectTo = '/' }: PublicRouteProps) => {
     );
   }
 
-  // Nếu đã đăng nhập, redirect về trang chỉ định
+  // Nếu đã đăng nhập, redirect dựa trên role
   if (isAuthenticated) {
-    return <Navigate to={redirectTo} replace />;
+    return <RoleBasedRedirect />;
   }
 
   // Nếu chưa đăng nhập, hiển thị component

@@ -39,14 +39,14 @@ const ImageUploader: React.FC<ImageUploaderProps> = ({
     const totalFiles = images.length + newFiles.length;
     
     if (totalFiles > maxImages) {
-      showToast.warning(`Bạn chỉ có thể upload tối đa ${maxImages} ảnh!`);
+      showToast(`Bạn chỉ có thể upload tối đa ${maxImages} ảnh!`, 'warning');
       return;
     }
 
     // Validate file types
     const validFiles = newFiles.filter(file => {
       if (!file.type.startsWith('image/')) {
-        showToast.error(`File ${file.name} không phải là ảnh!`);
+        showToast(`File ${file.name} không phải là ảnh!`, 'error');
         return false;
       }
       return true;

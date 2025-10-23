@@ -2,8 +2,8 @@
 
 ## Tổng quan
 Hệ thống quản lý packages (gói membership) cho admin panel, tích hợp với 2 API chính:
-- `GET /api/admin/memberships` - Lấy danh sách packages
-- `POST /api/admin/memberships` - Tạo package mới
+- `GET /api/admin/packages` - Lấy danh sách packages
+- `POST /api/admin/packages` - Tạo package mới
 
 ## Tính năng chính
 

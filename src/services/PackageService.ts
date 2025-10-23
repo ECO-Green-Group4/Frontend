@@ -54,7 +54,7 @@ export const PackageService = {
   getAllPackages: async (): Promise<Package[]> => {
     try {
       console.log('Fetching all packages...');
-      const response = await api.get<PackageResponse>('/admin/membership');
+      const response = await api.get<PackageResponse>('/admin/packages');
       console.log('Packages response:', response.data);
       return response.data.data;
     } catch (error) {
@@ -67,7 +67,7 @@ export const PackageService = {
   createPackage: async (packageData: CreatePackageRequest): Promise<Package> => {
     try {
       console.log('Creating package with data:', packageData);
-      const response = await api.post<CreatePackageResponse>('/admin/membership', packageData);
+      const response = await api.post<CreatePackageResponse>('/admin/packages', packageData);
       console.log('Create response:', response.data);
       return response.data.data;
     } catch (error) {
@@ -80,7 +80,7 @@ export const PackageService = {
   updatePackage: async (packageId: number, packageData: Partial<CreatePackageRequest>): Promise<UpdatePackageResponse> => {
     try {
       console.log('Updating package with ID:', packageId, 'Data:', packageData);
-      const response = await api.put<UpdatePackageResponse>(`/admin/membership/${packageId}`, packageData);
+      const response = await api.put<UpdatePackageResponse>(`/admin/packages/${packageId}`, packageData);
       console.log('Update response:', response.data);
       return response.data;
     } catch (error) {
@@ -93,7 +93,7 @@ export const PackageService = {
   deletePackage: async (packageId: number): Promise<DeletePackageResponse> => {
     try {
       console.log('Deleting package with ID:', packageId);
-      const response = await api.delete<DeletePackageResponse>(`/admin/membership/${packageId}`);
+      const response = await api.delete<DeletePackageResponse>(`/admin/packages/${packageId}`);
       console.log('Delete response:', response.data);
       return response.data;
     } catch (error) {

@@ -73,13 +73,13 @@ export default function BatteryForm({ onSubmit, packageId }: BatteryFormProps) {
     e.preventDefault();
 
     if (packageId === null) {
-      showToast.warning("Vui lòng chọn một gói đăng tin ở bên trên!");
+      showToast("Vui lòng chọn một gói đăng tin ở bên trên!", "warning");
       document.getElementById("package-selection")?.scrollIntoView({ behavior: "smooth" });
       return;
     }
     
     if (images.length === 0) {
-      showToast.warning("Vui lòng chọn ít nhất một ảnh!");
+      showToast("Vui lòng chọn ít nhất một ảnh!", "warning");
       return;
     }
 
