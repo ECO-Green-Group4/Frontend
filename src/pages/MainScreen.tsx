@@ -7,19 +7,9 @@ import { Badge } from "@/components/ui/badge";
 import Header from "../components/ui/Header";
 import Footer from "../components/Footer"; // Import đã có
 import { Search, Filter, Zap } from "lucide-react";
-import { useAuth } from "@/hooks/useAuth";
-import { isAdmin } from "@/utils/adminCheck";
 
 const MainScreen = () => {
   const navigate = useNavigate();
-  const { user } = useAuth();
-
-  // Kiểm tra nếu user là admin thì redirect về admin dashboard
-  useEffect(() => {
-    if (user && isAdmin(user)) {
-      navigate('/admin', { replace: true });
-    }
-  }, [user, navigate]);
 
   type Post = {
     id?: number | string;
@@ -38,7 +28,7 @@ const MainScreen = () => {
         api.get("/seller/listings/battery"),
       ]);
 
-      // 🔹 Hàm giúp đọc dữ liệu an toàn từ mọi kiểu response
+      // giúp đọc dữ liệu an toàn từ mọi kiểu response
       const safeExtract = (res: any) => {
         if (!res || typeof res !== "object") return [];
         if (Array.isArray(res?.data?.data)) return res.data.data;

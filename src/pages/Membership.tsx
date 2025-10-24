@@ -1,11 +1,14 @@
 import React from "react";
 import Header from "../components/ui/Header";
-import { showToast } from "@/utils/toast";
+import PaymentButton from "../components/PaymentButton";
+import { createMembershipPaymentInfo } from "@/utils/paymentUtils";
 
 // Defines the data structure for each membership plan
 interface MembershipPlan {
+  id: number;
   name:string;
   price:string;
+  priceValue: number; // Giá trị số để tính toán
   color: "cyan" | "fuchsia" | "pink";
   features: {
     description:string;
@@ -16,8 +19,10 @@ interface MembershipPlan {
 // Plan data, now in English
 const plans: MembershipPlan[] = [
   {
+    id: 1,
     name: "Standard",
     price: "39K",
+    priceValue: 39000,
     color: "cyan",
     features: [
       { description: "'Trusted Seller' Badge", included: true },
@@ -29,8 +34,10 @@ const plans: MembershipPlan[] = [
     ],
   },
   {
+    id: 2,
     name: "Premium",
     price: "79K",
+    priceValue: 79000,
     color: "fuchsia",
     features: [
       { description: "'Top Seller' Badge", included: true },
@@ -42,8 +49,10 @@ const plans: MembershipPlan[] = [
     ],
   },
   {
+    id: 3,
     name: "VIP",
     price: "149K",
+    priceValue: 149000,
     color: "pink",
     features: [
       { description: "Prestigious 'Pro Seller' Badge", included: true },
@@ -119,12 +128,17 @@ const PlanCard: React.FC<{ plan: MembershipPlan }> = ({ plan }) => {
 
       {/* Button */}
       <div className="p-6 pt-0 text-center mt-auto">
-        <button
-          onClick={() => showToast(`You have selected the ${plan.name} plan!`, 'success')}
+        <PaymentButton
+          paymentInfo={createMembershipPaymentInfo(
+            plan.id,
+            plan.name,
+            plan.priceValue,
+            `Gói thành viên ${plan.name} - ${plan.price}/tháng`
+          )}
           className={`w-full py-3 rounded-full text-lg font-bold shadow-xl transition transform hover:scale-[1.05] ${btnColorClass}`}
         >
           Choose Plan
-        </button>
+        </PaymentButton>
       </div>
     </div>
   );

@@ -1,9 +1,15 @@
 import React from 'react';
-import { useNavigate } from 'react-router-dom'; // Dùng để quay lại trang khác (nếu cần)
+import { useNavigate, useLocation } from 'react-router-dom'; // Dùng để quay lại trang khác (nếu cần)
 
 const Waiting: React.FC = () => {
   // Hook để điều hướng người dùng
   const navigate = useNavigate();
+  const location = useLocation();
+  
+  // Lấy thông báo từ state nếu có
+  const state = location.state as { message?: string; type?: string };
+  const customMessage = state?.message;
+  const type = state?.type;
 
   return (
     <div className="min-h-screen bg-gray-50 flex items-center justify-center p-6">
@@ -24,10 +30,10 @@ const Waiting: React.FC = () => {
 
         {/* Nội dung */}
         <p className="text-gray-600 mb-6">
-        We are reviewing your post/member request. This process may take a few minutes.
+          {customMessage || "We are reviewing your post/member request. This process may take a few minutes."}
         </p>
         <p className="text-sm text-gray-500 mb-8 font-medium">
-        You will receive a notification as soon as the status is updated.
+          You will receive a notification as soon as the status is updated.
         </p>
 
         {/* Nút quay lại hoặc tiếp tục */}

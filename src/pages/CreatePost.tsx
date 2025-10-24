@@ -23,7 +23,7 @@ interface ServicePackage {
 export default function CreatePost() {
   // --- STATE CỦA TRANG CHA ---
   const [category, setCategory] = useState<"EV" | "Battery">("EV");
-  const [isSubmitting, setIsSubmitting] = useState(false); // State loading của Cha
+  // const [isSubmitting, setIsSubmitting] = useState(false); // State loading của Cha - không cần nữa vì validation được xử lý trong form con
   const navigate = useNavigate();
 
   // State cho Gói tin
@@ -73,95 +73,53 @@ export default function CreatePost() {
   }, []); // Chỉ chạy 1 lần
   
 
-  // hàm chuyển đổi payloadpayload
-  
-  type BatteryFormData = any;
-  type VehicleFormData = any;
-
-  
-  const toBatteryPayload = (data: BatteryFormData) => ({
-    title: data.title,
-    description: data.description,
-    images: data.images,
-    location: data.location,
-    price: Number(data.price) || 0, 
-    
-    
-    brand: data.batteryBrand, 
-    
-    voltage: Number(data.voltage) || 0, 
-    capacity: data.capacity, 
-    healthPercent: Number(data.healthPercent) || 0, 
-    chargeCycles: Number(data.chargeCycles) || 0, 
-    type: data.type,
-    manufactureYear: Number(data.manufactureYear) || 0, 
-    origin: data.origin,
-    packageId: data.packageId,
-
-    
-  });
-
- 
-  const toVehiclePayload = (data: VehicleFormData) => ({
-    title: data.title,
-    description: data.description,
-    images: data.images,
-    location: data.location,
-    price: Number(data.price) || 0,
-    brand: data.brand,
-    model: data.model,
-    year: Number(data.year) || 0, 
-    bodyType: data.bodyType,
-    color: data.color,
-    mileage: Number(data.mileage) || 0, 
-    inspection: data.inspection,
-    origin: data.origin,
-    numberOfSeats: Number(data.numberOfSeats) || 0, 
-    licensePlate: data.licensePlate,
-    accessories: data.accessories,
-    batteryCapacity: Number(data.batteryCapacity) || 0, 
-    condition: data.condition,
-    packageId: data.packageId,
-  });
+  // Các hàm chuyển đổi payload đã được chuyển vào PostPaymentService.ts
 
   
   // async để component con có thể 'await'
   const handleFormSubmit = async (data: any) => {
-    
-    
-    setIsSubmitting(true); 
-
-    try {
-      let res; // Khai báo response ở ngoài
-      if (category === "Battery") {
-        const payload = toBatteryPayload(data);
-        console.log("Submitting Battery Payload:", payload); // Log để check
-        res = await api.post("/seller/listings/battery", payload, {
-            headers: { "Content-Type": "application/json" },
-        });
-        console.log("Battery listing created:", res.data);
-      } else {
-        const payload = toVehiclePayload(data);
-        console.log("Submitting Vehicle Payload:", payload); // Log để check
-        res = await api.post("/seller/listings/vehicle", payload, {
-            headers: { "Content-Type": "application/json" },
-        });
-        console.log("Vehicle listing created:", res.data);
-      }
-      
-      
-      showToast("🎉 Đăng tin thành công!", "success");
-      navigate("/waiting");
-
-    } catch (err: any) {
-      // Báo lỗi cho user nếu thất bại
-      console.error("Create listing error:", err);
-      const message = err?.response?.data?.message || err?.message || "Request failed";
-      showToast(`❌ Đăng tin thất bại! Lỗi: ${message}`, "error");
-    } finally {
-      // Tắt loading của trang
-      setIsSubmitting(false);
+    // Kiểm tra xem đã chọn package chưa
+    if (!selectedPackageId) {
+      showToast("Vui lòng chọn gói đăng tin", "error");
+      return;
     }
+
+    // Kiểm tra dữ liệu form cơ bản (validation chi tiết đã được xử lý trong form con)
+    if (!data) {
+      showToast("Dữ liệu không hợp lệ", "error");
+      return;
+    }
+
+    // Tìm thông tin package đã chọn
+    const selectedPackage = packages.find(pkg => pkg.packageId === selectedPackageId);
+    if (!selectedPackage) {
+      showToast("Gói đăng tin không hợp lệ", "error");
+      return;
+    }
+
+    // Chuẩn bị dữ liệu cho trang Payment
+    const paymentInfo = {
+      packageId: selectedPackage.packageId,
+      packageName: selectedPackage.name,
+      amount: selectedPackage.listingFee,
+      type: category === "Battery" ? "battery" : "vehicle" as "post" | "vehicle" | "battery" | "membership",
+      description: `Đăng tin ${category === "Battery" ? "pin" : "xe điện"} - ${data.title}`
+    };
+
+    // Lưu dữ liệu form vào sessionStorage để sử dụng sau khi thanh toán
+    const formData = {
+      category,
+      data,
+      selectedPackageId
+    };
+    sessionStorage.setItem('pendingPostData', JSON.stringify(formData));
+
+    // Chuyển đến trang Payment
+    navigate("/payment", { 
+      state: { 
+        paymentInfo 
+      } 
+    });
   };
 
   
@@ -238,12 +196,7 @@ export default function CreatePost() {
           />
         )}
 
-        {/* 4. Loading indicator của trang (nếu muốn) */}
-        {isSubmitting && (
-         <p className="text-center text-gray-500 mt-4 animate-pulse">
-            🕓 Đang xử lý...
-         </p>
-        )}
+        {/* Loading indicator được xử lý trong form con */}
       </div>
     </div>
   );

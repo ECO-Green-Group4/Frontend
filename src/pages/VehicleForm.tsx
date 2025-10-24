@@ -89,8 +89,44 @@ export default function VehicleForm({ onSubmit, packageId }: VehicleFormProps) {
       document.getElementById("package-selection")?.scrollIntoView({ behavior: "smooth" });
       return;
     }
+
+    // Check 2: Validation các trường bắt buộc
+    if (!vehicleData.title || !vehicleData.title.trim()) {
+      showToast("Vui lòng nhập tiêu đề xe", "error");
+      return;
+    }
+
+    if (!vehicleData.description || !vehicleData.description.trim()) {
+      showToast("Vui lòng nhập mô tả xe", "error");
+      return;
+    }
+
+    if (!vehicleData.price || Number(vehicleData.price) <= 0) {
+      showToast("Vui lòng nhập giá xe hợp lệ", "error");
+      return;
+    }
+
+    if (!vehicleData.location || !vehicleData.location.trim()) {
+      showToast("Vui lòng nhập địa điểm", "error");
+      return;
+    }
+
+    if (!vehicleData.brand || !vehicleData.brand.trim()) {
+      showToast("Vui lòng nhập thương hiệu xe", "error");
+      return;
+    }
+
+    if (!vehicleData.model || !vehicleData.model.trim()) {
+      showToast("Vui lòng nhập model xe", "error");
+      return;
+    }
+
+    if (!vehicleData.year || Number(vehicleData.year) <= 0) {
+      showToast("Vui lòng nhập năm sản xuất hợp lệ", "error");
+      return;
+    }
     
-    // Check 2: Phải có ảnh
+    // Check 3: Phải có ảnh
     if (images.length === 0) {
       showToast("Vui lòng chọn ít nhất một ảnh!", "warning");
       return;

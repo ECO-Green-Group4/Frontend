@@ -77,6 +77,42 @@ export default function BatteryForm({ onSubmit, packageId }: BatteryFormProps) {
       document.getElementById("package-selection")?.scrollIntoView({ behavior: "smooth" });
       return;
     }
+
+    // Validation các trường bắt buộc
+    if (!batteryData.title || !batteryData.title.trim()) {
+      showToast("Vui lòng nhập tiêu đề pin", "error");
+      return;
+    }
+
+    if (!batteryData.description || !batteryData.description.trim()) {
+      showToast("Vui lòng nhập mô tả pin", "error");
+      return;
+    }
+
+    if (!batteryData.price || Number(batteryData.price) <= 0) {
+      showToast("Vui lòng nhập giá pin hợp lệ", "error");
+      return;
+    }
+
+    if (!batteryData.location || !batteryData.location.trim()) {
+      showToast("Vui lòng nhập địa điểm", "error");
+      return;
+    }
+
+    if (!batteryData.batteryBrand || !batteryData.batteryBrand.trim()) {
+      showToast("Vui lòng nhập thương hiệu pin", "error");
+      return;
+    }
+
+    if (!batteryData.capacity || !batteryData.capacity.trim()) {
+      showToast("Vui lòng nhập dung lượng pin", "error");
+      return;
+    }
+
+    if (!batteryData.voltage || Number(batteryData.voltage) <= 0) {
+      showToast("Vui lòng nhập điện áp pin hợp lệ", "error");
+      return;
+    }
     
     if (images.length === 0) {
       showToast("Vui lòng chọn ít nhất một ảnh!", "warning");

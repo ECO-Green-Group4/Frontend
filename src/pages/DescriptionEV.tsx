@@ -5,6 +5,8 @@ import { Zap, ArrowLeft } from "lucide-react";
 import ImageGallery from "../components/ImageGallery";
 import api from "../services/axios";
 import Header from "../components/ui/Header";
+import PaymentButton from "../components/PaymentButton";
+import { createVehiclePurchasePaymentInfo } from "@/utils/paymentUtils";
 
 interface EVDetails {
   id: string | number;
@@ -362,12 +364,16 @@ const DescriptionEV = () => {
               </div>
 
               <div className="mt-8 text-center">
-                <Button
-                  onClick={handleBuyNow}
+                <PaymentButton
+                  paymentInfo={createVehiclePurchasePaymentInfo(
+                    Number(evDetails.id),
+                    evDetails.name,
+                    evDetails.price
+                  )}
                   className="bg-green-500 hover:bg-green-600 text-white px-8 py-3 rounded-lg text-lg font-semibold w-full"
                 >
                   Mua ngay
-                </Button>
+                </PaymentButton>
               </div>
             </div>
           </div>

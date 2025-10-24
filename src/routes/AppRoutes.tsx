@@ -18,6 +18,7 @@ import DescriptionEV from '../pages/DescriptionEV';
 import DescriptionBattery from '../pages/DescriptionBattery';
 import NotFound from '../pages/NotFound';
 import Waiting from '@/pages/Waiting';
+import Payment from '@/pages/Payment';
 import Unauthorized from '@/pages/Unauthorized';
 import AdminLayout from '@/layouts/AdminLayout';
 import UserManagement from '@/components/UserManagement';
@@ -110,6 +111,11 @@ const AppRoutes = () => {
         </ProtectedRoute>
             
           
+        } />
+        <Route path="/payment" element={
+          <ProtectedRoute>
+            <Payment />
+          </ProtectedRoute>
         } />
         <Route path="/history" element={
           <ProtectedRoute>
