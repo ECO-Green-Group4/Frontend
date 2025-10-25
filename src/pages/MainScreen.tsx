@@ -22,10 +22,10 @@ const MainScreen = () => {
 
   const fetchPosts = async (): Promise<Post[]> => {
     try {
-      // Gọi cả 2 API — không crash nếu battery rỗng
+      // Gọi cả 2 API với filter status=ACTIVE — không crash nếu battery rỗng
       const [vehicleResult, batteryResult] = await Promise.allSettled([
-        api.get("/seller/listings/vehicle"),
-        api.get("/seller/listings/battery"),
+        api.get("/seller/listings/vehicle?status=ACTIVE"),
+        api.get("/seller/listings/battery?status=ACTIVE"),
       ]);
 
       // giúp đọc dữ liệu an toàn từ mọi kiểu response
@@ -49,9 +49,12 @@ const MainScreen = () => {
 
       console.log("✅ Vehicle data:", vehicleData);
       console.log("✅ Battery data:", batteryData);
+      console.log("🔍 Filtering for ACTIVE status only");
 
       // Map dữ liệu xe
-      const vehicles: Post[] = vehicleData.map((item: any) => ({
+      const vehicles: Post[] = vehicleData
+        .filter((item: any) => item.status === 'ACTIVE')
+        .map((item: any) => ({
         id: item.id ?? item.listingId ?? item._id,
         title: item.title ?? item.name ?? "Untitled Vehicle",
         price: Number(item.price) || 0,
@@ -65,7 +68,9 @@ const MainScreen = () => {
       }));
 
       // Map dữ liệu pin (nếu có)
-      const batteries: Post[] = batteryData.map((item: any) => ({
+      const batteries: Post[] = batteryData
+        .filter((item: any) => item.status === 'ACTIVE')
+        .map((item: any) => ({
         id: item.id ?? item.listingId ?? item._id,
         title: item.title ?? item.name ?? "Untitled Battery",
         price: Number(item.price) || 0,
@@ -77,6 +82,9 @@ const MainScreen = () => {
             : ""),
         category: "Battery",
       }));
+
+      console.log(`📊 Filtered vehicles: ${vehicles.length}/${vehicleData.length}`);
+      console.log(`📊 Filtered batteries: ${batteries.length}/${batteryData.length}`);
 
       return [...vehicles, ...batteries];
     } catch (err) {

@@ -1,11 +1,29 @@
 import React from 'react';
 import { Navigate, useLocation } from 'react-router-dom';
 import { useAuth } from '@/hooks/useAuth';
+import { isAdmin } from '@/utils/adminCheck'; // Import hàm isAdmin đã sửa
 
 interface RoleRouteProps {
   children: React.ReactNode;
-  requiredRole: string;
+  requiredRole: string; // ví dụ: "2" (admin), "3" (staff)
   fallbackPath?: string;
+}
+
+// Hàm helper an toàn để lấy các role, tránh "undefined"
+const getSafeUserRoles = (user: User | null): string[] => {
+  if (!user) return [];
+  
+  const roles: string[] = [];
+  if (user.roleId) {
+    roles.push(String(user.roleId));
+  }
+  if (user.role) {
+    roles.push(user.role);
+  }
+  if (user.roleName) {
+    roles.push(user.roleName);
+  }
+  return roles;
 }
 
 const RoleRoute: React.FC<RoleRouteProps> = ({ 
@@ -16,7 +34,7 @@ const RoleRoute: React.FC<RoleRouteProps> = ({
   const { user, isAuthenticated, loading } = useAuth();
   const location = useLocation();
 
-  // Hiển thị loading khi đang kiểm tra auth
+  // Hiển thị loading
   if (loading) {
     return (
       <div className="flex items-center justify-center min-h-screen">
@@ -28,30 +46,43 @@ const RoleRoute: React.FC<RoleRouteProps> = ({
     );
   }
 
-  // Nếu chưa đăng nhập, redirect đến login
+  // Nếu chưa đăng nhập
   if (!isAuthenticated || !user) {
     return <Navigate to="/login" state={{ from: location }} replace />;
   }
 
-  // Kiểm tra quyền theo roleId hoặc roleName
-  // requiredRole có thể là: '2' (admin), '3' (staff), '1' (user)
-  // hoặc: 'admin', 'staff', 'user'
-  const hasPermission = 
-    user.roleId === requiredRole || 
-    user.roleName === requiredRole ||
-    user.role === requiredRole ||
-    // Thêm mapping cho trường hợp roleId string
-    (requiredRole === '2' && (user.role === 'admin' || user.roleId === '2')) ||
-    (requiredRole === '3' && (user.role === 'staff' || user.roleId === '3')) ||
-    (requiredRole === '1' && (user.role === 'user' || user.roleId === '1'));
+  // LOGIC KIỂM TRA QUYỀN ĐƯỢC SỬA LẠI AN TOÀN
+  let hasPermission = false;
+  const safeRoles = getSafeUserRoles(user); // Lấy mảng role an toàn
 
-  // Nếu không có quyền, redirect đến fallback path
+  // Kiểm tra quyền Admin
+  if (requiredRole === '2') {
+    hasPermission = isAdmin(user); // Dùng hàm isAdmin đã sửa
+  } 
+  
+  // Kiểm tra 'staff'
+  else if (requiredRole === '3') {
+    hasPermission = safeRoles.some(r => r.toLowerCase() === '3' || r.toLowerCase() === 'staff');
+  }
+  
+  // Kiểm tra 'user'
+  else if (requiredRole === '1') {
+     hasPermission = safeRoles.some(r => r.toLowerCase() === '1' || r.toLowerCase() === 'user');
+  }
+
+  // Nếu không có quyền
   if (!hasPermission) {
-    console.warn(`User ${user.email} không có quyền truy cập. Required: ${requiredRole}, User role: ${user.roleId || user.roleName || user.role}`);
+    // DÒNG DEBUG QUAN TRỌNG:
+    // Hãy mở F12 (Console) trên trình duyệt để xem object user của bạn thực sự là gì.
+    // Bạn sẽ biết được API đang trả về tên thuộc tính là gì (ví dụ: 'roleName' hay 'role_id' hay 'authority'...)
+    console.error("DEBUG: USER KHÔNG CÓ QUYỀN TRUY CẬP");
+    console.error("Required Role:", requiredRole);
+    console.error("Actual User Object:", user); 
+    
     return <Navigate to={fallbackPath} replace />;
   }
 
-  // Nếu có quyền, render children
+  // Nếu có quyền
   return <>{children}</>;
 };
 

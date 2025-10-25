@@ -5,6 +5,9 @@ import { Zap, ArrowLeft } from "lucide-react";
 import ImageGallery from "../components/ImageGallery";
 import api from "../services/axios";
 import Header from "../components/ui/Header";
+// THÊM MỚI: Import PaymentButton và hàm tiện ích
+import PaymentButton from "../components/PaymentButton";
+import { createBatteryPurchasePaymentInfo } from "@/utils/paymentUtils"; // <-- Đảm bảo bạn đã tạo hàm này
 
 interface BatteryDetails {
   id: string | number;
@@ -125,10 +128,10 @@ const DescriptionBattery = () => {
     fetchBatteryDetails();
   }, [id]);
 
-  const handleBuyNow = () => {
-   
-    console.log("Buy now clicked for Battery:", batteryDetails?.id);
-  };
+  // XÓA BỎ: Hàm handleBuyNow không còn cần thiết
+  // const handleBuyNow = () => {
+  //   console.log("Buy now clicked for Battery:", batteryDetails?.id);
+  // };
 
   if (loading) {
     return (
@@ -296,13 +299,18 @@ const DescriptionBattery = () => {
                 )}
               </div>
 
+              {/* THAY ĐỔI: Sử dụng PaymentButton thay vì Button thường */}
               <div className="mt-8 text-center">
-                <Button
-                  onClick={handleBuyNow}
+                <PaymentButton
+                  paymentInfo={createBatteryPurchasePaymentInfo(
+                    Number(batteryDetails.id),
+                    batteryDetails.name,
+                    batteryDetails.price
+                  )}
                   className="bg-green-500 hover:bg-green-600 text-white px-8 py-3 rounded-lg text-lg font-semibold w-full"
                 >
                   Mua ngay
-                </Button>
+                </PaymentButton>
               </div>
             </div>
           </div>

@@ -7,7 +7,7 @@ title: string;
 content: string;
 description?: string;
 price: number;
-status: 'DRAFT' | 'PENDING' | 'APPROVED' | 'REJECTED' | 'ACTIVE' | 'INACTIVE';
+status: 'DRAFT' | 'PENDING' | 'PENDING_APPROVAL' | 'APPROVED' | 'REJECTED' | 'ACTIVE' | 'INACTIVE';
 category: 'EV' | 'BATTERY' | 'ACCESSORY';
 images?: string[];
 userId: number;
@@ -54,7 +54,7 @@ data: string;
 }
 
 // Định nghĩa kiểu status
-export type PostStatus = 'DRAFT' | 'PENDING' | 'APPROVED' | 'REJECTED' | 'ACTIVE' | 'INACTIVE';
+export type PostStatus = 'DRAFT' | 'PENDING' | 'PENDING_APPROVAL' | 'APPROVED' | 'REJECTED' | 'ACTIVE' | 'INACTIVE';
 
 // === TOÀN BỘ SERVICE OBJECT ĐÃ ĐƯỢC SỬA LẠI ĐÚNG ===
 export const PostService = {
@@ -86,37 +86,35 @@ throw error;
 },
 
 // Cập nhật trạng thái (Sửa lỗi 400 - Sử dụng query parameter approved)
- updatePostStatus: async (postId: number, newStatus: PostStatus): Promise<UpdatePostResponse> => {
- try {
-console.log('Updating listing status with ID:', postId, 'New Status:', newStatus);
- 
- // Chuyển đổi status thành boolean approved
- const approved = newStatus === 'APPROVED' || newStatus === 'ACTIVE';
+updatePostStatus: async (postId: number, newStatus: PostStatus): Promise<UpdatePostResponse> => {
+  try {
+    console.log('Updating listing status with ID:', postId, 'New Status:', newStatus);
+    
+    // Chuyển đổi status thành boolean approved
+    const approved = newStatus === 'APPROVED' || newStatus === 'ACTIVE';
 
-const response = await api.put<UpdatePostResponse>(
-`/admin/listings/${postId}/status?approved=${approved}`
-);
+    const response = await api.put<UpdatePostResponse>(
+      `/admin/listings/${postId}/status?approved=${approved}`
+    );
 
- console.log('Update status response:', response.data);
- return response.data;
-} catch (error) {
- console.error('Error updating listing status:', error);
-throw error;
- }
+    console.log('Update status response:', response.data);
+    return response.data;
+  } catch (error) {
+    console.error('Error updating listing status:', error);
+    throw error;
+  }
 },
 
-// Xóa listing (Sửa lỗi cú pháp từ ảnh chụp màn hình)
+// Xóa listing
 deletePost: async (postId: number): Promise<DeletePostResponse> => {
-try {
-console.log('Deleting listing with ID:', postId);
- // Sửa lại URL cho đúng
- const response = await api.delete<DeletePostResponse>(`/admin/listings/${postId}`);
-console.log('Delete response:', response.data);
-return response.data;
- } catch (error) {
-// Sửa lại 'loading...sole.error' thành 'console.error'
-console.error('Error deleting listing:', error);
-throw error;
- }
+  try {
+    console.log('Deleting listing with ID:', postId);
+    const response = await api.delete<DeletePostResponse>(`/admin/listings/${postId}`);
+    console.log('Delete response:', response.data);
+    return response.data;
+  } catch (error) {
+    console.error('Error deleting listing:', error);
+    throw error;
+  }
 }
 };

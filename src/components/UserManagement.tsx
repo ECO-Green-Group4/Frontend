@@ -12,7 +12,9 @@ import {
   Mail,
   Phone,
   Calendar,
-  MapPin
+  MapPin,
+  Users,
+  UserCog
 } from 'lucide-react';
 import {
   DropdownMenu,
@@ -28,7 +30,7 @@ const UserManagement: React.FC = () => {
   const [error, setError] = useState<string | null>(null);
   const [searchQuery, setSearchQuery] = useState('');
   const [statusFilter, setStatusFilter] = useState<'all' | 'active' | 'true' | 'null'>('all');
-  const [roleFilter, setRoleFilter] = useState<'all' | 'admin' | 'member'>('all');
+  const [roleFilter, setRoleFilter] = useState<'all' | 'admin' | 'user' | 'staff'>('all');
 
   // Fetch users
   const fetchUsers = async () => {
@@ -84,7 +86,7 @@ const UserManagement: React.FC = () => {
       email: "john@example.com",
       username: "johndoe",
       phone: "0987654321",
-      role: "member",
+      role: "user",
       status: "active",
       dateOfBirth: "1995-05-15",
       gender: "male",
@@ -129,6 +131,25 @@ const UserManagement: React.FC = () => {
     }
   };
 
+  // Handle role change
+  const handleChangeRole = async (userId: number, currentRole: string, newRole: 'admin' | 'user' | 'staff') => {
+    try {
+      console.log(`Changing user ${userId} from ${currentRole} to ${newRole}`);
+      const response = await UserService.changeUserRole(userId, newRole);
+      
+      if (response.success) {
+        showToast(response.message || `Đã thay đổi role từ ${currentRole} thành ${newRole}`, 'success');
+        fetchUsers(); // Refresh the list
+      } else {
+        showToast(response.message || 'Không thể thay đổi role của user', 'error');
+      }
+    } catch (error: any) {
+      console.error('Error changing role:', error);
+      const errorMessage = error?.response?.data?.message || error?.message || 'Không thể thay đổi role của user';
+      showToast(errorMessage, 'error');
+    }
+  };
+
 
   const formatDate = (dateString: string | null) => {
     if (!dateString) return 'N/A';
@@ -146,9 +167,16 @@ const UserManagement: React.FC = () => {
   };
 
   const getRoleBadge = (role: string) => {
-    return role === 'admin'
-      ? <Badge className="bg-purple-100 text-purple-800">Admin</Badge>
-      : <Badge className="bg-blue-100 text-blue-800">Member</Badge>;
+    switch (role) {
+      case 'admin':
+        return <Badge className="bg-purple-100 text-purple-800">Admin</Badge>;
+      case 'staff':
+        return <Badge className="bg-orange-100 text-orange-800">Staff</Badge>;
+      case 'user':
+        return <Badge className="bg-blue-100 text-blue-800">User</Badge>;
+      default:
+        return <Badge className="bg-gray-100 text-gray-800">{role}</Badge>;
+    }
   };
 
   const formatGender = (gender: string) => {
@@ -282,11 +310,18 @@ const UserManagement: React.FC = () => {
                 Admin
               </Button>
               <Button
-                variant={roleFilter === 'member' ? 'default' : 'outline'}
-                onClick={() => setRoleFilter('member')}
+                variant={roleFilter === 'user' ? 'default' : 'outline'}
+                onClick={() => setRoleFilter('user')}
                 size="sm"
               >
-                Member
+                User
+              </Button>
+              <Button
+                variant={roleFilter === 'staff' ? 'default' : 'outline'}
+                onClick={() => setRoleFilter('staff')}
+                size="sm"
+              >
+                Staff
               </Button>
             </div>
           </div>
@@ -366,6 +401,29 @@ const UserManagement: React.FC = () => {
                         </Button>
                       </DropdownMenuTrigger>
                       <DropdownMenuContent align="end">
+                        {/* Role Change Options - Chỉ hiển thị Member và Staff */}
+                        {user.role !== 'staff' && (
+                          <DropdownMenuItem
+                            onClick={() => handleChangeRole(user.userId, user.role, 'staff')}
+                          >
+                            <UserCog className="w-4 h-4 mr-2" />
+                            Thay đổi thành Staff
+                          </DropdownMenuItem>
+                        )}
+                        
+                        {user.role !== 'user' && (
+                          <DropdownMenuItem
+                            onClick={() => handleChangeRole(user.userId, user.role, 'user')}
+                          >
+                            <Users className="w-4 h-4 mr-2" />
+                            Thay đổi thành User
+                          </DropdownMenuItem>
+                        )}
+                        
+                        {/* Separator */}
+                        <div className="border-t my-1"></div>
+                        
+                        {/* Status Toggle */}
                         <DropdownMenuItem
                           onClick={() => handleToggleStatus(user.userId, user.status)}
                         >

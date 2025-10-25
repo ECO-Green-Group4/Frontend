@@ -20,6 +20,7 @@ import NotFound from '../pages/NotFound';
 import Waiting from '@/pages/Waiting';
 import Payment from '@/pages/Payment';
 import Unauthorized from '@/pages/Unauthorized';
+import VnPayCallback from '@/pages/VnPayCallback';
 import AdminLayout from '@/layouts/AdminLayout';
 import UserManagement from '@/components/UserManagement';
 import PackageManagement from '@/components/PackageManagement';
@@ -162,6 +163,9 @@ const AppRoutes = () => {
             </AdminLayout>
           </RoleRoute>
         } />
+
+        {/* VNPay Callback */}
+        <Route path="/vnpay-callback" element={<VnPayCallback />} />
 
         {/* Unauthorized Page */}
         <Route path="/unauthorized" element={<Unauthorized />} />

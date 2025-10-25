@@ -115,18 +115,73 @@ const PostManagement: React.FC = () => {
     }
   };
 
-  // Handle delete listing
-  const handleDeleteListing = async (postId: number) => {
-    if (!confirm('Bạn có chắc chắn muốn xóa listing này?')) return;
-    
-    try {
-      await PostService.deletePost(postId);
-      showToast('Xóa listing thành công!', 'success');
-      fetchPosts();
-    } catch (error: any) {
-      showToast(`Lỗi xóa listing: ${error.message}`, 'error');
-    }
-  };
+  // Handle soft delete listing (chuyển sang INACTIVE thay vì xóa)
+  const handleSoftDeleteListing = async (postId: number) => {
+    if (!confirm('Bạn có chắc chắn muốn vô hiệu hóa listing này?')) return;
+    
+    try {
+      console.log('Attempting to soft delete listing with ID:', postId);
+      
+      if (!postId || postId === undefined || postId === null) {
+        showToast('Lỗi: Không tìm thấy ID của listing', 'error');
+        return;
+      }
+      
+      // Chuyển status sang INACTIVE thay vì xóa
+      await PostService.updatePostStatus(postId, 'INACTIVE');
+      showToast('Vô hiệu hóa listing thành công!', 'success');
+      fetchPosts();
+    } catch (error: any) {
+      console.error('Soft delete listing error details:', error);
+      showToast(`Lỗi vô hiệu hóa listing: ${error.message}`, 'error');
+    }
+  };
+
+  // Handle delete listing
+  const handleDeleteListing = async (postId: number) => {
+    if (!confirm('Bạn có chắc chắn muốn xóa listing này?')) return;
+    
+    try {
+      console.log('Attempting to delete listing with ID:', postId);
+      console.log('PostId type:', typeof postId);
+      
+      if (!postId || postId === undefined || postId === null) {
+        showToast('Lỗi: Không tìm thấy ID của listing', 'error');
+        return;
+      }
+      
+      await PostService.deletePost(postId);
+      showToast('Xóa listing thành công!', 'success');
+      fetchPosts();
+    } catch (error: any) {
+      console.error('Delete listing error details:', error);
+      console.error('Error response:', error.response?.data);
+      console.error('Error status:', error.response?.status);
+      
+      let errorMessage = 'Lỗi xóa listing';
+      
+      // Xử lý các loại lỗi khác nhau
+      if (error.response?.status === 400) {
+        if (error.response?.data?.message?.includes('Data integrity violation')) {
+          errorMessage = 'Không thể xóa listing này vì đang có dữ liệu liên quan (thanh toán, gói dịch vụ, v.v.). Hãy thử "Vô hiệu hóa" thay vì "Xóa vĩnh viễn".';
+        } else if (error.response?.data?.message?.includes('foreign key')) {
+          errorMessage = 'Không thể xóa listing này vì đang được sử dụng trong hệ thống. Hãy thử "Vô hiệu hóa" thay vì "Xóa vĩnh viễn".';
+        } else {
+          errorMessage = `Lỗi dữ liệu: ${error.response?.data?.message || 'Dữ liệu không hợp lệ'}`;
+        }
+      } else if (error.response?.status === 403) {
+        errorMessage = 'Bạn không có quyền xóa listing này.';
+      } else if (error.response?.status === 404) {
+        errorMessage = 'Không tìm thấy listing để xóa.';
+      } else if (error.response?.status === 500) {
+        errorMessage = 'Lỗi server. Vui lòng thử lại sau.';
+      } else {
+        errorMessage = error.response?.data?.message || error.message || 'Lỗi xóa listing';
+      }
+      
+      showToast(errorMessage, 'error');
+    }
+  };
 
   // Get status badge color
   const getStatusBadgeColor = (status: string) => {
@@ -136,6 +191,8 @@ const PostManagement: React.FC = () => {
         return 'bg-green-100 text-green-800';
       case 'PENDING':
         return 'bg-yellow-100 text-yellow-800';
+      case 'PENDING_APPROVAL':
+        return 'bg-orange-100 text-orange-800';
       case 'DRAFT':
         return 'bg-blue-100 text-blue-800';
       case 'REJECTED':
@@ -154,6 +211,8 @@ const PostManagement: React.FC = () => {
       case 'ACTIVE':
         return <CheckCircle className="w-4 h-4" />;
       case 'PENDING':
+        return <Clock className="w-4 h-4" />;
+      case 'PENDING_APPROVAL':
         return <Clock className="w-4 h-4" />;
       case 'DRAFT':
         return <FileText className="w-4 h-4" />;
@@ -340,6 +399,13 @@ const PostManagement: React.FC = () => {
                     <span className="text-sm">Chờ duyệt</span>
                   </DropdownMenuItem>
                   <DropdownMenuItem 
+                    onClick={() => setStatusFilter('PENDING_APPROVAL')}
+                    className={`px-2 py-2 cursor-pointer flex items-center ${statusFilter === 'PENDING_APPROVAL' ? 'bg-accent' : ''}`}
+                  >
+                    <Clock className="w-4 h-4 mr-3 flex-shrink-0" />
+                    <span className="text-sm">Chờ duyệt (Đã thanh toán)</span>
+                  </DropdownMenuItem>
+                  <DropdownMenuItem 
                     onClick={() => setStatusFilter('APPROVED')}
                     className={`px-2 py-2 cursor-pointer flex items-center ${statusFilter === 'APPROVED' ? 'bg-accent' : ''}`}
                   >
@@ -352,6 +418,13 @@ const PostManagement: React.FC = () => {
                   >
                     <XCircle className="w-4 h-4 mr-3 flex-shrink-0" />
                     <span className="text-sm">Bị từ chối</span>
+                  </DropdownMenuItem>
+                  <DropdownMenuItem 
+                    onClick={() => setStatusFilter('INACTIVE')}
+                    className={`px-2 py-2 cursor-pointer flex items-center ${statusFilter === 'INACTIVE' ? 'bg-accent' : ''}`}
+                  >
+                    <XCircle className="w-4 h-4 mr-3 flex-shrink-0" />
+                    <span className="text-sm">Vô hiệu hóa</span>
                   </DropdownMenuItem>
                 </DropdownMenuContent>
               </DropdownMenu>
@@ -449,16 +522,26 @@ const PostManagement: React.FC = () => {
                         <Badge variant="outline">{post.category}</Badge>
                       </div>
                     </div>
-                    <div className="flex gap-1">
-                      <Button
-                     variant="ghost"
-                        size="sm"
-                        onClick={() => handleDeleteListing(postId!)}
-                        className="text-red-600 hover:text-red-700"
-                      >
-                        <Trash2 className="w-4 h-4" />
-                      </Button>
-                    </div>
+                  <div className="flex gap-1">
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      onClick={() => handleSoftDeleteListing(postId!)}
+                      className="text-orange-600 hover:text-orange-700 hover:bg-orange-50"
+                      title="Vô hiệu hóa listing (an toàn)"
+                    >
+                      <XCircle className="w-4 h-4" />
+                    </Button>
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      onClick={() => handleDeleteListing(postId!)}
+                      className="text-red-600 hover:text-red-700 hover:bg-red-50"
+                      title="Xóa vĩnh viễn (có thể gặp lỗi)"
+                    >
+                      <Trash2 className="w-4 h-4" />
+                    </Button>
+                  </div>
                </div>
                 </CardHeader>
                 
@@ -511,6 +594,22 @@ const PostManagement: React.FC = () => {
                       )}
 
                       {post.status === 'PENDING' && (
+                        <div className="text-sm text-gray-500 p-2 bg-gray-50 rounded">
+                          <span className="text-red-600 font-medium">⚠️ Bài đăng chưa thanh toán</span>
+                          <br />
+                          <span>User cần thanh toán trước khi admin có thể duyệt</span>
+                        </div>
+                      )}
+
+                      {post.status === 'DRAFT' && (
+                        <div className="text-sm text-gray-500 p-2 bg-gray-50 rounded">
+                          <span className="text-blue-600 font-medium">📝 Bài đăng nháp</span>
+                          <br />
+                          <span>User cần hoàn thiện và thanh toán trước khi admin có thể duyệt</span>
+                        </div>
+                      )}
+
+                      {post.status === 'PENDING_APPROVAL' && (
                         <>
                           <Button
                             size="sm"
@@ -541,6 +640,17 @@ const PostManagement: React.FC = () => {
                       >
                         <XCircle className="w-4 h-4 mr-1" />
                         Gỡ bài (Reject)
+                      </Button>
+                    )}
+
+                    {post.status === 'INACTIVE' && (
+                      <Button
+                        size="sm"
+                        className="bg-green-600 hover:bg-green-700 text-white"
+                        onClick={() => handleApproveListing(postId!)}
+                      >
+                        <CheckCircle className="w-4 h-4 mr-1" />
+                        Kích hoạt lại
                       </Button>
                     )}
 

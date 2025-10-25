@@ -109,9 +109,11 @@ export default function CreatePost() {
     // Lưu dữ liệu form vào sessionStorage để sử dụng sau khi thanh toán
     const formData = {
       category,
-      data,
+      data: JSON.parse(JSON.stringify(data)), // Deep clone để đảm bảo serialize được
       selectedPackageId
     };
+    
+    console.log('Saving to sessionStorage:', formData);
     sessionStorage.setItem('pendingPostData', JSON.stringify(formData));
 
     // Chuyển đến trang Payment

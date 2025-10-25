@@ -98,6 +98,7 @@ class PostPaymentService {
       manufactureYear: Number(data.manufactureYear) || 0,
       origin: data.origin,
       packageId: data.packageId,
+      status: 'PENDING_APPROVAL', // Đảm bảo status là PENDING_APPROVAL
     };
   }
 
@@ -123,6 +124,7 @@ class PostPaymentService {
       batteryCapacity: Number(data.batteryCapacity) || 0,
       condition: data.condition,
       packageId: data.packageId,
+      status: 'PENDING_APPROVAL', // Đảm bảo status là PENDING_APPROVAL
     };
   }
 }

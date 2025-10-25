@@ -53,8 +53,8 @@ const Login = () => {
       if (isAdmin(response.user)) {
         navigate('/admin', { replace: true });
       } else {
-        // Redirect về trang trước đó hoặc dashboard cho user thường
-        navigate(from, { replace: true });
+        // Redirect về trang trước đó hoặc trang chủ cho user thường
+        navigate(from === '/admin' ? '/' : from, { replace: true });
       }
     } catch (error: any) {
       setErrors({ 

@@ -26,7 +26,24 @@ class AuthService {
       if (data.refreshToken) localStorage.setItem('refreshToken', data.refreshToken);
     }
 
-    return data;
+    // Tạo user object từ response data
+    const user: User = {
+      id: data.id?.toString() || '',
+      name: data.fullName || '',
+      email: email,
+      phone: data.phoneNumber || '',
+      role: data.role || 'user',
+      roleId: data.roleId?.toString() || '1',
+      roleName: data.role || 'user',
+      createdAt: new Date().toISOString(),
+      updatedAt: new Date().toISOString()
+    };
+
+    return {
+      user,
+      token: data.token,
+      refreshToken: data.refreshToken
+    };
   }
 
   //  Đăng ký

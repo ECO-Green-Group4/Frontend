@@ -6,7 +6,7 @@ export interface User {
   email: string;
   username: string;
   phone: string;
-  role: 'admin' | 'member';
+  role: 'admin' | 'user' | 'staff';
   status: 'active' | 'true' | null;
   dateOfBirth: string;
   gender: string;
@@ -45,6 +45,19 @@ export const UserService = {
       return response.data;
     } catch (error) {
       console.error('Error toggling user status:', error);
+      throw error;
+    }
+  },
+
+  // Thay đổi role của user
+  changeUserRole: async (userId: number, newRole: 'admin' | 'user' | 'staff'): Promise<any> => {
+    try {
+      console.log(`Changing user ${userId} role to ${newRole}`);
+      const response = await api.put(`/admin/users/${userId}/role?role=${newRole}`);
+      console.log('Role change response:', response.data);
+      return response.data;
+    } catch (error) {
+      console.error('Error changing user role:', error);
       throw error;
     }
   },
