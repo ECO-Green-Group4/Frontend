@@ -6,6 +6,8 @@ import BatteryForm from "./BatteryForm";
 import Header from "../components/ui/Header";
 import api from "../services/axios";
 import { showToast } from "@/utils/toast";
+import { useAuth } from "@/hooks/useAuth";
+import AuthGuard from "@/components/AuthGuard";
 
 // Interface cho Gói Dịch Vụ
 // (Khớp với 'ServicePackageResponse.java')
@@ -21,14 +23,25 @@ interface ServicePackage {
 }
 
 export default function CreatePost() {
+  const navigate = useNavigate();
+  const { isAuthenticated } = useAuth();
+  
+  // Redirect to login nếu chưa đăng nhập
+  useEffect(() => {
+    if (!isAuthenticated) {
+      showToast("Vui lòng đăng nhập để tạo bài đăng", "error");
+      navigate("/login");
+    }
+  }, [isAuthenticated, navigate]);
+  
   // --- STATE CỦA TRANG CHA ---
   const [category, setCategory] = useState<"EV" | "Battery">("EV");
   // const [isSubmitting, setIsSubmitting] = useState(false); // State loading của Cha - không cần nữa vì validation được xử lý trong form con
-  const navigate = useNavigate();
 
   // State cho Gói tin
   const [packages, setPackages] = useState<ServicePackage[]>([]);
   const [selectedPackageId, setSelectedPackageId] = useState<number | null>(null);
+  const [customDays, setCustomDays] = useState<number>(1); // Số ngày mua thêm
 
  
   
@@ -97,20 +110,25 @@ export default function CreatePost() {
       return;
     }
 
+    // Tính tổng tiền = giá/ngày * số ngày
+    const totalAmount = selectedPackage.listingFee * customDays;
+
     // Chuẩn bị dữ liệu cho trang Payment
     const paymentInfo = {
       packageId: selectedPackage.packageId,
       packageName: selectedPackage.name,
-      amount: selectedPackage.listingFee,
+      amount: totalAmount,
+      days: customDays, // Thêm số ngày vào paymentInfo
       type: category === "Battery" ? "battery" : "vehicle" as "post" | "vehicle" | "battery" | "membership",
-      description: `Đăng tin ${category === "Battery" ? "pin" : "xe điện"} - ${data.title}`
+      description: `Đăng tin ${category === "Battery" ? "pin" : "xe điện"} - ${data.title} (${customDays} ngày)`
     };
 
     // Lưu dữ liệu form vào sessionStorage để sử dụng sau khi thanh toán
     const formData = {
       category,
       data: JSON.parse(JSON.stringify(data)), // Deep clone để đảm bảo serialize được
-      selectedPackageId
+      selectedPackageId,
+      customDays // Lưu số ngày để sử dụng khi tạo listing
     };
     
     console.log('Saving to sessionStorage:', formData);
@@ -168,14 +186,44 @@ export default function CreatePost() {
                 >
                   <h4 className="font-bold text-lg text-gray-800">{pkg.name}</h4>
                   <div className="text-sm text-gray-600 mt-1" style={{ minHeight: "3.5rem" }}>
-                    <p>Thời hạn: {pkg.durationDays} ngày</p>
+                    <p>Giá: {new Intl.NumberFormat("vi-VN", { style: "currency", currency: "VND" }).format(pkg.listingFee)}/ngày</p>
                     {pkg.highlight && <p className="font-bold text-emerald-600">Nổi bật</p>}
                   </div>
-                  <p className="text-xl font-bold text-emerald-600 mt-3">
-                    {new Intl.NumberFormat("vi-VN", { style: "currency", currency: "VND" }).format(pkg.listingFee)}
-                  </p>
                 </div>
               ))}
+            </div>
+          )}
+          
+          {/* Input số ngày muốn mua */}
+          {selectedPackageId && (
+            <div className="mt-4 bg-emerald-50 rounded-lg p-4 border-2 border-emerald-200">
+              <div className="flex items-center justify-between mb-3">
+                <label className="text-sm font-semibold text-gray-700">
+                  Số ngày bạn muốn đăng tin:
+                </label>
+              </div>
+              <div className="flex items-center gap-3">
+                <input
+                  type="number"
+                  min="1"
+                  value={customDays}
+                  onChange={(e) => setCustomDays(Math.max(1, parseInt(e.target.value) || 1))}
+                  className="border-2 border-emerald-500 rounded-lg px-4 py-2 w-32 text-center font-bold text-lg focus:outline-none focus:ring-2 focus:ring-emerald-300"
+                />
+                <span className="text-gray-600">ngày</span>
+                <div className="ml-auto">
+                  <p className="text-sm text-gray-600">Tổng tiền:</p>
+                  {(() => {
+                    const selectedPkg = packages.find(pkg => pkg.packageId === selectedPackageId);
+                    const totalAmount = selectedPkg ? selectedPkg.listingFee * customDays : 0;
+                    return (
+                      <p className="text-2xl font-bold text-emerald-600">
+                        {new Intl.NumberFormat("vi-VN", { style: "currency", currency: "VND" }).format(totalAmount)}
+                      </p>
+                    );
+                  })()}
+                </div>
+              </div>
             </div>
           )}
         </div>

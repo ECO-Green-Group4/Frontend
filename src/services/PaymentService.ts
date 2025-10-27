@@ -84,8 +84,13 @@ class PaymentService {
       chargeCycles: typeof cleanData.chargeCycles === 'string' ? parseInt(cleanData.chargeCycles) : cleanData.chargeCycles,
       manufactureYear: typeof cleanData.manufactureYear === 'string' ? parseInt(cleanData.manufactureYear) : cleanData.manufactureYear,
       // Chuẩn hóa capacity - thêm space nếu thiếu
-      capacity: cleanData.capacity?.replace(/(\d+)([A-Z]+)/, '$1 $2') || cleanData.capacity
+      capacity: cleanData.capacity?.replace(/(\d+)([A-Z]+)/, '$1 $2') || cleanData.capacity,
+      // Truyền quantity để backend tính expiredAt và packageAmount
+      quantity: typeof cleanData.quantity === 'string' ? parseInt(cleanData.quantity) : (cleanData.quantity || 1)
     };
+    
+    // Log để debug
+    console.log('Request data with quantity:', requestData);
     
     // Loại bỏ batteryBrand nếu đã map sang brand
     if (requestData.batteryBrand) {
@@ -134,6 +139,22 @@ class PaymentService {
   async createVnPayPayment(listingPackageId: number): Promise<PaymentResponse> {
     const response = await api.post(`/payments/package/vnpay?listingPackageId=${listingPackageId}`);
     return response.data;
+  }
+
+  // Tạo order để mua xe (chỉ dùng listingId)
+  async createVehicleOrder(listingId: number): Promise<any> {
+    try {
+      console.log('Creating vehicle order with listingId:', listingId);
+      const response = await api.post('/buyer/orders', {
+        listingId: listingId,
+        basePrice: 0 // Không dùng basePrice theo yêu cầu
+      });
+      console.log('Order created:', response.data);
+      return response.data;
+    } catch (error: any) {
+      console.error('Error creating order:', error);
+      throw error;
+    }
   }
 
   // Kiểm tra trạng thái payment

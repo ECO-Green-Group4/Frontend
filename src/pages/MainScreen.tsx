@@ -6,6 +6,7 @@ import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import Header from "../components/ui/Header";
 import Footer from "../components/Footer"; // Import đã có
+import VIPBadge from "../components/VIPBadge";
 import { Search, Filter, Zap } from "lucide-react";
 
 const MainScreen = () => {
@@ -18,77 +19,67 @@ const MainScreen = () => {
     imageUrl: string;
     category: "EV" | "Battery";
     description?: string;
+    postType?: string;
   };
 
   const fetchPosts = async (): Promise<Post[]> => {
     try {
-      // Gọi cả 2 API với filter status=ACTIVE — không crash nếu battery rỗng
-      const [vehicleResult, batteryResult] = await Promise.allSettled([
-        api.get("/seller/listings/vehicle?status=ACTIVE"),
-        api.get("/seller/listings/battery?status=ACTIVE"),
-      ]);
-
-      // giúp đọc dữ liệu an toàn từ mọi kiểu response
-      const safeExtract = (res: any) => {
-        if (!res || typeof res !== "object") return [];
-        if (Array.isArray(res?.data?.data)) return res.data.data;
-        if (Array.isArray(res?.data)) return res.data;
-        if (Array.isArray(res)) return res;
-        return [];
-      };
-
-      const vehicleData =
-        vehicleResult.status === "fulfilled"
-          ? safeExtract(vehicleResult.value)
-          : [];
-
-      const batteryData =
-        batteryResult.status === "fulfilled"
-          ? safeExtract(batteryResult.value)
-          : [];
-
-      console.log("✅ Vehicle data:", vehicleData);
-      console.log("✅ Battery data:", batteryData);
+      // Gọi API buyer/listings - public API không cần authentication
+      console.log("Fetching buyer listings...");
+      const response = await api.get("/buyer/listings");
+      
+      console.log("✅ Buyer listings response:", response.data);
+      
+      // Extract data từ response
+      // Response format: { message, success, data: [...] }
+      const listings = response.data?.data || response.data || [];
+      
+      console.log("📋 Total listings:", listings.length);
       console.log("🔍 Filtering for ACTIVE status only");
 
-      // Map dữ liệu xe
-      const vehicles: Post[] = vehicleData
+      // Map dữ liệu từ API buyer/listings
+      const mappedPosts: Post[] = listings
         .filter((item: any) => item.status === 'ACTIVE')
-        .map((item: any) => ({
-        id: item.id ?? item.listingId ?? item._id,
-        title: item.title ?? item.name ?? "Untitled Vehicle",
-        price: Number(item.price) || 0,
-        imageUrl:
-          item.imageUrl ||
-          item.thumbnail ||
-          (Array.isArray(item.images) && item.images.length > 0
-            ? item.images[0]
-            : ""),
-        category: "EV",
-      }));
+        .map((item: any) => {
+          const listingId = item.id ?? item.listingId ?? item._id;
+          const title = item.title ?? item.name ?? "Untitled";
+          const price = Number(item.price) || 0;
+          
+          // Extract image - API trả về array images
+          let imageUrl = "";
+          if (Array.isArray(item.images) && item.images.length > 0) {
+            imageUrl = item.images[0];
+          } else if (item.imageUrl) {
+            imageUrl = item.imageUrl;
+          } else if (item.thumbnail) {
+            imageUrl = item.thumbnail;
+          }
+          
+          // Determine category based on itemType hoặc có vehicle-specific fields
+          const category = 
+            item.itemType?.toLowerCase().includes('battery') || 
+            item.batteryBrand || 
+            item.capacity 
+              ? "Battery" 
+              : "EV";
+          
+          return {
+            id: listingId,
+            title,
+            price,
+            imageUrl,
+            category,
+            postType: item.postType,
+            description: item.description
+          };
+        });
 
-      // Map dữ liệu pin (nếu có)
-      const batteries: Post[] = batteryData
-        .filter((item: any) => item.status === 'ACTIVE')
-        .map((item: any) => ({
-        id: item.id ?? item.listingId ?? item._id,
-        title: item.title ?? item.name ?? "Untitled Battery",
-        price: Number(item.price) || 0,
-        imageUrl:
-          item.imageUrl ||
-          item.thumbnail ||
-          (Array.isArray(item.images) && item.images.length > 0
-            ? item.images[0]
-            : ""),
-        category: "Battery",
-      }));
-
-      console.log(`📊 Filtered vehicles: ${vehicles.length}/${vehicleData.length}`);
-      console.log(`📊 Filtered batteries: ${batteries.length}/${batteryData.length}`);
-
-      return [...vehicles, ...batteries];
+      console.log(`✅ Mapped ${mappedPosts.length} active listings`);
+      return mappedPosts;
+      
     } catch (err) {
       console.error("❌ Error fetching posts:", err);
+      setError("Không thể tải danh sách bài đăng");
       return [];
     }
   };
@@ -117,9 +108,20 @@ const MainScreen = () => {
     };
   }, []);
 
+  // Helper function to get VIP priority for sorting
+  const getVIPPriority = (postType?: string): number => {
+    if (!postType) return 999; // Non-VIP posts go last
+    
+    const normalized = postType.toLowerCase();
+    if (normalized.includes("diamond")) return 1; // Highest priority
+    if (normalized.includes("gold")) return 2;
+    if (normalized.includes("silver")) return 3;
+    return 999; // Non-VIP or unknown
+  };
+
   const filteredPosts = useMemo(() => {
     const term = searchQuery.trim().toLowerCase();
-    return posts.filter((p) => {
+    const filtered = posts.filter((p) => {
       const matchFilter =
         activeFilter === "All" || p.category === activeFilter;
       const matchSearch =
@@ -128,6 +130,9 @@ const MainScreen = () => {
         (p.description ?? "").toLowerCase().includes(term);
       return matchFilter && matchSearch;
     });
+    
+    // Sort by VIP priority: Diamond → Gold → Silver → Non-VIP
+    return filtered.sort((a, b) => getVIPPriority(a.postType) - getVIPPriority(b.postType));
   }, [posts, activeFilter, searchQuery]);
 
   const handlePostClick = (post: Post) => {
@@ -142,10 +147,11 @@ const MainScreen = () => {
   function PostCard({ post }: { post: Post }) {
     return (
       <div
-        className="group rounded-xl bg-[#D6FAD7] border border-green-200 shadow-sm hover:shadow-lg transition duration-200 p-4 flex items-center gap-4 cursor-pointer"
+        className="group rounded-xl bg-[#D6FAD7] border border-green-200 shadow-sm hover:shadow-lg transition duration-200 p-4 flex items-center gap-4 cursor-pointer relative"
         onClick={() => handlePostClick(post)}
       >
-        <div className="w-28 h-28 rounded-lg overflow-hidden bg-white flex-shrink-0">
+        <div className="w-28 h-28 rounded-lg overflow-hidden bg-white flex-shrink-0 relative">
+          <VIPBadge postType={post.postType} />
           <img
             src={post.imageUrl}
             alt={post.title}

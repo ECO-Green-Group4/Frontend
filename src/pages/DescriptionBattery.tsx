@@ -5,9 +5,6 @@ import { Zap, ArrowLeft } from "lucide-react";
 import ImageGallery from "../components/ImageGallery";
 import api from "../services/axios";
 import Header from "../components/ui/Header";
-// THÊM MỚI: Import PaymentButton và hàm tiện ích
-import PaymentButton from "../components/PaymentButton";
-import { createBatteryPurchasePaymentInfo } from "@/utils/paymentUtils"; // <-- Đảm bảo bạn đã tạo hàm này
 
 interface BatteryDetails {
   id: string | number;
@@ -29,6 +26,14 @@ interface BatteryDetails {
   origin?: string;
   postType?: string;
   location?: string;
+  // User/Seller information
+  user?: {
+    userId: number;
+    fullName: string;
+    email: string;
+    phone?: string;
+    username?: string;
+  };
 }
 
 const DescriptionBattery = () => {
@@ -67,6 +72,13 @@ const DescriptionBattery = () => {
         if (!battery) {
           throw new Error(`Không tìm thấy pin với ID: ${id}`);
         }
+
+        // Debug: Log toàn bộ dữ liệu battery và user
+        console.log('📦 Full battery data from API:', battery);
+        console.log('👤 User data from API:', battery.user);
+        console.log('📞 Phone field (phone):', battery.user?.phone);
+        console.log('📞 Phone field (phoneNumber):', battery.user?.phoneNumber);
+        console.log('📞 All user fields:', Object.keys(battery.user || {}));
 
         const images =
           (Array.isArray(battery.images) && battery.images) ||
@@ -116,6 +128,11 @@ const DescriptionBattery = () => {
           origin: battery.origin,
           postType: battery.postType,
           location: battery.location || battery.city,// Thêm fallback 'city'
+          // Map user information with proper phone field handling (try multiple field names)
+          user: battery.user ? {
+            ...battery.user,
+            phone: battery.user.phone || battery.user.phoneNumber || battery.user['phone_number'] || undefined
+          } : undefined,
         });
       } catch (err: any) {
         console.error("❌ Lỗi khi tải thông tin pin:", err);
@@ -297,20 +314,40 @@ const DescriptionBattery = () => {
                     </p>
                   </div>
                 )}
+
+                {/* Thông tin người bán - CHỈ HIỂN THỊ CHO PIN */}
+                {batteryDetails.user && (
+                  <div className="mt-6 lg:col-span-3 border-t pt-4">
+                    <h3 className="font-semibold text-lg text-gray-800 mb-3">Thông tin người bán</h3>
+                    <div className="space-y-2">
+                      <div>
+                        <span className="font-semibold text-gray-700">Họ tên:</span>
+                        <p className="text-gray-900">{batteryDetails.user.fullName}</p>
+                      </div>
+                      <div>
+                        <span className="font-semibold text-gray-700">Email:</span>
+                        <p className="text-gray-900">{batteryDetails.user.email}</p>
+                      </div>
+                      <div>
+                        <span className="font-semibold text-gray-700">Số điện thoại:</span>
+                        <p className="text-gray-900">{batteryDetails.user.phone || "N/A"}</p>
+                      </div>
+                    </div>
+                  </div>
+                )}
               </div>
 
-              {/* THAY ĐỔI: Sử dụng PaymentButton thay vì Button thường */}
+              {/* Button mua ngay */}
               <div className="mt-8 text-center">
-                <PaymentButton
-                  paymentInfo={createBatteryPurchasePaymentInfo(
-                    Number(batteryDetails.id),
-                    batteryDetails.name,
-                    batteryDetails.price
-                  )}
+                <Button
+                  onClick={() => {
+                    // Navigation hoặc handle purchase logic
+                    console.log("Purchase battery:", batteryDetails.id);
+                  }}
                   className="bg-green-500 hover:bg-green-600 text-white px-8 py-3 rounded-lg text-lg font-semibold w-full"
                 >
                   Mua ngay
-                </PaymentButton>
+                </Button>
               </div>
             </div>
           </div>

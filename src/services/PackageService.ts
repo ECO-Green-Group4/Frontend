@@ -2,6 +2,7 @@ import api from './axios';
 
 export interface Package {
   id?: number;
+  packageId?: number;
   name: string;
   packageType: 'LISTING_VIP' | 'LISTING_PREMIUM' | 'LISTING_BASIC';
   listingLimit: number;
