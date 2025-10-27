@@ -9,6 +9,7 @@ interface PaymentInfo {
   packageId: number;
   packageName: string;
   amount: number;
+  days?: number; // Số ngày mua
   type: 'post' | 'vehicle' | 'battery' | 'membership';
   description: string;
 }
@@ -87,10 +88,20 @@ const Payment: React.FC = () => {
       const itemType = formData.category === 'EV' ? 'vehicle' : 'battery';
       console.log('Item type:', itemType);
       console.log('Package ID:', paymentInfo.packageId);
+      console.log('Custom days:', paymentInfo.days);
+      console.log('Total amount:', paymentInfo.amount);
+      
+      // Thêm quantity vào listingData (quantity = số ngày)
+      const listingDataWithDays = {
+        ...formData.data,
+        quantity: paymentInfo.days || 1, // Gửi quantity thay vì durationDays để backend tính toán
+      };
+      
+      console.log('Listing data with quantity:', listingDataWithDays);
       
       // Tạo listing với package
       const listingResponse = await PaymentService.createListingWithPackage(
-        formData.data, 
+        listingDataWithDays, 
         paymentInfo.packageId,
         itemType
       );
@@ -249,6 +260,13 @@ const Payment: React.FC = () => {
                 <span className="text-gray-600">Gói dịch vụ:</span>
                 <span className="font-semibold text-gray-900">{paymentInfo.packageName}</span>
               </div>
+              
+              {paymentInfo.days && (
+                <div className="flex justify-between items-center py-3 border-b border-gray-200">
+                  <span className="text-gray-600">Số ngày:</span>
+                  <span className="font-semibold text-gray-900">{paymentInfo.days} ngày</span>
+                </div>
+              )}
               
               <div className="flex justify-between items-center py-3 border-b border-gray-200">
                 <span className="text-gray-600">Loại:</span>

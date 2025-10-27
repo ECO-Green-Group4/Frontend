@@ -26,6 +26,11 @@ const PackageManagement: React.FC = () => {
   const [editingPackage, setEditingPackage] = useState<Package | null>(null);
   const [showFilters, setShowFilters] = useState(false);
 
+  // Helper function to get package ID (supports both id and packageId)
+  const getPackageId = (pkg: Package | null): number | undefined => {
+    return pkg?.id || pkg?.packageId;
+  };
+
   // Form state
   const [formData, setFormData] = useState<CreatePackageRequest>({
     name: '',
@@ -110,7 +115,9 @@ const PackageManagement: React.FC = () => {
 
   // Handle update package
   const handleUpdatePackage = async () => {
-    if (!editingPackage?.id) {
+    const packageId = getPackageId(editingPackage);
+    if (!packageId) {
+      console.error('Cannot update package: Invalid ID. Package data:', editingPackage);
       showToast('Không thể cập nhật package: ID không hợp lệ', 'error');
       return;
     }
@@ -123,7 +130,7 @@ const PackageManagement: React.FC = () => {
       }
       
       console.log('Updating package with data:', formData);
-      const response = await PackageService.updatePackage(editingPackage.id, formData);
+      const response = await PackageService.updatePackage(packageId, formData);
       showToast(response.message || 'Cập nhật package thành công!', 'success');
       setIsEditDialogOpen(false);
       setEditingPackage(null);
@@ -172,6 +179,10 @@ const PackageManagement: React.FC = () => {
 
   // Open edit dialog
   const openEditDialog = (pkg: Package) => {
+    const packageId = getPackageId(pkg);
+    console.log('Opening edit dialog for package:', pkg);
+    console.log('Package ID:', packageId);
+    
     setEditingPackage(pkg);
     setFormData({
       name: pkg.name,
@@ -427,9 +438,10 @@ const PackageManagement: React.FC = () => {
           </Card>
         ) : (
           filteredPackages.map((pkg, index) => {
-            console.log('Rendering package:', pkg);
+            const packageId = getPackageId(pkg);
+            console.log('Rendering package:', pkg, 'ID:', packageId);
             return (
-            <Card key={pkg.id || `package-${index}`} className="hover:shadow-md transition-shadow">
+            <Card key={packageId || `package-${index}`} className="hover:shadow-md transition-shadow">
               <CardHeader>
                 <div className="flex justify-between items-start">
                   <div className="flex-1">
@@ -460,7 +472,14 @@ const PackageManagement: React.FC = () => {
                     <Button
                       variant="outline"
                       size="sm"
-                      onClick={() => pkg.id ? handleDeletePackage(pkg.id) : showToast('Không thể xóa package: ID không tồn tại', 'error')}
+                      onClick={() => {
+                        const packageId = getPackageId(pkg);
+                        if (packageId) {
+                          handleDeletePackage(packageId);
+                        } else {
+                          showToast('Không thể xóa package: ID không tồn tại', 'error');
+                        }
+                      }}
                       className="text-red-600 hover:text-red-700"
                     >
                       <Trash2 className="h-4 w-4" />

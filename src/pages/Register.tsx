@@ -2,7 +2,6 @@
 import React, { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { Eye, EyeOff } from 'lucide-react';
-import { isAdmin } from '@/utils/adminCheck';
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -67,6 +66,9 @@ const Register = () => {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     
+    // Reset errors
+    setErrors({});
+    
     // Validate form
     const validation = validateForm(formData, validationRules);
     setErrors(validation.errors);
@@ -84,13 +86,31 @@ const Register = () => {
     setLoading(true);
     try {
       console.log('Sending register data:', formData);
+      console.log('Register data JSON:', JSON.stringify(formData, null, 2));
+      
       const result = await AuthService.register(formData);
       console.log('Register successful:', result);
       showToast('Đăng ký thành công! Vui lòng đăng nhập.', 'success');
       navigate('/login');
     } catch (error: any) {
       console.error('Register error:', error);
-      setErrors({ general: error.message });
+      console.error('Error details:', {
+        message: error.message,
+        stack: error.stack,
+        name: error.name
+      });
+      
+      // Extract error message
+      let errorMessage = 'Đăng ký thất bại';
+      if (error.message) {
+        errorMessage = error.message;
+      } else if (typeof error === 'string') {
+        errorMessage = error;
+      }
+      
+      // Hiển thị error trong toast và state
+      showToast(errorMessage, 'error');
+      setErrors({ general: errorMessage });
     } finally {
       setLoading(false);
     }
@@ -104,11 +124,13 @@ const Register = () => {
     }));
     
     // Xóa error khi user bắt đầu nhập
-    if (errors[name]) {
-      setErrors(prev => ({
-        ...prev,
-        [name]: ''
-      }));
+    if (errors[name] || errors.general) {
+      setErrors(prev => {
+        const newErrors = { ...prev };
+        delete newErrors[name];
+        delete newErrors.general; // Xóa cả general error
+        return newErrors;
+      });
     }
   };
 

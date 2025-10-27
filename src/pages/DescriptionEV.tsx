@@ -5,8 +5,8 @@ import { Zap, ArrowLeft } from "lucide-react";
 import ImageGallery from "../components/ImageGallery";
 import api from "../services/axios";
 import Header from "../components/ui/Header";
-import PaymentButton from "../components/PaymentButton";
-import { createVehiclePurchasePaymentInfo } from "@/utils/paymentUtils";
+import PaymentService from "../services/PaymentService";
+import { showToast } from "@/utils/toast";
 
 interface EVDetails {
   id: string | number;
@@ -29,6 +29,14 @@ interface EVDetails {
   condition?: string;
   postType?: string;
   location?: string;
+  // User/Seller information - NOT displayed for EV
+  user?: {
+    userId: number;
+    fullName: string;
+    email: string;
+    phone?: string;
+    username?: string;
+  };
 }
 
 const DescriptionEV = () => {
@@ -127,6 +135,8 @@ const DescriptionEV = () => {
           condition: vehicle.condition,
           postType: vehicle.postType,
           location: vehicle.location || vehicle.city,
+          // User information - fetched but NOT displayed for EV
+          user: vehicle.user,
         });
       } catch (err: any) {
         console.error("❌ Lỗi khi tải thông tin xe:", err);
@@ -139,9 +149,46 @@ const DescriptionEV = () => {
     fetchEVDetails();
   }, [id]);
 
-  const handleBuyNow = () => {
-    // TODO: Implement buy now functionality
-    console.log("Buy now clicked for EV:", evDetails?.id);
+  const handleBuyNow = async () => {
+    if (!evDetails) {
+      showToast("Không có thông tin xe", "error");
+      return;
+    }
+
+    // Check authentication trước khi tạo order
+    const token = localStorage.getItem('token');
+    if (!token) {
+      showToast("Vui lòng đăng nhập để mua xe", "error");
+      navigate('/login');
+      return;
+    }
+
+    try {
+      // Lấy listingId từ evDetails
+      const listingId = typeof evDetails.id === 'number' ? evDetails.id : parseInt(evDetails.id);
+      
+      console.log("Creating order for listingId:", listingId);
+      
+      // Gọi API tạo order
+      const response = await PaymentService.createVehicleOrder(listingId);
+      
+      // Hiển thị thông báo thành công
+      showToast("Tạo đơn hàng thành công!", "success");
+      
+      // Có thể chuyển đến trang đơn hàng hoặc trang thanh toán
+      console.log("Order created successfully:", response);
+      
+    } catch (error: any) {
+      console.error("Error creating order:", error);
+      const errorMessage = error.response?.data?.message || error.message || "Không thể tạo đơn hàng";
+      showToast(errorMessage, "error");
+      
+      // Nếu lỗi 401 Unauthorized, redirect về login
+      if (error.response?.status === 401) {
+        showToast("Phiên đăng nhập đã hết hạn, vui lòng đăng nhập lại", "error");
+        navigate('/login');
+      }
+    }
   };
 
   if (loading) {
@@ -364,16 +411,12 @@ const DescriptionEV = () => {
               </div>
 
               <div className="mt-8 text-center">
-                <PaymentButton
-                  paymentInfo={createVehiclePurchasePaymentInfo(
-                    Number(evDetails.id),
-                    evDetails.name,
-                    evDetails.price
-                  )}
+                <Button
+                  onClick={handleBuyNow}
                   className="bg-green-500 hover:bg-green-600 text-white px-8 py-3 rounded-lg text-lg font-semibold w-full"
                 >
                   Mua ngay
-                </PaymentButton>
+                </Button>
               </div>
             </div>
           </div>

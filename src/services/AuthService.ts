@@ -14,8 +14,37 @@ class AuthService {
     });
 
     if (!response.ok) {
-      const errorData = await response.json();
-      throw new Error(errorData.message || 'Đăng nhập thất bại');
+      // Log response details
+      console.error('Login API error response:', {
+        status: response.status,
+        statusText: response.statusText,
+        headers: Object.fromEntries(response.headers.entries())
+      });
+      
+      // Thử parse JSON, nếu fail thì lấy text
+      let errorMessage = 'Đăng nhập thất bại';
+      try {
+        const errorData = await response.json();
+        console.error('Parsed error data:', errorData);
+        errorMessage = errorData.message || errorData.error || errorMessage;
+        
+        // Nếu có validation errors chi tiết
+        if (errorData.errors && typeof errorData.errors === 'object') {
+          const errorMessages = Object.values(errorData.errors).flat();
+          if (errorMessages.length > 0) {
+            errorMessage = errorMessages.join(', ');
+          }
+        }
+      } catch (e) {
+        try {
+          const errorText = await response.text();
+          console.error('Error text:', errorText);
+          errorMessage = errorText || errorMessage;
+        } catch (e2) {
+          errorMessage = response.statusText || errorMessage;
+        }
+      }
+      throw new Error(errorMessage);
     }
 
     const data = await response.json();
@@ -54,19 +83,85 @@ class AuthService {
       body: JSON.stringify(registerData),
     });
 
-    if (!response.ok) {
-      const errorData = await response.json();
-      throw new Error(errorData.message || 'Đăng ký thất bại');
+    // Log response details
+    console.log('Register response:', {
+      ok: response.ok,
+      status: response.status,
+      statusText: response.statusText,
+      headers: Object.fromEntries(response.headers.entries())
+    });
+    
+    // Log để debug
+    console.log('Response status:', response.status);
+    console.log('Response ok?', response.ok);
+
+    // Parse response content một cách an toàn
+    const contentType = response.headers.get('content-type');
+    let data: any;
+    
+    try {
+      if (contentType && contentType.includes('application/json')) {
+        data = await response.json();
+      } else {
+        // Nếu không phải JSON, thử parse như text
+        const textResponse = await response.text();
+        console.log('Response is not JSON, text content:', textResponse);
+        
+        // Nếu response không ok, throw error với text content
+        if (!response.ok) {
+          throw new Error(textResponse || 'Đăng ký thất bại');
+        }
+        
+        // Nếu response ok nhưng không phải JSON, cố gắng parse JSON
+        try {
+          data = JSON.parse(textResponse);
+        } catch (e) {
+          // Trường hợp đặc biệt: Nếu backend trả về "Registration successful" và status 200
+          if (textResponse.toLowerCase().includes('success') && response.ok) {
+            console.log('Backend returned success message:', textResponse);
+            // Tạo data object giả để frontend tiếp tục
+            data = {
+              message: 'Registration successful',
+              success: true
+            };
+            console.log('Created success data object:', data);
+          } else {
+            // Nếu parse fail và không phải success message
+            console.warn('Could not parse response as JSON or text, status:', response.status);
+            throw new Error('Backend trả về dữ liệu không hợp lệ');
+          }
+        }
+      }
+    } catch (error: any) {
+      console.error('Error parsing response:', error);
+      throw error;
     }
 
-    const data: AuthResponse = await response.json();
+    // Nếu response không ok, throw error với message từ data
+    if (!response.ok) {
+      const errorMessage = data?.message || data?.error || response.statusText || 'Đăng ký thất bại';
+      
+      // Log error details
+      console.error('Register failed:', {
+        status: response.status,
+        statusText: response.statusText,
+        data: data
+      });
+      
+      throw new Error(errorMessage);
+    }
 
-    //  Lưu token sau khi đăng ký
+    // Lưu token sau khi đăng ký thành công (nếu có)
     if (data.token) {
       localStorage.setItem('token', data.token);
       if (data.refreshToken) localStorage.setItem('refreshToken', data.refreshToken);
+    } else {
+      console.log('No token in response, user will need to login after registration');
     }
 
+    // Log success
+    console.log('Registration completed successfully:', data);
+    
     return data;
   }
 
@@ -173,3 +268,4 @@ class AuthService {
 }
 
 export default new AuthService();
+
