@@ -169,10 +169,10 @@ const AppRoutes = () => {
           </RoleRoute>
         } />
 
-        <Route path="/admin/services" element={
+        <Route path="/admin/orders" element={
           <RoleRoute requiredRole="2">
             <AdminLayout>
-              <ServiceManagement />
+              <ManageOrder />
             </AdminLayout>
           </RoleRoute>
         } />
@@ -181,31 +181,6 @@ const AppRoutes = () => {
             <AdminLayout>
               <ManageOrder />
             </AdminLayout>
-          </RoleRoute>
-        } />
-
-        {/* Staff Routes - Chỉ dành cho Staff (roleId = '3') */}
-        <Route path="/staff" element={
-          <RoleRoute requiredRole="3">
-            <StaffLayout>
-              <StaffOrderManagement />
-            </StaffLayout>
-          </RoleRoute>
-        } />
-        
-        <Route path="/staff/orders" element={
-          <RoleRoute requiredRole="3">
-            <StaffLayout>
-              <StaffOrderManagement />
-            </StaffLayout>
-          </RoleRoute>
-        } />
-
-        <Route path="/staff/contracts" element={
-          <RoleRoute requiredRole="3">
-            <StaffLayout>
-              <ContractManagement />
-            </StaffLayout>
           </RoleRoute>
         } />
 

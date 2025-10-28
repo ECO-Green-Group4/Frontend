@@ -30,6 +30,7 @@ export interface AssignStaffResponse {
   success: boolean;
   data?: any;
 }
+import { Order, OrderResponse, AssignStaffResponse } from '@/types/api';
 
 export const OrderService = {
   // Lấy tất cả orders
@@ -57,6 +58,14 @@ export const OrderService = {
       return response.data;
     } catch (error) {
       console.error('Error assigning staff:', error);
+  assignStaffToOrder: async (orderId: number, staffId: number): Promise<Order> => {
+    try {
+      const response = await api.put<AssignStaffResponse>(
+        `/admin/orders/${orderId}/assign-staff?staffId=${staffId}`
+      );
+      return response.data.data;
+    } catch (error) {
+      console.error('Error assigning staff to order:', error);
       throw error;
     }
   }

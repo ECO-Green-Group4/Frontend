@@ -49,15 +49,30 @@ export const UserService = {
     }
   },
 
-  // Thay đổi role của user
-  changeUserRole: async (userId: number, newRole: 'admin' | 'user' | 'staff'): Promise<any> => {
+  // Lấy danh sách staff
+  getStaffList: async (): Promise<User[]> => {
     try {
-      console.log(`Changing user ${userId} role to ${newRole}`);
-      const response = await api.put(`/admin/users/${userId}/role?role=${newRole}`);
-      console.log('Role change response:', response.data);
-      return response.data;
+      const response = await api.get<UserResponse>('/admin/users');
+      const users = response.data.data || [];
+
+      // Chuẩn hoá xác định staff từ nhiều dạng backend có thể trả về
+      const isStaff = (u: any) => {
+        if (!u) return false;
+        // role là chuỗi
+        if (typeof u.role === 'string' && u.role.toLowerCase() === 'staff') return true;
+        // roleId là số/chuỗi (ví dụ staff = 3)
+        if (u.roleId && String(u.roleId) === '3') return true;
+        // authorities/roles mảng
+        const arrayRoles = u.roles || u.authorities || u.permissions;
+        if (Array.isArray(arrayRoles)) {
+          return arrayRoles.some((r: any) => String(r).toLowerCase().includes('staff'));
+        }
+        return false;
+      };
+
+      return users.filter(isStaff);
     } catch (error) {
-      console.error('Error changing user role:', error);
+      console.error('Error fetching staff list:', error);
       throw error;
     }
   },
