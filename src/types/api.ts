@@ -35,3 +35,23 @@ export interface AuthTokens {
   refreshToken?: string;
   expiresIn?: number;
 }
+
+// Order types
+export interface OrderUser {
+  userId: number;
+  fullName: string;
+  email: string;
+  phone?: string;
+  role?: string;
+}
+
+export interface Order {
+  orderId: number;
+  listingId?: number;
+  buyer: OrderUser;
+  seller: OrderUser;
+  status: string;
+  createdAt: string;
+  totalAmount: number;
+  assignedStaff?: OrderUser | null;
+}

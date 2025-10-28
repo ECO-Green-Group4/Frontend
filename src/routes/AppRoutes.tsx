@@ -29,6 +29,7 @@ import PostManagement from '@/components/PostManagement';
 import ServiceManagement from '@/components/ServiceManagement';
 import StaffOrderManagement from '@/components/StaffOrderManagement';
 import ContractManagement from '@/pages/ContractManagement';
+import ManageOrder from '@/pages/ManageOrder';
 
 const AppRoutes = () => {
   return (
@@ -172,6 +173,13 @@ const AppRoutes = () => {
           <RoleRoute requiredRole="2">
             <AdminLayout>
               <ServiceManagement />
+            </AdminLayout>
+          </RoleRoute>
+        } />
+        <Route path="/admin/orders" element={
+          <RoleRoute requiredRole="2">
+            <AdminLayout>
+              <ManageOrder />
             </AdminLayout>
           </RoleRoute>
         } />
