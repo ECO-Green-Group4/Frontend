@@ -35,3 +35,46 @@ export interface AuthTokens {
   refreshToken?: string;
   expiresIn?: number;
 }
+
+// Order related types
+export interface OrderUser {
+  userId: number;
+  fullName: string;
+  email: string;
+  username: string;
+  phone: string;
+  status: string;
+  dateOfBirth: string;
+  gender: string;
+  identityCard: string;
+  address: string;
+  createdAt: string;
+  currentMembershipId: number;
+  membershipExpiry: string;
+  availableCoupons: number;
+}
+
+export interface Order {
+  orderId: number;
+  listingId: number;
+  buyer: OrderUser;
+  seller: OrderUser;
+  assignedStaff?: OrderUser;
+  status: string;
+  createdAt: string;
+  updatedAt: string;
+  totalAmount: number;
+  notes?: string;
+}
+
+export interface OrderResponse {
+  message: string;
+  success: boolean;
+  data: Order[];
+}
+
+export interface AssignStaffResponse {
+  message: string;
+  success: boolean;
+  data: Order;
+}
