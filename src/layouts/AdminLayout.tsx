@@ -11,8 +11,7 @@ import {
   Search,
   Bell,
   Settings as SettingsIcon,
-  User,
-  ShoppingCart
+  User
 } from 'lucide-react';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import {
@@ -50,7 +49,7 @@ const AdminLayout: React.FC<AdminLayoutProps> = ({ children }) => {
     {
       id: 'orders',
       label: 'Order management',
-      icon: ShoppingCart,
+      icon: FileText,
       path: '/admin/orders',
       active: location.pathname === '/admin/orders'
     },
