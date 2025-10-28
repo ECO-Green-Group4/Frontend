@@ -1,18 +1,12 @@
 import React from 'react';
 import { Outlet, useLocation, useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
 import { 
-  Users, 
-  FileText, 
-  Package, 
-  BarChart3, 
-  Settings, 
-  Search,
+  Package,
   Bell,
   Settings as SettingsIcon,
   User,
-  Wrench
+  FileText
 } from 'lucide-react';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import {
@@ -25,11 +19,11 @@ import {
 import { useAuth } from '@/hooks/useAuth';
 import ecoLogo from '@/assets/logo/eco_green.png';
 
-interface AdminLayoutProps {
+interface StaffLayoutProps {
   children?: React.ReactNode;
 }
 
-const AdminLayout: React.FC<AdminLayoutProps> = ({ children }) => {
+const StaffLayout: React.FC<StaffLayoutProps> = ({ children }) => {
   const location = useLocation();
   const navigate = useNavigate();
   const { user, logout } = useAuth();
@@ -41,46 +35,18 @@ const AdminLayout: React.FC<AdminLayoutProps> = ({ children }) => {
 
   const menuItems = [
     {
-      id: 'users',
-      label: 'User management',
-      icon: Users,
-      path: '/admin/users',
-      active: location.pathname === '/admin/users'
-    },
-    {
-      id: 'posts',
-      label: 'Manage posts',
-      icon: FileText,
-      path: '/admin/posts',
-      active: location.pathname === '/admin/posts'
-    },
-    {
-      id: 'packages',
-      label: 'Manage packages',
+      id: 'orders',
+      label: 'Manage Orders',
       icon: Package,
-      path: '/admin/packages',
-      active: location.pathname === '/admin/packages'
+      path: '/staff/orders',
+      active: location.pathname === '/staff/orders'
     },
     {
-      id: 'services',
-      label: 'Manage services',
-      icon: Wrench,
-      path: '/admin/services',
-      active: location.pathname === '/admin/services'
-    },
-    {
-      id: 'reports',
-      label: 'Reports & Statistics',
-      icon: BarChart3,
-      path: '/admin/reports',
-      active: location.pathname === '/admin/reports'
-    },
-    {
-      id: 'settings',
-      label: 'Settings',
-      icon: Settings,
-      path: '/admin/settings',
-      active: location.pathname === '/admin/settings'
+      id: 'contracts',
+      label: 'Contract Management',
+      icon: FileText,
+      path: '/staff/contracts',
+      active: location.pathname === '/staff/contracts'
     }
   ];
 
@@ -93,17 +59,6 @@ const AdminLayout: React.FC<AdminLayoutProps> = ({ children }) => {
           <div className="flex items-center space-x-3">
             <img src={ecoLogo} alt="Eco Green Logo" className="h-8 w-8" />
             <span className="text-xl font-bold text-green-500">EcoGreen</span>
-          </div>
-
-          {/* Search Bar */}
-          <div className="flex-1 max-w-md mx-8">
-            <div className="relative">
-              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4" />
-              <Input
-                placeholder="Search"
-                className="pl-10 pr-4 py-2 bg-gray-50 border-gray-200 focus:bg-white focus:border-green-500"
-              />
-            </div>
           </div>
 
           {/* Right side icons */}
@@ -120,7 +75,7 @@ const AdminLayout: React.FC<AdminLayoutProps> = ({ children }) => {
               <DropdownMenuTrigger asChild>
                 <button className="inline-flex items-center justify-center outline-none">
                   <Avatar className="h-8 w-8">
-                    <AvatarImage src={user?.avatarUrl || ""} alt={user?.name || user?.email || "User"} />
+                    <AvatarImage src={user?.avatar || ""} alt={user?.name || user?.email || "User"} />
                     <AvatarFallback>
                       <User className="w-4 h-4 text-gray-600" />
                     </AvatarFallback>
@@ -174,4 +129,5 @@ const AdminLayout: React.FC<AdminLayoutProps> = ({ children }) => {
   );
 };
 
-export default AdminLayout;
+export default StaffLayout;
+

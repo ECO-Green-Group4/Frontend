@@ -157,7 +157,7 @@ const StaffContract: React.FC = () => {
               onClick={handlePayment}
               className="bg-green-500 hover:bg-green-600 text-white px-12 py-4 text-xl font-semibold rounded-lg transition-all duration-200 shadow-lg hover:shadow-xl transform hover:scale-105"
             >
-              Payment
+              Next
             </Button>
           </div>
         </div>

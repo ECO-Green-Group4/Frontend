@@ -74,7 +74,7 @@ export const VALIDATION_RULES: Record<string, Record<string, ValidationRule>> = 
   PASSWORD: {
     REQUIRED: { type: 'required', message: 'Mật khẩu là bắt buộc' },
     MIN_LENGTH: { type: 'minLength', value: 8, message: 'Mật khẩu phải có ít nhất 8 ký tự' },
-    FORMAT: { type: 'password', message: 'Mật khẩu phải có chữ hoa, chữ thường và số' }
+    FORMAT: { type: 'password', message: 'Mật khẩu phải có chữ hoa, chữ thường, số và ký tự đặc biệt' }
   },
   PHONE: {
     FORMAT: { type: 'phone', message: 'Số điện thoại không hợp lệ' }
