@@ -22,6 +22,7 @@ import Payment from '@/pages/Payment';
 import Unauthorized from '@/pages/Unauthorized';
 import VnPayCallback from '@/pages/VnPayCallback';
 import AdminLayout from '@/layouts/AdminLayout';
+import StaffLayout from '@/layouts/StaffLayout';
 import UserManagement from '@/components/UserManagement';
 import PackageManagement from '@/components/PackageManagement';
 import PostManagement from '@/components/PostManagement';

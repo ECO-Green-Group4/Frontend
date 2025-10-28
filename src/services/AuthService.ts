@@ -55,15 +55,43 @@ class AuthService {
       if (data.refreshToken) localStorage.setItem('refreshToken', data.refreshToken);
     }
 
+    // Map role từ backend thành roleId và normalize
+    const backendRole = (data.role || 'user').toUpperCase();
+    let roleId = data.roleId?.toString();
+    let normalizedRole: 'user' | 'admin' | 'staff' = 'user';
+    
+    // Nếu không có roleId từ backend, map từ role string
+    if (!roleId) {
+      if (backendRole === 'ADMIN' || backendRole === 'ROLE_ADMIN') {
+        roleId = '2';
+        normalizedRole = 'admin';
+      } else if (backendRole === 'STAFF' || backendRole === 'ROLE_STAFF') {
+        roleId = '3';
+        normalizedRole = 'staff';
+      } else {
+        roleId = '1';
+        normalizedRole = 'user';
+      }
+    } else {
+      // Nếu có roleId, map role tương ứng
+      if (roleId === '2') {
+        normalizedRole = 'admin';
+      } else if (roleId === '3') {
+        normalizedRole = 'staff';
+      } else {
+        normalizedRole = 'user';
+      }
+    }
+
     // Tạo user object từ response data
     const user: User = {
       id: data.id?.toString() || '',
       name: data.fullName || '',
       email: email,
       phone: data.phoneNumber || '',
-      role: data.role || 'user',
-      roleId: data.roleId?.toString() || '1',
-      roleName: data.role || 'user',
+      role: normalizedRole as 'user' | 'admin' | 'staff',
+      roleId: roleId,
+      roleName: normalizedRole as 'user' | 'admin' | 'staff',
       createdAt: new Date().toISOString(),
       updatedAt: new Date().toISOString()
     };
@@ -141,12 +169,29 @@ class AuthService {
     if (!response.ok) {
       const errorMessage = data?.message || data?.error || response.statusText || 'Đăng ký thất bại';
       
-      // Log error details
+      // Log error details with full error object
       console.error('Register failed:', {
         status: response.status,
         statusText: response.statusText,
         data: data
       });
+      
+      // Log the actual error response JSON
+      if (data) {
+        console.error('Backend error response:', JSON.stringify(data, null, 2));
+      }
+      
+      // If there are validation errors, include them in the message
+      if (data?.errors && typeof data.errors === 'object') {
+        const errorDetails = Object.entries(data.errors)
+          .map(([field, messages]) => {
+            const messageList = Array.isArray(messages) ? messages : [messages];
+            return `${field}: ${messageList.join(', ')}`;
+          })
+          .join('; ');
+        console.error('Validation errors:', errorDetails);
+        throw new Error(`${errorMessage}\n\n${errorDetails}`);
+      }
       
       throw new Error(errorMessage);
     }
