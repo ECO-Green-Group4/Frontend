@@ -2,6 +2,7 @@ import React, { useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '@/hooks/useAuth';
 import { isAdmin } from '@/utils/adminCheck';
+import { isStaff } from '@/utils/staffCheck';
 
 const RoleBasedRedirect: React.FC = () => {
   const { user, isAuthenticated, loading } = useAuth();
@@ -13,6 +14,9 @@ const RoleBasedRedirect: React.FC = () => {
       if (isAdmin(user)) {
         // Admin - redirect đến admin dashboard
         navigate('/admin', { replace: true });
+      } else if (isStaff(user)) {
+        // Staff - redirect đến staff dashboard
+        navigate('/staff/orders', { replace: true });
       } else {
         // User thường - redirect đến trang chủ
         navigate('/', { replace: true });

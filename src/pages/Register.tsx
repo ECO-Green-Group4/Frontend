@@ -108,9 +108,39 @@ const Register = () => {
         errorMessage = error;
       }
       
-      // Hiển thị error trong toast và state
-      showToast(errorMessage, 'error');
-      setErrors({ general: errorMessage });
+      // Parse backend validation errors if available
+      // Error message format: "Dữ liệu không hợp lệ\n\nfield: error1, error2; field2: error3"
+      const errorLines = errorMessage.split('\n\n');
+      if (errorLines.length > 1) {
+        // We have detailed validation errors
+        const validationErrors: Record<string, string> = {};
+        errorLines[1].split(';').forEach((fieldError: string) => {
+          const [field, ...messages] = fieldError.split(':');
+          if (field && messages.length > 0) {
+            validationErrors[field.trim()] = messages.join(':').trim();
+          }
+        });
+        
+        // Only update errors for fields that exist in our form
+        const formErrors: Record<string, string> = {};
+        Object.entries(validationErrors).forEach(([field, message]) => {
+          if (formData.hasOwnProperty(field)) {
+            formErrors[field] = message;
+          }
+        });
+        
+        if (Object.keys(formErrors).length > 0) {
+          setErrors(formErrors);
+          showToast('Vui lòng kiểm tra lại thông tin đăng ký', 'error');
+        } else {
+          showToast(errorMessage, 'error');
+          setErrors({ general: errorMessage });
+        }
+      } else {
+        // No detailed errors, just show the general message
+        showToast(errorMessage, 'error');
+        setErrors({ general: errorMessage });
+      }
     } finally {
       setLoading(false);
     }

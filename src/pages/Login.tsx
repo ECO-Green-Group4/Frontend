@@ -4,6 +4,7 @@ import { Link, useNavigate, useLocation } from 'react-router-dom';
 import { Eye, EyeOff } from 'lucide-react';
 import { useAuth } from '@/hooks/useAuth';
 import { isAdmin } from '@/utils/adminCheck';
+import { isStaff } from '@/utils/staffCheck';
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -49,12 +50,23 @@ const Login = () => {
     try {
       const response = await login(formData.email, formData.password);
       
-      // Kiểm tra nếu user là admin thì redirect đến admin dashboard
+      // Debug: Log user info để kiểm tra role
+      console.log('Login response user:', response.user);
+      console.log('Role check - isAdmin:', isAdmin(response.user), 'isStaff:', isStaff(response.user));
+      
+      // Kiểm tra và redirect dựa trên role của user
       if (isAdmin(response.user)) {
+        // Admin - redirect đến admin dashboard
+        console.log('Redirecting to admin dashboard');
         navigate('/admin', { replace: true });
+      } else if (isStaff(response.user)) {
+        // Staff - redirect đến staff dashboard
+        console.log('Redirecting to staff dashboard');
+        navigate('/staff/orders', { replace: true });
       } else {
-        // Redirect về trang trước đó hoặc trang chủ cho user thường
-        navigate(from === '/admin' ? '/' : from, { replace: true });
+        // User thường - redirect về trang trước đó hoặc trang chủ
+        console.log('Redirecting to home/user page');
+        navigate(from === '/admin' || from === '/staff' ? '/' : from, { replace: true });
       }
     } catch (error: any) {
       setErrors({ 

@@ -16,7 +16,7 @@ interface MembershipPlan {
   }[];
 }
 
-// Plan data, now in English
+
 const plans: MembershipPlan[] = [
   {
     id: 1,
