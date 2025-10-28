@@ -25,6 +25,7 @@ import AdminLayout from '@/layouts/AdminLayout';
 import UserManagement from '@/components/UserManagement';
 import PackageManagement from '@/components/PackageManagement';
 import PostManagement from '@/components/PostManagement';
+import ManageOrder from '@/pages/ManageOrder';
 
 const AppRoutes = () => {
   return (
@@ -160,6 +161,14 @@ const AppRoutes = () => {
           <RoleRoute requiredRole="2">
             <AdminLayout>
               <PostManagement />
+            </AdminLayout>
+          </RoleRoute>
+        } />
+
+        <Route path="/admin/orders" element={
+          <RoleRoute requiredRole="2">
+            <AdminLayout>
+              <ManageOrder />
             </AdminLayout>
           </RoleRoute>
         } />
