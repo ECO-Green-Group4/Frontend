@@ -12,7 +12,8 @@ import {
   Bell,
   Settings as SettingsIcon,
   User,
-  Wrench
+  Wrench,
+  ShoppingCart
 } from 'lucide-react';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import {
@@ -76,6 +77,13 @@ const AdminLayout: React.FC<AdminLayoutProps> = ({ children }) => {
       active: location.pathname === '/admin/services'
     },
     {
+      id: 'orders',
+      label: 'Manage orders',
+      icon: ShoppingCart,
+      path: '/admin/orders',
+      active: location.pathname === '/admin/orders'
+    },
+    {
       id: 'reports',
       label: 'Reports & Statistics',
       icon: BarChart3,
@@ -88,7 +96,14 @@ const AdminLayout: React.FC<AdminLayoutProps> = ({ children }) => {
       icon: Settings,
       path: '/admin/settings',
       active: location.pathname === '/admin/settings'
-    }
+    },
+    {
+      id: 'orders',
+      label: 'Order management',
+      icon: FileText,
+      path: '/admin/orders',
+      active: location.pathname === '/admin/orders'
+    },
   ];
 
   return (
@@ -127,7 +142,7 @@ const AdminLayout: React.FC<AdminLayoutProps> = ({ children }) => {
               <DropdownMenuTrigger asChild>
                 <button className="inline-flex items-center justify-center outline-none">
                   <Avatar className="h-8 w-8">
-                    <AvatarImage src={user?.avatarUrl || ""} alt={user?.name || user?.email || "User"} />
+                    <AvatarImage src={user?.avatar || ""} alt={user?.name || user?.email || "User"} />
                     <AvatarFallback>
                       <User className="w-4 h-4 text-gray-600" />
                     </AvatarFallback>

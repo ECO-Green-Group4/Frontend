@@ -36,35 +36,26 @@ export interface AuthTokens {
   expiresIn?: number;
 }
 
+// Order types
 // Order related types
 export interface OrderUser {
   userId: number;
   fullName: string;
   email: string;
-  username: string;
-  phone: string;
-  status: string;
-  dateOfBirth: string;
-  gender: string;
-  identityCard: string;
-  address: string;
-  createdAt: string;
-  currentMembershipId: number;
-  membershipExpiry: string;
-  availableCoupons: number;
+  phone?: string;
+  role?: string;
 }
 
 export interface Order {
   orderId: number;
-  listingId: number;
+
+  listingId?: number;
   buyer: OrderUser;
   seller: OrderUser;
-  assignedStaff?: OrderUser;
   status: string;
   createdAt: string;
-  updatedAt: string;
   totalAmount: number;
-  notes?: string;
+  assignedStaff?: OrderUser | null;
 }
 
 export interface OrderResponse {
@@ -77,4 +68,5 @@ export interface AssignStaffResponse {
   message: string;
   success: boolean;
   data: Order;
+
 }

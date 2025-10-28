@@ -26,6 +26,9 @@ import StaffLayout from '@/layouts/StaffLayout';
 import UserManagement from '@/components/UserManagement';
 import PackageManagement from '@/components/PackageManagement';
 import PostManagement from '@/components/PostManagement';
+import ServiceManagement from '@/components/ServiceManagement';
+import StaffOrderManagement from '@/components/StaffOrderManagement';
+import ContractManagement from '@/pages/ContractManagement';
 import ManageOrder from '@/pages/ManageOrder';
 
 const AppRoutes = () => {
@@ -166,6 +169,13 @@ const AppRoutes = () => {
           </RoleRoute>
         } />
 
+        <Route path="/admin/orders" element={
+          <RoleRoute requiredRole="2">
+            <AdminLayout>
+              <ManageOrder />
+            </AdminLayout>
+          </RoleRoute>
+        } />
         <Route path="/admin/orders" element={
           <RoleRoute requiredRole="2">
             <AdminLayout>
