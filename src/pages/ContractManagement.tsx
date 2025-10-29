@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -21,6 +22,7 @@ import {
 import { showToast } from '@/utils/toast';
 
 const ContractManagement: React.FC = () => {
+  const navigate = useNavigate();
   const [orders, setOrders] = useState<StaffOrder[]>([]);
   const [contract, setContract] = useState<ContractData | null>(null);
   const [loadingOrders, setLoadingOrders] = useState(true);
@@ -53,32 +55,54 @@ const ContractManagement: React.FC = () => {
       setError(null);
       setContract(null);
       const contractData = await ContractService.generateContract(orderId);
+      
+      // Validate contractData before using it
+      if (!contractData || !contractData.contractId) {
+        throw new Error('Contract data is invalid or missing contractId');
+      }
+      
       setContract(contractData);
       showToast('Tạo contract thành công!', 'success');
+      
+      // Navigate to add-on page after successful contract creation
+      navigate(`/staff/contract-addon?contractId=${contractData.contractId}`);
+      
       // Refresh orders after creating contract
       fetchOrders();
     } catch (err: any) {
       console.error('Error generating contract:', err);
-      let errorMessage = 'Không thể tạo contract';
+      
+      // Check if contract already exists
+      const errorMessage = err.message || '';
+      if (errorMessage.includes('Contract already exists') || errorMessage.includes('contract already exists')) {
+        // Backend không trả về contractId khi contract đã tồn tại
+        // Redirect đến trang add-on để staff có thể nhập contractId
+        showToast('Contract đã tồn tại. Chuyển đến trang Add-on để nhập Contract ID...', 'info');
+        navigate(`/staff/contract-addon`);
+        return;
+      }
+      
+      // Handle other errors
+      let finalErrorMessage = 'Không thể tạo contract';
       
       if (err.response) {
         if (err.response.status === 404) {
-          errorMessage = 'Không tìm thấy order với ID này';
+          finalErrorMessage = 'Không tìm thấy order với ID này';
         } else if (err.response.status === 400) {
-          errorMessage = err.response.data?.message || 'Dữ liệu không hợp lệ';
+          finalErrorMessage = err.response.data?.message || 'Dữ liệu không hợp lệ';
         } else if (err.response.status === 401 || err.response.status === 403) {
-          errorMessage = 'Bạn không có quyền tạo contract';
+          finalErrorMessage = 'Bạn không có quyền tạo contract';
         } else if (err.response.status === 500) {
-          errorMessage = 'Lỗi server. Vui lòng thử lại sau';
+          finalErrorMessage = 'Lỗi server. Vui lòng thử lại sau';
         } else {
-          errorMessage = err.response.data?.message || errorMessage;
+          finalErrorMessage = err.response.data?.message || finalErrorMessage;
         }
       } else if (err.message) {
-        errorMessage = err.message;
+        finalErrorMessage = err.message;
       }
       
-      setError(errorMessage);
-      showToast(errorMessage, 'error');
+      setError(finalErrorMessage);
+      showToast(finalErrorMessage, 'error');
     } finally {
       setGeneratingOrderId(null);
     }

@@ -6,7 +6,8 @@ import {
   Bell,
   Settings as SettingsIcon,
   User,
-  FileText
+  FileText,
+  Plus
 } from 'lucide-react';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import {
@@ -47,6 +48,13 @@ const StaffLayout: React.FC<StaffLayoutProps> = ({ children }) => {
       icon: FileText,
       path: '/staff/contracts',
       active: location.pathname === '/staff/contracts'
+    },
+    {
+      id: 'contract-addon',
+      label: 'Contract Add-on',
+      icon: Plus,
+      path: '/staff/contract-addon',
+      active: location.pathname.startsWith('/staff/contract-addon')
     }
   ];
 

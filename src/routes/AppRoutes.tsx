@@ -13,7 +13,7 @@ import Battery from '../pages/Battery';
 import Membership from '../pages/Membership';
 import Favorited from '../pages/Favorited';
 import History from '../pages/History';
-import StaffContract from '../pages/StaffContract';
+import ContractAddon from '@/pages/ContractAddon';
 import DescriptionEV from '../pages/DescriptionEV';
 import DescriptionBattery from '../pages/DescriptionBattery';
 import NotFound from '../pages/NotFound';
@@ -30,6 +30,7 @@ import ServiceManagement from '@/components/ServiceManagement';
 import StaffOrderManagement from '@/components/StaffOrderManagement';
 import ContractManagement from '@/pages/ContractManagement';
 import ManageOrder from '@/pages/ManageOrder';
+import MyContract from '@/pages/MyContract';
 
 const AppRoutes = () => {
   return (
@@ -128,12 +129,13 @@ const AppRoutes = () => {
             <History />
           </ProtectedRoute>
         } />
-
-        <Route path="/staff-contract" element={
-          
-            <StaffContract />
-          
+        <Route path="/my-contracts" element={
+          <ProtectedRoute>
+            <MyContract />
+          </ProtectedRoute>
         } />
+
+        
 
 
         {/* Admin Routes - Chỉ dành cho Admin (roleId = '2') */}
@@ -207,6 +209,11 @@ const AppRoutes = () => {
               <ContractManagement />
             </StaffLayout>
           </RoleRoute>
+        } />
+        <Route path="/staff/contract-addon" element={
+          <ProtectedRoute>
+            <ContractAddon />
+          </ProtectedRoute>
         } />
 
         {/* VNPay Callback */}

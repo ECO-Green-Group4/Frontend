@@ -1,8 +1,26 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
+import { useSearchParams } from 'react-router-dom';
 import Header from '@/components/ui/Header';
 import { Button } from '@/components/ui/button';
 import { Check } from 'lucide-react';
 import { showToast } from '@/utils/toast';
+import api from '@/services/axios';
+
+interface ContractAddon {
+  id: number;
+  contractId: number;
+  serviceId: number;
+  serviceName: string;
+  fee: number;
+  createdAt: string;
+  paymentStatus: string;
+}
+
+interface ContractAddonsResponse {
+  message: string;
+  success: boolean;
+  data: ContractAddon[];
+}
 
 interface ContractTerm {
   id: string;
@@ -16,9 +34,9 @@ interface ContractSection {
 }
 
 const StaffContract: React.FC = () => {
-  // Debug: Log when component loads
-  console.log('StaffContract component loaded!');
-  
+  const [searchParams] = useSearchParams();
+  const contractId = searchParams.get('contractId');
+  const [contractAddons, setContractAddons] = useState<ContractAddon[]>([]);
   const [contractSections, setContractSections] = useState<ContractSection[]>([
     {
       party: 'A',
@@ -39,6 +57,27 @@ const StaffContract: React.FC = () => {
       ]
     }
   ]);
+  
+  // Debug: Log when component loads
+  console.log('StaffContract component loaded!');
+  console.log('Contract ID:', contractId);
+  
+  // Fetch contract addons if contractId is provided
+  useEffect(() => {
+    if (contractId) {
+      fetchContractAddons();
+    }
+  }, [contractId]);
+
+  const fetchContractAddons = async () => {
+    try {
+      const response = await api.get<ContractAddonsResponse>(`/api/addon/contract/${contractId}/addons`);
+      setContractAddons(response.data.data);
+    } catch (error) {
+      console.error('Error fetching contract addons:', error);
+      showToast('Không thể tải danh sách services đã thêm', 'error');
+    }
+  };
 
   const handleTermToggle = (partyIndex: number, termId: string) => {
     setContractSections(prev => 
@@ -63,6 +102,14 @@ const StaffContract: React.FC = () => {
     showToast('Payment functionality will be implemented', 'info');
   };
 
+  // Format currency
+  const formatCurrency = (amount: number) => {
+    return new Intl.NumberFormat('vi-VN', {
+      style: 'currency',
+      currency: 'VND'
+    }).format(amount);
+  };
+
   return (
     <div className="min-h-screen bg-gray-200">
       {/* Header */}
@@ -79,9 +126,46 @@ const StaffContract: React.FC = () => {
           {/* Contract Title */}
           <h2 className="text-4xl font-bold text-black mb-12 text-center">Contract</h2>
           
+          {/* Contract Addons Section */}
+          {contractAddons.length > 0 && (
+            <div className="mb-12">
+              <h3 className="text-2xl font-bold text-gray-900 mb-6 text-center">
+                Services đã thêm vào Contract
+              </h3>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                {contractAddons.map((addon) => (
+                  <div key={addon.id} className="bg-gray-50 rounded-lg p-4 border">
+                    <div className="flex justify-between items-start mb-2">
+                      <h4 className="font-semibold text-gray-900">{addon.serviceName}</h4>
+                      <span className="text-sm text-gray-500">ID: {addon.serviceId}</span>
+                    </div>
+                    <div className="flex justify-between items-center">
+                      <span className="text-lg font-bold text-green-600">
+                        {formatCurrency(addon.fee)}
+                      </span>
+                      <span className={`px-2 py-1 rounded text-xs font-medium ${
+                        addon.paymentStatus === 'PENDING' 
+                          ? 'bg-yellow-100 text-yellow-800' 
+                          : 'bg-green-100 text-green-800'
+                      }`}>
+                        {addon.paymentStatus}
+                      </span>
+                    </div>
+                  </div>
+                ))}
+              </div>
+              <div className="mt-4 text-center">
+                <div className="text-lg font-semibold text-gray-900">
+                  Tổng phí services: {formatCurrency(
+                    contractAddons.reduce((total, addon) => total + addon.fee, 0)
+                  )}
+                </div>
+              </div>
+            </div>
+          )}
+          
           {/* Contract Sections */}
           <div className="flex items-start gap-16 mb-12">
-            {/* Section A */}
             <div className="flex-1 space-y-8">
               <h3 className="text-3xl font-bold text-black mb-6 text-center">
                 A
