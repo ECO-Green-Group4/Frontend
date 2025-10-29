@@ -14,6 +14,7 @@ import Membership from '../pages/Membership';
 import Favorited from '../pages/Favorited';
 import History from '../pages/History';
 import ContractAddon from '@/pages/ContractAddon';
+import StaffContract from '../pages/StaffContract';
 import DescriptionEV from '../pages/DescriptionEV';
 import DescriptionBattery from '../pages/DescriptionBattery';
 import NotFound from '../pages/NotFound';
@@ -134,8 +135,11 @@ const AppRoutes = () => {
             <MyContract />
           </ProtectedRoute>
         } />
-
-        
+        <Route path="/staff-contract" element={
+          <ProtectedRoute>
+            <StaffContract />
+          </ProtectedRoute>
+        } />
 
 
         {/* Admin Routes - Chỉ dành cho Admin (roleId = '2') */}
@@ -171,17 +175,17 @@ const AppRoutes = () => {
           </RoleRoute>
         } />
 
-        <Route path="/admin/services" element={
-          <RoleRoute requiredRole="2">
-            <AdminLayout>
-              <ServiceManagement />
-            </AdminLayout>
-          </RoleRoute>
-        } />
         <Route path="/admin/orders" element={
           <RoleRoute requiredRole="2">
             <AdminLayout>
               <ManageOrder />
+            </AdminLayout>
+          </RoleRoute>
+        } />
+        <Route path="/admin/services" element={
+          <RoleRoute requiredRole="2">
+            <AdminLayout>
+              <ServiceManagement />
             </AdminLayout>
           </RoleRoute>
         } />

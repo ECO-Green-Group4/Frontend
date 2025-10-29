@@ -37,6 +37,7 @@ export interface AuthTokens {
 }
 
 // Order types
+// Order related types
 export interface OrderUser {
   userId: number;
   fullName: string;
@@ -47,6 +48,7 @@ export interface OrderUser {
 
 export interface Order {
   orderId: number;
+
   listingId?: number;
   buyer: OrderUser;
   seller: OrderUser;
@@ -54,4 +56,17 @@ export interface Order {
   createdAt: string;
   totalAmount: number;
   assignedStaff?: OrderUser | null;
+}
+
+export interface OrderResponse {
+  message: string;
+  success: boolean;
+  data: Order[];
+}
+
+export interface AssignStaffResponse {
+  message: string;
+  success: boolean;
+  data: Order;
+
 }
