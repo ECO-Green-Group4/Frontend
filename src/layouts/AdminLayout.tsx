@@ -49,13 +49,6 @@ const AdminLayout: React.FC<AdminLayoutProps> = ({ children }) => {
       active: location.pathname === '/admin/users'
     },
     {
-      id: 'orders',
-      label: 'Order management',
-      icon: FileText,
-      path: '/admin/orders',
-      active: location.pathname === '/admin/orders'
-    },
-    {
       id: 'posts',
       label: 'Manage posts',
       icon: FileText,
@@ -97,7 +90,6 @@ const AdminLayout: React.FC<AdminLayoutProps> = ({ children }) => {
       path: '/admin/settings',
       active: location.pathname === '/admin/settings'
     },
-    
   ];
 
   return (
