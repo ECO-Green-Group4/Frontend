@@ -9,7 +9,6 @@ import {
   DialogContent,
   DialogHeader,
   DialogTitle,
-  DialogTrigger,
 } from '@/components/ui/dialog';
 import {
   Select,
@@ -84,12 +83,15 @@ const OrderManagement: React.FC = () => {
 
   const fetchStaffList = async () => {
     try {
-      // ưu tiên API lọc staff; fallback lọc phía client nếu API trả tất cả user
-      const data = await UserService.getStaffList();
-      const onlyStaff = Array.isArray(data)
-        ? data.filter((u: any) => (u.role?.toLowerCase?.() || u.role) === 'staff')
-        : [];
-      setStaffList(onlyStaff);
+      const users = await UserService.getStaffList();
+      const mappedStaff: OrderUser[] = (Array.isArray(users) ? users : []).map((u: any) => ({
+        userId: Number(u.userId ?? u.id),
+        fullName: u.fullName || u.name || u.username || 'Không rõ tên',
+        email: u.email || '',
+        phone: u.phone || undefined,
+        role: 'staff'
+      }));
+      setStaffList(mappedStaff);
     } catch (error) {
       console.error('Error fetching staff list:', error);
       showToast('Không thể tải danh sách staff', 'error');

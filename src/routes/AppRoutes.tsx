@@ -22,10 +22,10 @@ import Payment from '@/pages/Payment';
 import Unauthorized from '@/pages/Unauthorized';
 import VnPayCallback from '@/pages/VnPayCallback';
 import AdminLayout from '@/layouts/AdminLayout';
-import StaffLayout from '@/layouts/StaffLayout';
 import UserManagement from '@/components/UserManagement';
 import PackageManagement from '@/components/PackageManagement';
 import PostManagement from '@/components/PostManagement';
+import StaffLayout from '@/layouts/StaffLayout';
 import ServiceManagement from '@/components/ServiceManagement';
 import StaffOrderManagement from '@/components/StaffOrderManagement';
 import ContractManagement from '@/pages/ContractManagement';
@@ -101,7 +101,7 @@ const AppRoutes = () => {
 
 
 
-<Route path="/membership" element={
+        <Route path="/membership" element={
           <ProtectedRoute>
             <Membership />
           </ProtectedRoute>
@@ -111,7 +111,7 @@ const AppRoutes = () => {
             <Favorited />
           </ProtectedRoute>
         } />
-<Route path="/waiting" element={
+        <Route path="/waiting" element={
           <ProtectedRoute>
           <Waiting />
         </ProtectedRoute>
@@ -176,11 +176,35 @@ const AppRoutes = () => {
             </AdminLayout>
           </RoleRoute>
         } />
-        <Route path="/admin/orders" element={
+        <Route path="/admin/services" element={
           <RoleRoute requiredRole="2">
             <AdminLayout>
-              <ManageOrder />
+              <ServiceManagement />
             </AdminLayout>
+          </RoleRoute>
+        } />
+        {/* Staff Routes - Chỉ dành cho Staff (roleId = '3') */}
+        <Route path="/staff" element={
+          <RoleRoute requiredRole="3">
+            <StaffLayout>
+              <StaffOrderManagement />
+            </StaffLayout>
+          </RoleRoute>
+        } />
+        
+        <Route path="/staff/orders" element={
+          <RoleRoute requiredRole="3">
+            <StaffLayout>
+              <StaffOrderManagement />
+            </StaffLayout>
+          </RoleRoute>
+        } />
+
+        <Route path="/staff/contracts" element={
+          <RoleRoute requiredRole="3">
+            <StaffLayout>
+              <ContractManagement />
+            </StaffLayout>
           </RoleRoute>
         } />
 
