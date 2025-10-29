@@ -10,8 +10,7 @@ import {
   Plus, 
   Edit, 
   Trash2, 
-  Settings,
-  Filter
+  Settings
 } from 'lucide-react';
 import SimpleModal from '@/components/ui/simple-modal';
 import { showToast } from '@/utils/toast';
@@ -35,7 +34,7 @@ const ServiceManagement: React.FC = () => {
     name: '',
     description: '',
     fee: 0,
-    status: 'active'
+    status: 'ACTIVE'
   });
 
   // Fetch services
@@ -173,7 +172,7 @@ const ServiceManagement: React.FC = () => {
       name: '',
       description: '',
       fee: 0,
-      status: 'active'
+      status: 'ACTIVE'
     });
   };
 
@@ -188,7 +187,7 @@ const ServiceManagement: React.FC = () => {
       name: service.name,
       description: service.description,
       fee: service.defaultFee || service.fee,
-      status: service.status
+      status: service.status.toUpperCase() // Convert to uppercase for API
     });
     setIsEditDialogOpen(true);
   };
@@ -203,6 +202,15 @@ const ServiceManagement: React.FC = () => {
       default:
         return 'bg-gray-100 text-gray-800';
     }
+  };
+
+  // Format status to proper case
+  const formatStatus = (status: string) => {
+    if (!status) return status;
+    const lowerStatus = status.toLowerCase();
+    if (lowerStatus === 'active') return 'Active';
+    if (lowerStatus === 'inactive') return 'Inactive';
+    return status.charAt(0).toUpperCase() + status.slice(1).toLowerCase();
   };
 
   // Format currency
@@ -304,8 +312,8 @@ const ServiceManagement: React.FC = () => {
                     onChange={(e) => handleInputChange('status', e.target.value)}
                     className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-green-500"
                   >
-                    <option value="active">Active</option>
-                    <option value="inactive">Inactive</option>
+                    <option value="ACTIVE">Active</option>
+                    <option value="INACTIVE">Inactive</option>
                   </select>
                 </div>
               </div>
@@ -372,7 +380,7 @@ const ServiceManagement: React.FC = () => {
                     <CardTitle className="flex items-center gap-2">
                       {service.name}
                       <Badge className={getStatusBadgeColor(service.status)}>
-                        {service.status || 'N/A'}
+                        {formatStatus(service.status) || 'N/A'}
                       </Badge>
                     </CardTitle>
                     <div className="mt-2 text-sm text-gray-600">
@@ -482,8 +490,8 @@ const ServiceManagement: React.FC = () => {
                 onChange={(e) => handleInputChange('status', e.target.value)}
                 className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-green-500"
               >
-                <option value="active">Active</option>
-                <option value="inactive">Inactive</option>
+                <option value="ACTIVE">Active</option>
+                <option value="INACTIVE">Inactive</option>
               </select>
             </div>
           </div>
