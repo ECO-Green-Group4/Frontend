@@ -187,6 +187,14 @@ class PaymentService {
     });
     return response.data;
   }
+
+  // Xử lý callback VNPay theo endpoint frontend mới từ backend
+  async handleVnPayFrontendCallback(queryParams: any): Promise<any> {
+    const response = await api.get('/payments/vnpay-frontend-callback', {
+      params: queryParams
+    });
+    return response.data;
+  }
 }
 
 export default new PaymentService();

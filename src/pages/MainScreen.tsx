@@ -20,6 +20,7 @@ const MainScreen = () => {
     category: "EV" | "Battery";
     description?: string;
     postType?: string;
+    createdAt?: string; // Thêm trường createdAt
   };
 
   const fetchPosts = async (): Promise<Post[]> => {
@@ -70,7 +71,8 @@ const MainScreen = () => {
             imageUrl,
             category,
             postType: item.postType,
-            description: item.description
+            description: item.description,
+            createdAt: item.createdAt // Lấy createdAt từ API
           };
         });
 
@@ -130,9 +132,24 @@ const MainScreen = () => {
         (p.description ?? "").toLowerCase().includes(term);
       return matchFilter && matchSearch;
     });
-    
-    // Sort by VIP priority: Diamond → Gold → Silver → Non-VIP
-    return filtered.sort((a, b) => getVIPPriority(a.postType) - getVIPPriority(b.postType));
+
+    // Sort by VIP priority + mới nhất lên đầu trong cùng 1 nhóm VIP
+    return filtered.sort((a, b) => {
+      const v1 = getVIPPriority(a.postType);
+      const v2 = getVIPPriority(b.postType);
+      if (v1 !== v2) return v1 - v2;
+
+      // Ưu tiên bài mới theo createdAt hoặc id
+      if (a.createdAt && b.createdAt) {
+        // Nếu createdAt tồn tại, sort giảm dần (mới lên trước)
+        return new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime();
+      }
+      // Nếu không có createdAt, sort theo id giảm dần nếu là số
+      if (!isNaN(Number(a.id)) && !isNaN(Number(b.id))) {
+        return Number(b.id) - Number(a.id);
+      }
+      return 0;
+    });
   }, [posts, activeFilter, searchQuery]);
 
   const handlePostClick = (post: Post) => {

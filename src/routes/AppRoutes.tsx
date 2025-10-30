@@ -14,7 +14,8 @@ import Membership from '../pages/Membership';
 import Favorited from '../pages/Favorited';
 import History from '../pages/History';
 import ContractAddon from '@/pages/ContractAddon';
-import StaffContract from '../pages/StaffContract';
+// import StaffContract from '../pages/StaffContract';
+import ContractDetail from '@/pages/ContractDetail';
 import DescriptionEV from '../pages/DescriptionEV';
 import DescriptionBattery from '../pages/DescriptionBattery';
 import NotFound from '../pages/NotFound';
@@ -135,9 +136,9 @@ const AppRoutes = () => {
             <MyContract />
           </ProtectedRoute>
         } />
-        <Route path="/staff-contract" element={
+        <Route path="/my-contracts/:contractId" element={
           <ProtectedRoute>
-            <StaffContract />
+            <ContractDetail />
           </ProtectedRoute>
         } />
 
