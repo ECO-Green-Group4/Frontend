@@ -16,6 +16,7 @@ import {
 import { showToast } from '@/utils/toast';
 import api from '@/services/axios';
 import { useNavigate } from 'react-router-dom';
+// Modal đã thay bằng trang chi tiết riêng
 
 interface ContractData {
   contractId: number;
@@ -38,6 +39,8 @@ const MyContract: React.FC = () => {
   const [contracts, setContracts] = useState<ContractData[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  // Thêm state cho chi tiết contract
+  // Xem chi tiết sẽ chuyển sang trang riêng
 
   useEffect(() => {
     fetchMyContracts();
@@ -95,9 +98,9 @@ const MyContract: React.FC = () => {
     );
   };
 
+  // Hàm fetch contract chi tiết
   const handleViewContract = (contractId: number) => {
-    // Navigate to contract detail page or staff contract page with contractId
-    navigate(`/staff-contract?contractId=${contractId}`);
+    navigate(`/my-contracts/${contractId}`);
   };
 
   if (loading) {
@@ -220,9 +223,6 @@ const MyContract: React.FC = () => {
                     <CardTitle className="flex items-center gap-3">
                       Contract #{contract.contractId}
                       {getStatusBadge(contract.status)}
-                      <Badge variant="outline" className="text-blue-600">
-                        Order ID: {contract.orderId}
-                      </Badge>
                     </CardTitle>
                   </div>
                   <Button
@@ -298,6 +298,7 @@ const MyContract: React.FC = () => {
         </div>
       )}
       </div>
+  {/* Chi tiết đã tách sang trang riêng */}
     </div>
   );
 };

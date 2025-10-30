@@ -26,8 +26,10 @@ const VnPayCallback: React.FC = () => {
           queryParams[key] = value;
         });
 
-        // Kiểm tra nếu có vnp_ResponseCode = '00' (thành công)
-        if (queryParams.vnp_ResponseCode === '00') {
+        // Gọi backend endpoint mới để xác nhận giao dịch, sau đó điều hướng về trang Waiting
+        const backendResult = await PaymentService.handleVnPayFrontendCallback(queryParams);
+
+        if (backendResult?.success || queryParams.vnp_ResponseCode === '00') {
           setStatus('success');
           setMessage('Thanh toán thành công! Bài đăng của bạn đang chờ admin duyệt.');
           
