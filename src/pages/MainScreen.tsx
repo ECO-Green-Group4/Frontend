@@ -192,9 +192,18 @@ const MainScreen = () => {
     if (!postType) return 999; // Non-VIP posts go last
     
     const normalized = postType.toLowerCase();
-    if (normalized.includes("diamond")) return 1; // Highest priority
-    if (normalized.includes("gold")) return 2;
-    if (normalized.includes("silver")) return 3;
+    // VIP Kim Cương (Diamond) - Highest priority
+    if (normalized.includes("diamond") || normalized.includes("kim cương") || normalized.includes("kimcuong")) {
+      return 1;
+    }
+    // VIP Vàng (Gold)
+    if (normalized.includes("gold") || normalized.includes("vàng") || normalized.includes("vang")) {
+      return 2;
+    }
+    // VIP Bạc (Silver)
+    if (normalized.includes("silver") || normalized.includes("bạc") || normalized.includes("bac")) {
+      return 3;
+    }
     return 999; // Non-VIP or unknown
   };
 

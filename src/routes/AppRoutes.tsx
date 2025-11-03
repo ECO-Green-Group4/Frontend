@@ -31,6 +31,7 @@ import StaffLayout from '@/layouts/StaffLayout';
 import ServiceManagement from '@/components/ServiceManagement';
 import StaffOrderManagement from '@/components/StaffOrderManagement';
 import ContractManagement from '@/pages/ContractManagement';
+import StaffContractsList from '@/pages/StaffContractsList';
 import ManageOrder from '@/pages/ManageOrder';
 import MyContract from '@/pages/MyContract';
 
@@ -236,6 +237,13 @@ const AppRoutes = () => {
           <RoleRoute requiredRole="3">
             <StaffLayout>
               <ContractManagement />
+            </StaffLayout>
+          </RoleRoute>
+        } />
+        <Route path="/staff/signed-contracts" element={
+          <RoleRoute requiredRole="3">
+            <StaffLayout>
+              <StaffContractsList />
             </StaffLayout>
           </RoleRoute>
         } />

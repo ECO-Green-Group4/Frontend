@@ -7,7 +7,8 @@ import {
   Settings as SettingsIcon,
   User,
   FileText,
-  Plus
+  Plus,
+  CheckCircle2
 } from 'lucide-react';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import {
@@ -44,10 +45,17 @@ const StaffLayout: React.FC<StaffLayoutProps> = ({ children }) => {
     },
     {
       id: 'contracts',
-      label: 'Contract Management',
+      label: 'Tạo Contract',
       icon: FileText,
       path: '/staff/contracts',
       active: location.pathname === '/staff/contracts'
+    },
+    {
+      id: 'signed-contracts',
+      label: 'Contracts Đã Ký',
+      icon: CheckCircle2,
+      path: '/staff/signed-contracts',
+      active: location.pathname === '/staff/signed-contracts'
     },
     {
       id: 'contract-addon',

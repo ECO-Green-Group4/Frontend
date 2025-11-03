@@ -30,6 +30,7 @@ interface ContractDetailData {
     fee: number;
     createdAt: string;
     paymentStatus: string;
+    chargedTo?: string;
   }>;
 }
 
@@ -203,14 +204,16 @@ const ContractDetail: React.FC = () => {
     }
   };
 
-  const handleAddonVnpayPayment = async () => {
+  // Handler thanh toán add-ons của Seller
+  const handleSellerAddonPayment = async () => {
     if (!contractId) return;
     try {
       setPayingAddon(true);
-      console.log('💳 Creating VNPay payment for contract addons:', contractId);
+      console.log('💳 Creating VNPay payment for SELLER addons:', contractId);
       
       const res = await api.post<VnPayPaymentResponse>(
-        `/payments/contract/${contractId}/addons/vnpay`
+        `/payments/contract/${contractId}/addons/vnpay`,
+        { chargedTo: 'SELLER' }
       );
       
       console.log('✅ VNPay payment response:', res.data);
@@ -239,7 +242,55 @@ const ContractDetail: React.FC = () => {
         showToast('Không nhận được paymentUrl từ server', 'error');
       }
     } catch (err: any) {
-      console.error('❌ Create addon VNPAY payment error:', err);
+      console.error('❌ Create SELLER addon VNPAY payment error:', err);
+      const errorMessage = err.response?.data?.message || 
+                          err.message || 
+                          'Tạo thanh toán dịch vụ thất bại';
+      showToast(errorMessage, 'error');
+    } finally {
+      setPayingAddon(false);
+    }
+  };
+
+  // Handler thanh toán add-ons của Buyer
+  const handleBuyerAddonPayment = async () => {
+    if (!contractId) return;
+    try {
+      setPayingAddon(true);
+      console.log('💳 Creating VNPay payment for BUYER addons:', contractId);
+      
+      const res = await api.post<VnPayPaymentResponse>(
+        `/payments/contract/${contractId}/addons/vnpay`,
+        { chargedTo: 'BUYER' }
+      );
+      
+      console.log('✅ VNPay payment response:', res.data);
+      
+      if (!res.data.success) {
+        throw new Error(res.data.message || 'Không thể tạo thanh toán');
+      }
+      
+      const paymentData = res.data.data;
+      
+      // Ưu tiên paymentUrl, sau đó deeplink, cuối cùng là gatewayResponse
+      const paymentUrl = paymentData.paymentUrl || 
+                        paymentData.deeplink || 
+                        paymentData.gatewayResponse?.paymentUrl;
+      
+      if (paymentUrl) {
+        console.log('🔗 Redirecting to payment URL:', paymentUrl);
+        showToast('Đang chuyển đến trang thanh toán VNPay...', 'success');
+        
+        // Delay nhỏ để toast hiển thị trước khi redirect
+        setTimeout(() => {
+          window.location.href = paymentUrl;
+        }, 500);
+      } else {
+        console.error('❌ No payment URL found in response:', paymentData);
+        showToast('Không nhận được paymentUrl từ server', 'error');
+      }
+    } catch (err: any) {
+      console.error('❌ Create BUYER addon VNPAY payment error:', err);
       const errorMessage = err.response?.data?.message || 
                           err.message || 
                           'Tạo thanh toán dịch vụ thất bại';
@@ -302,53 +353,100 @@ const ContractDetail: React.FC = () => {
               </CardContent>
             </Card>
 
-            {autoRole === 'buyer' && (
-              <Card>
-                <CardHeader>
-                  <CardTitle className="flex items-center gap-2"><Package className="w-5 h-5" /> Dịch vụ đi kèm</CardTitle>
-                </CardHeader>
-                <CardContent>
-                  {Array.isArray(detail.addons) && detail.addons.length > 0 ? (
-                    <div className="space-y-4">
-                      <div className="flex items-center justify-between bg-green-50 border border-green-200 rounded-lg p-4">
-                        <div className="text-sm text-green-800">
-                          Các dịch vụ đã thêm cho hợp đồng
+            <Card>
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2"><Package className="w-5 h-5" /> Dịch vụ đi kèm</CardTitle>
+              </CardHeader>
+              <CardContent>
+                {Array.isArray(detail.addons) && detail.addons.length > 0 ? (
+                  <div className="space-y-6">
+                    {/* Add-ons của Seller */}
+                    {detail.addons.filter(a => a.chargedTo === 'SELLER').length > 0 && (
+                      <div className="space-y-4">
+                        <div className="flex items-center justify-between bg-blue-50 border border-blue-200 rounded-lg p-4">
+                          <div className="text-sm text-blue-800 font-medium">
+                            Dịch vụ đi kèm của người bán
+                          </div>
+                          <Badge className="bg-blue-600 text-white border-blue-600">Seller</Badge>
                         </div>
-                        <Badge className="bg-green-600 text-white border-green-600">Buyer</Badge>
+                        {detail.addons
+                          .filter(a => a.chargedTo === 'SELLER')
+                          .map((a) => (
+                            <div key={a.id} className="flex items-center justify-between border rounded-lg p-3 bg-white hover:shadow-sm transition-shadow">
+                              <div className="flex-1">
+                                <div className="font-medium text-gray-900">{a.serviceName}</div>
+                                <div className="text-sm text-gray-600">ID: {a.id} • {formatDate(a.createdAt)}</div>
+                              </div>
+                              <div className="text-right">
+                                <div className="font-semibold text-blue-700">{a.fee.toLocaleString('vi-VN')} VND</div>
+                                <Badge className={a.paymentStatus === 'PAID' ? 'bg-green-100 text-green-700 border-green-300' : 'bg-yellow-100 text-yellow-800 border-yellow-300'}>
+                                  {a.paymentStatus}
+                                </Badge>
+                              </div>
+                            </div>
+                          ))}
+                        {/* Nút thanh toán VNPAY cho addons của seller (chỉ hiển thị khi là seller và có addons của seller chưa thanh toán) */}
+                        {autoRole === 'seller' && detail.addons.filter(a => a.chargedTo === 'SELLER').some(a => a.paymentStatus !== 'PAID') && (
+                          <div className="pt-2 border-t pt-4">
+                            <Button
+                              onClick={handleSellerAddonPayment}
+                              disabled={payingAddon}
+                              className="w-full gap-2 bg-blue-600 hover:bg-blue-700 text-white shadow-sm disabled:opacity-60"
+                            >
+                              <CreditCard className="w-4 h-4" />
+                              {payingAddon ? 'Đang chuyển đến VNPay…' : 'Thanh toán dịch vụ của người bán (VNPay)'}
+                            </Button>
+                          </div>
+                        )}
                       </div>
-                      {detail.addons.map((a) => (
-                        <div key={a.id} className="flex items-center justify-between border rounded-lg p-3 bg-white hover:shadow-sm transition-shadow">
-                          <div className="flex-1">
-                            <div className="font-medium text-gray-900">{a.serviceName}</div>
-                            <div className="text-sm text-gray-600">ID: {a.id} • {formatDate(a.createdAt)}</div>
-                          </div>
-                          <div className="text-right">
-                            <div className="font-semibold text-green-700">{a.fee.toLocaleString('vi-VN')} VND</div>
-                            <Badge className={a.paymentStatus === 'PAID' ? 'bg-green-100 text-green-700 border-green-300' : 'bg-yellow-100 text-yellow-800 border-yellow-300'}>
-                              {a.paymentStatus}
-                            </Badge>
-                          </div>
-                        </div>
-                      ))}
+                    )}
 
-                      {/* Nút thanh toán VNPAY cho addons */}
-                      <div className="pt-2 border-t pt-4">
-                        <Button
-                          onClick={handleAddonVnpayPayment}
-                          disabled={payingAddon}
-                          className="w-full gap-2 bg-green-600 hover:bg-green-700 text-white shadow-sm disabled:opacity-60"
-                        >
-                          <CreditCard className="w-4 h-4" />
-                          {payingAddon ? 'Đang chuyển đến VNPay…' : 'Thanh toán dịch vụ (VNPay)'}
-                        </Button>
+                    {/* Add-ons của Buyer */}
+                    {detail.addons.filter(a => a.chargedTo === 'BUYER').length > 0 && (
+                      <div className="space-y-4">
+                        <div className="flex items-center justify-between bg-green-50 border border-green-200 rounded-lg p-4">
+                          <div className="text-sm text-green-800 font-medium">
+                            Dịch vụ đi kèm của người mua
+                          </div>
+                          <Badge className="bg-green-600 text-white border-green-600">Buyer</Badge>
+                        </div>
+                        {detail.addons
+                          .filter(a => a.chargedTo === 'BUYER')
+                          .map((a) => (
+                            <div key={a.id} className="flex items-center justify-between border rounded-lg p-3 bg-white hover:shadow-sm transition-shadow">
+                              <div className="flex-1">
+                                <div className="font-medium text-gray-900">{a.serviceName}</div>
+                                <div className="text-sm text-gray-600">ID: {a.id} • {formatDate(a.createdAt)}</div>
+                              </div>
+                              <div className="text-right">
+                                <div className="font-semibold text-green-700">{a.fee.toLocaleString('vi-VN')} VND</div>
+                                <Badge className={a.paymentStatus === 'PAID' ? 'bg-green-100 text-green-700 border-green-300' : 'bg-yellow-100 text-yellow-800 border-yellow-300'}>
+                                  {a.paymentStatus}
+                                </Badge>
+                              </div>
+                            </div>
+                          ))}
+                        {/* Nút thanh toán VNPAY cho addons của buyer (chỉ hiển thị khi là buyer và có addons của buyer chưa thanh toán) */}
+                        {autoRole === 'buyer' && detail.addons.filter(a => a.chargedTo === 'BUYER').some(a => a.paymentStatus !== 'PAID') && (
+                          <div className="pt-2 border-t pt-4">
+                            <Button
+                              onClick={handleBuyerAddonPayment}
+                              disabled={payingAddon}
+                              className="w-full gap-2 bg-green-600 hover:bg-green-700 text-white shadow-sm disabled:opacity-60"
+                            >
+                              <CreditCard className="w-4 h-4" />
+                              {payingAddon ? 'Đang chuyển đến VNPay…' : 'Thanh toán dịch vụ của người mua (VNPay)'}
+                            </Button>
+                          </div>
+                        )}
                       </div>
-                    </div>
-                  ) : (
-                    <div className="text-gray-600">Chưa có dịch vụ đi kèm</div>
-                  )}
-                </CardContent>
-              </Card>
-            )}
+                    )}
+                  </div>
+                ) : (
+                  <div className="text-gray-600">Chưa có dịch vụ đi kèm</div>
+                )}
+              </CardContent>
+            </Card>
 
             {/* Ký hợp đồng bằng OTP */}
             <Card>

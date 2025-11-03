@@ -15,23 +15,23 @@ const VIPBadge: React.FC<VIPBadgeProps> = ({ postType, className = "" }) => {
   let bgColor = "";
   let textColor = "text-white";
 
-  if (normalizedType.includes("diamond")) {
-    badgeText = "VIP DIAMOND";
-    bgColor = "bg-gradient-to-r from-blue-600 to-cyan-500";
-  } else if (normalizedType.includes("gold")) {
-    badgeText = "VIP GOLD";
-    bgColor = "bg-gradient-to-r from-yellow-500 to-orange-500";
-  } else if (normalizedType.includes("silver")) {
-    badgeText = "VIP SILVER";
-    bgColor = "bg-gradient-to-r from-gray-500 to-gray-400";
+  if (normalizedType.includes("diamond") || normalizedType.includes("kim cương") || normalizedType.includes("kimcuong")) {
+    badgeText = "VIP KIM CƯƠNG";
+    bgColor = "bg-red-600"; // Màu đỏ như trong hình
+  } else if (normalizedType.includes("gold") || normalizedType.includes("vàng") || normalizedType.includes("vang")) {
+    badgeText = "VIP VÀNG";
+    bgColor = "bg-yellow-500"; // Màu vàng
+  } else if (normalizedType.includes("silver") || normalizedType.includes("bạc") || normalizedType.includes("bac")) {
+    badgeText = "VIP BẠC";
+    bgColor = "bg-gray-400"; // Màu bạc
   } else {
     return null; // Not a VIP post
   }
 
   return (
     <div
-      className={`absolute !top-2 !right-2 ${bgColor} ${textColor} px-3 py-1 rounded-md text-xs font-bold shadow-lg z-10 ${className}`}
-      style={{ top: '8px', right: '8px' }}
+      className={`absolute top-2 left-2 ${bgColor} ${textColor} px-3 py-1.5 rounded text-xs font-bold shadow-lg z-10 ${className}`}
+      style={{ top: '8px', left: '8px' }}
     >
       {badgeText}
     </div>

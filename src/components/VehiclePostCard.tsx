@@ -162,9 +162,7 @@ const VehiclePostCard: React.FC<VehiclePostCardProps> = ({ post }) => {
           <div className="relative w-full h-full min-h-[300px] bg-gradient-to-br from-gray-100 to-gray-200">
             {/* VIP Badge */}
             {post.postType && (
-              <div className="absolute top-2 left-2 z-10">
-                <VIPBadge postType={post.postType} />
-              </div>
+              <VIPBadge postType={post.postType} />
             )}
             
             {/* Main Image */}

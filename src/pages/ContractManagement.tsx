@@ -17,9 +17,11 @@ import {
   User,
   Mail,
   Search,
-  RefreshCw
+  RefreshCw,
+  CheckCircle2
 } from 'lucide-react';
 import { showToast } from '@/utils/toast';
+import api from '@/services/axios';
 
 const ContractManagement: React.FC = () => {
   const navigate = useNavigate();
@@ -29,6 +31,9 @@ const ContractManagement: React.FC = () => {
   const [error, setError] = useState<string | null>(null);
   const [searchQuery, setSearchQuery] = useState('');
   const [generatingOrderId, setGeneratingOrderId] = useState<number | null>(null);
+  const [orderContracts, setOrderContracts] = useState<Record<number, ContractData | null>>({});
+  const [contractDetails, setContractDetails] = useState<Record<number, any>>({});
+  const [completingContractId, setCompletingContractId] = useState<number | null>(null);
 
   // Fetch orders on mount
   useEffect(() => {
@@ -41,6 +46,45 @@ const ContractManagement: React.FC = () => {
       setError(null);
       const orderData = await StaffOrderService.getAllOrders();
       setOrders(orderData);
+      
+      // Lấy contract cho mỗi order
+      const contractsMap: Record<number, ContractData | null> = {};
+      const detailsMap: Record<number, any> = {};
+      await Promise.all(
+        orderData.map(async (order) => {
+          try {
+            const contractData = await ContractService.getContractByOrderId(order.orderId);
+            contractsMap[order.orderId] = contractData;
+            
+            // Nếu có contract, fetch details để check điều kiện complete
+            if (contractData && contractData.contractId) {
+              try {
+                const res = await api.get(`/contract/contractDetails/${contractData.contractId}`);
+                const detailData = res.data?.data || res.data;
+                detailsMap[order.orderId] = detailData;
+                console.log(`✅ Contract details for order ${order.orderId}:`, detailData);
+              } catch (err: any) {
+                console.warn(`⚠️ Error fetching contract details for contract ${contractData.contractId} (order ${order.orderId}):`, err.response?.status || err.message);
+                // Không throw error, chỉ log warning
+              }
+            } else {
+              console.log(`ℹ️ No contract found for order ${order.orderId}`);
+            }
+          } catch (err: any) {
+            // Xử lý lỗi một cách graceful
+            if (err.response?.status === 500) {
+              console.warn(`⚠️ Server error when fetching contract for order ${order.orderId} (500). Order may not have a contract yet.`);
+            } else if (err.response?.status === 404) {
+              console.log(`ℹ️ No contract found for order ${order.orderId} (404)`);
+            } else {
+              console.warn(`⚠️ Error fetching contract for order ${order.orderId}:`, err.response?.status || err.message);
+            }
+            contractsMap[order.orderId] = null;
+          }
+        })
+      );
+      setOrderContracts(contractsMap);
+      setContractDetails(detailsMap);
     } catch (err: any) {
       console.error('Error fetching orders:', err);
       setError('Không thể tải danh sách orders');
@@ -64,10 +108,16 @@ const ContractManagement: React.FC = () => {
       setContract(contractData);
       showToast('Tạo contract thành công!', 'success');
       
+      // Update orderContracts state
+      setOrderContracts(prev => ({
+        ...prev,
+        [orderId]: contractData
+      }));
+      
       // Navigate to add-on page after successful contract creation
       navigate(`/staff/contract-addon?contractId=${contractData.contractId}`);
       
-      // Refresh orders after creating contract
+      // Refresh orders after creating contract (to get updated contract status)
       fetchOrders();
     } catch (err: any) {
       console.error('Error generating contract:', err);
@@ -134,11 +184,82 @@ const ContractManagement: React.FC = () => {
     }
   };
 
+  // Handler hoàn thành contract
+  const handleCompleteContract = async (contractId: number) => {
+    try {
+      setCompletingContractId(contractId);
+      await ContractService.completeContract(contractId);
+      showToast('Đã hoàn thành hợp đồng thành công!', 'success');
+      
+      // Refresh orders để cập nhật trạng thái
+      await fetchOrders();
+    } catch (err: any) {
+      console.error('Complete contract error:', err);
+      const errorMessage = err.message || 'Hoàn thành hợp đồng thất bại. Vui lòng thử lại.';
+      showToast(errorMessage, 'error');
+    } finally {
+      setCompletingContractId(null);
+    }
+  };
+
+  // Kiểm tra điều kiện có thể complete contract
+  const canCompleteContract = (orderId: number): boolean => {
+    const orderContract = orderContracts[orderId];
+    const detail = contractDetails[orderId];
+    
+    console.log(`Checking canCompleteContract for order ${orderId}:`, {
+      hasContract: !!orderContract,
+      hasDetail: !!detail,
+      contractStatus: orderContract?.status,
+      buyerSigned: detail?.buyerSigned,
+      sellerSigned: detail?.sellerSigned,
+      addons: detail?.addons
+    });
+    
+    if (!orderContract) {
+      console.log(`No contract for order ${orderId}`);
+      return false;
+    }
+    
+    if (!detail) {
+      console.log(`No contract details for order ${orderId}`);
+      return false;
+    }
+    
+    // Contract chưa được completed
+    if (orderContract.status === 'COMPLETED') {
+      console.log(`Contract already completed for order ${orderId}`);
+      return false;
+    }
+    
+    // Cả hai bên phải đã ký
+    if (!detail.buyerSigned || !detail.sellerSigned) {
+      console.log(`Not both parties signed for order ${orderId}:`, {
+        buyerSigned: detail.buyerSigned,
+        sellerSigned: detail.sellerSigned
+      });
+      return false;
+    }
+    
+    // Tất cả add-ons phải đã thanh toán (nếu có)
+    if (detail.addons && detail.addons.length > 0) {
+      const allPaid = detail.addons.every((addon: any) => addon.paymentStatus === 'PAID');
+      if (!allPaid) {
+        console.log(`Not all addons paid for order ${orderId}`);
+        return false;
+      }
+    }
+    
+    console.log(`✅ Can complete contract for order ${orderId}`);
+    return true;
+  };
+
   const getStatusBadge = (status: string) => {
     const statusColors: Record<string, string> = {
       'DRAFT': 'bg-yellow-100 text-yellow-800 border-yellow-300',
       'PENDING': 'bg-blue-100 text-blue-800 border-blue-300',
       'SIGNED': 'bg-green-100 text-green-800 border-green-300',
+      'COMPLETED': 'bg-purple-100 text-purple-800 border-purple-300',
       'CANCELLED': 'bg-red-100 text-red-800 border-red-300',
     };
 
@@ -246,70 +367,109 @@ const ContractManagement: React.FC = () => {
               </CardContent>
             </Card>
           ) : (
-            filteredOrders.map((order) => (
-              <Card key={order.orderId} className="hover:shadow-md transition-shadow">
-                <CardHeader>
-                  <div className="flex justify-between items-start">
-                    <div className="flex-1">
-                      <CardTitle className="flex items-center gap-2">
-                        Order #{order.orderId}
-                        <Badge variant="outline" className="text-blue-600">
-                          Listing ID: {order.listingId}
-                        </Badge>
-                      </CardTitle>
-                    </div>
-                    <Button
-                      onClick={() => handleGenerateContract(order.orderId)}
-                      disabled={generatingOrderId === order.orderId}
-                      className="bg-green-600 hover:bg-green-700"
-                    >
-                      {generatingOrderId === order.orderId ? (
-                        <>
-                          <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-                          Đang tạo...
-                        </>
-                      ) : (
-                        <>
-                          <FileText className="w-4 h-4 mr-2" />
-                          Tạo Contract
-                        </>
-                      )}
-                    </Button>
-                  </div>
-                </CardHeader>
-                <CardContent>
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                    {/* Buyer Info */}
-                    <div className="space-y-2">
-                      <div className="flex items-center gap-2 text-sm font-semibold text-gray-900 mb-2">
-                        <User className="w-4 h-4 text-green-600" />
-                        Người mua: {order.buyer.fullName}
+            filteredOrders.map((order) => {
+              const orderContract = orderContracts[order.orderId];
+              const isCompleted = orderContract?.status === 'COMPLETED';
+              const hasContract = !!orderContract;
+              const canCreateContract = !hasContract && !isCompleted;
+              
+              return (
+                <Card key={order.orderId} className="hover:shadow-md transition-shadow">
+                  <CardHeader>
+                    <div className="flex justify-between items-start">
+                      <div className="flex-1">
+                        <CardTitle className="flex items-center gap-2 flex-wrap">
+                          Order #{order.orderId}
+                          <Badge variant="outline" className="text-blue-600">
+                            Listing ID: {order.listingId}
+                          </Badge>
+                          {isCompleted && (
+                            <Badge className="bg-purple-100 text-purple-800 border-purple-300">
+                              Đã hoàn thành
+                            </Badge>
+                          )}
+                          {hasContract && !isCompleted && (
+                            <Badge className="bg-blue-100 text-blue-800 border-blue-300">
+                              Đã có Contract
+                            </Badge>
+                          )}
+                        </CardTitle>
                       </div>
-                      <div className="text-sm text-gray-600 space-y-1">
-                        <div className="flex items-center gap-2">
-                          <Mail className="w-3 h-3" />
-                          {order.buyer.email}
+                      <div className="flex gap-2">
+                        {(() => {
+                          const canComplete = orderContract && canCompleteContract(order.orderId);
+                          console.log(`Render button for order ${order.orderId}:`, {
+                            hasContract: !!orderContract,
+                            canComplete,
+                            contractId: orderContract?.contractId
+                          });
+                          return canComplete ? (
+                            <Button
+                              onClick={() => handleCompleteContract(orderContract!.contractId)}
+                              disabled={completingContractId === orderContract!.contractId}
+                              className="gap-2 bg-purple-600 hover:bg-purple-700 text-white"
+                            >
+                              <CheckCircle2 className="w-4 h-4" />
+                              {completingContractId === orderContract!.contractId 
+                                ? 'Đang hoàn thành...' 
+                                : 'Hoàn thành hợp đồng'}
+                            </Button>
+                          ) : null;
+                        })()}
+                        <Button
+                          onClick={() => handleGenerateContract(order.orderId)}
+                          disabled={generatingOrderId === order.orderId || !canCreateContract}
+                          className={`${canCreateContract ? 'bg-green-600 hover:bg-green-700' : 'bg-gray-400 cursor-not-allowed'}`}
+                        >
+                          {generatingOrderId === order.orderId ? (
+                            <>
+                              <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                              Đang tạo...
+                            </>
+                          ) : (
+                            <>
+                              <FileText className="w-4 h-4 mr-2" />
+                              {isCompleted ? 'Đã hoàn thành' : hasContract ? 'Đã có Contract' : 'Tạo Contract'}
+                            </>
+                          )}
+                        </Button>
+                      </div>
+                    </div>
+                  </CardHeader>
+                  <CardContent>
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                      {/* Buyer Info */}
+                      <div className="space-y-2">
+                        <div className="flex items-center gap-2 text-sm font-semibold text-gray-900 mb-2">
+                          <User className="w-4 h-4 text-green-600" />
+                          Người mua: {order.buyer.fullName}
+                        </div>
+                        <div className="text-sm text-gray-600 space-y-1">
+                          <div className="flex items-center gap-2">
+                            <Mail className="w-3 h-3" />
+                            {order.buyer.email}
+                          </div>
                         </div>
                       </div>
-                    </div>
 
-                    {/* Seller Info */}
-                    <div className="space-y-2">
-                      <div className="flex items-center gap-2 text-sm font-semibold text-gray-900 mb-2">
-                        <User className="w-4 h-4 text-blue-600" />
-                        Người bán: {order.seller.fullName}
-                      </div>
-                      <div className="text-sm text-gray-600 space-y-1">
-                        <div className="flex items-center gap-2">
-                          <Mail className="w-3 h-3" />
-                          {order.seller.email}
+                      {/* Seller Info */}
+                      <div className="space-y-2">
+                        <div className="flex items-center gap-2 text-sm font-semibold text-gray-900 mb-2">
+                          <User className="w-4 h-4 text-blue-600" />
+                          Người bán: {order.seller.fullName}
+                        </div>
+                        <div className="text-sm text-gray-600 space-y-1">
+                          <div className="flex items-center gap-2">
+                            <Mail className="w-3 h-3" />
+                            {order.seller.email}
+                          </div>
                         </div>
                       </div>
                     </div>
-                  </div>
-                </CardContent>
-              </Card>
-            ))
+                  </CardContent>
+                </Card>
+              );
+            })
           )}
         </div>
       )}
