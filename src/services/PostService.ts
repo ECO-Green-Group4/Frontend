@@ -8,7 +8,7 @@ content: string;
 description?: string;
 price: number;
 status: 'DRAFT' | 'PENDING' | 'PENDING_APPROVAL' | 'APPROVED' | 'REJECTED' | 'ACTIVE' | 'INACTIVE';
-category: 'EV' | 'BATTERY' | 'ACCESSORY';
+category: 'EV' | 'BATTERY' ;
 images?: string[];
 userId?: number;
 user?: {
