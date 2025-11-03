@@ -368,6 +368,49 @@ class AuthService {
     return await response.json();
   }
 
+  //  Cập nhật profile với thông tin bổ sung (dành cho Google users)
+  async updateProfileComplete(profileData: {
+    phone: string;
+    address: string;
+    dateOfBirth: string;
+    gender: string;
+    identityCard: string;
+  }): Promise<string> {
+    const token = this.getToken();
+    if (!token) throw new Error('Chưa đăng nhập');
+
+    const response = await fetch(`${API_BASE_URL}/auth/update-profile`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        Authorization: `Bearer ${token}`,
+      },
+      body: JSON.stringify(profileData),
+    });
+
+    if (!response.ok) {
+      let errorMessage = 'Không thể cập nhật profile';
+      try {
+        const errorData = await response.json();
+        console.error('Update profile error:', errorData);
+        errorMessage = errorData.message || errorMessage;
+      } catch (e) {
+        try {
+          const errorText = await response.text();
+          console.error('Error text:', errorText);
+          errorMessage = errorText || errorMessage;
+        } catch (e2) {
+          errorMessage = response.statusText || errorMessage;
+        }
+      }
+      throw new Error(errorMessage);
+    }
+
+    // API trả về string message theo documentation
+    const result = await response.text();
+    return result || 'Profile updated successfully';
+  }
+
   //  Refresh token
   async refreshToken(): Promise<string | null> {
     const refreshToken = this.getRefreshToken();

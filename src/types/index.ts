@@ -13,6 +13,14 @@ export interface User {
   updatedAt: string;
 }
 
+export interface UpdateProfileCompleteData {
+  phone: string;
+  address: string;
+  dateOfBirth: string;
+  gender: string;
+  identityCard: string;
+}
+
 export interface AuthContextType {
   user: User | null;
   isAuthenticated: boolean;
@@ -22,6 +30,7 @@ export interface AuthContextType {
   register: (userData: RegisterData) => Promise<AuthResponse>;
   logout: () => void;
   updateProfile: (userData: Partial<User>) => Promise<User>;
+  updateProfileComplete: (profileData: UpdateProfileCompleteData) => Promise<string>;
 }
 
 export interface AuthResponse {

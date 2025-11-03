@@ -8,6 +8,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { ArrowLeft, Calendar, CheckCircle2, Package, CreditCard, KeyRound, PenLine } from 'lucide-react';
 import api from '@/services/axios';
+import { ContractService } from '@/services/ContractService';
 import { showToast } from '@/utils/toast';
 import { useAuth } from '@/hooks/useAuth';
 
@@ -164,13 +165,15 @@ const ContractDetail: React.FC = () => {
     if (!contractId) return;
     try {
       setSendingOtp(true);
-      const res = await api.post(`/contract/${contractId}/otp`);
-      const code = res.data?.data || res.data;
+      const otpCode = await ContractService.getContractOtp(Number(contractId));
       showToast('Đã gửi OTP. Vui lòng kiểm tra email của bạn.', 'success');
-      if (typeof code === 'string') setOtp(code);
+      if (otpCode) {
+        setOtp(otpCode);
+      }
     } catch (err: any) {
       console.error('Send OTP error:', err);
-      showToast('Gửi OTP thất bại. Vui lòng thử lại.', 'error');
+      const errorMessage = err.message || 'Gửi OTP thất bại. Vui lòng thử lại.';
+      showToast(errorMessage, 'error');
     } finally {
       setSendingOtp(false);
     }

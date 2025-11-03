@@ -1,7 +1,7 @@
 // Context cho authentication
 import React, { createContext, useContext, useState, useEffect } from 'react';
 import AuthService from '@/services/AuthService';
-import type { User, AuthContextType, AuthResponse, LayoutProps, RegisterData } from '@/types';
+import type { User, AuthContextType, AuthResponse, LayoutProps, RegisterData, UpdateProfileCompleteData } from '@/types';
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
@@ -80,6 +80,21 @@ export const AuthProvider: React.FC<LayoutProps> = ({ children }) => {
     return updatedUser;
   };
 
+  // Cập nhật profile với thông tin bổ sung (dành cho Google users)
+  const updateProfileComplete = async (profileData: UpdateProfileCompleteData): Promise<string> => {
+    const message = await AuthService.updateProfileComplete(profileData);
+    // Refresh user data sau khi update
+    try {
+      const userData = await AuthService.getCurrentUser();
+      if (userData) {
+        setUser(userData);
+      }
+    } catch (error) {
+      console.error('Error refreshing user data after update:', error);
+    }
+    return message;
+  };
+
   const value: AuthContextType = {
     user,
     isAuthenticated,
@@ -89,6 +104,7 @@ export const AuthProvider: React.FC<LayoutProps> = ({ children }) => {
     register, 
     logout,
     updateProfile,
+    updateProfileComplete,
   };
 
   return (

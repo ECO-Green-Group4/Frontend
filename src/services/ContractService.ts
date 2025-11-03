@@ -22,6 +22,12 @@ export interface GetContractByOrderResponse {
   data: ContractData | null;
 }
 
+export interface ContractOtpResponse {
+  message: string;
+  success: boolean;
+  data: string;
+}
+
 export const ContractService = {
   // Generate contract từ orderId
   generateContract: async (orderId: number): Promise<ContractData> => {
@@ -83,6 +89,35 @@ export const ContractService = {
     } catch (error) {
       console.error('Error getting contract by orderId:', error);
       return null;
+    }
+  },
+
+  // Lấy OTP cho contract (gửi OTP đến email)
+  getContractOtp: async (contractId: number): Promise<string> => {
+    try {
+      console.log(`Requesting OTP for contractId: ${contractId}`);
+      const response = await api.post<ContractOtpResponse>(
+        `/contract/${contractId}/otp`
+      );
+      console.log('OTP response:', response.data);
+      
+      // API trả về { message, success, data: "string" }
+      if (response.data.success && response.data.data) {
+        return response.data.data;
+      }
+      
+      throw new Error(response.data.message || 'Không thể lấy OTP');
+    } catch (error: any) {
+      console.error('Error getting contract OTP:', error);
+      
+      let errorMessage = 'Gửi OTP thất bại. Vui lòng thử lại.';
+      if (error.response?.data?.message) {
+        errorMessage = error.response.data.message;
+      } else if (error.message) {
+        errorMessage = error.message;
+      }
+      
+      throw new Error(errorMessage);
     }
   }
 };
