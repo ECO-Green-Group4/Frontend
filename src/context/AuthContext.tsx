@@ -50,6 +50,14 @@ export const AuthProvider: React.FC<LayoutProps> = ({ children }) => {
     return response;
   };
 
+  // Đăng nhập với Google
+  const googleLogin = async (idToken: string): Promise<AuthResponse> => {
+    const response = await AuthService.loginWithGoogle(idToken);
+    setUser(response.user);
+    setIsAuthenticated(true);
+    return response;
+  };
+
   // Đăng ký
   const register = async (userData: RegisterData): Promise<AuthResponse> => {
     const response = await AuthService.register(userData);
@@ -77,6 +85,7 @@ export const AuthProvider: React.FC<LayoutProps> = ({ children }) => {
     isAuthenticated,
     loading,
     login,
+    googleLogin,
     register, 
     logout,
     updateProfile,

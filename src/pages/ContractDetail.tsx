@@ -32,6 +32,35 @@ interface ContractDetailData {
   }>;
 }
 
+interface VnPayPaymentResponse {
+  message: string;
+  success: boolean;
+  data: {
+    id: number;
+    paymentId: number;
+    paymentType: string;
+    paymentMethod: string;
+    amount: number;
+    currency: string;
+    paymentStatus: string;
+    status: string;
+    paymentUrl: string;
+    paymentDate: string;
+    createdAt: string;
+    expiryTime: string;
+    gatewayTransactionId: string;
+    transactionId: string;
+    contractId: number;
+    contractAddOnId: number;
+    listingPackageId: number;
+    deeplink: string;
+    qrCodeUrl: string;
+    gatewayResponse: {
+      [key: string]: string;
+    };
+  };
+}
+
 const formatDate = (dateString?: string) => {
   if (!dateString) return 'N/A';
   try {
@@ -175,17 +204,43 @@ const ContractDetail: React.FC = () => {
     if (!contractId) return;
     try {
       setPayingAddon(true);
-      const res = await api.post(`/payments/contract/${contractId}/addons/vnpay`);
-      const data = res.data?.data || res.data;
-      const paymentUrl = data?.paymentUrl || data?.gatewayResponse?.paymentUrl;
+      console.log('💳 Creating VNPay payment for contract addons:', contractId);
+      
+      const res = await api.post<VnPayPaymentResponse>(
+        `/payments/contract/${contractId}/addons/vnpay`
+      );
+      
+      console.log('✅ VNPay payment response:', res.data);
+      
+      if (!res.data.success) {
+        throw new Error(res.data.message || 'Không thể tạo thanh toán');
+      }
+      
+      const paymentData = res.data.data;
+      
+      // Ưu tiên paymentUrl, sau đó deeplink, cuối cùng là gatewayResponse
+      const paymentUrl = paymentData.paymentUrl || 
+                        paymentData.deeplink || 
+                        paymentData.gatewayResponse?.paymentUrl;
+      
       if (paymentUrl) {
-        window.location.href = paymentUrl;
+        console.log('🔗 Redirecting to payment URL:', paymentUrl);
+        showToast('Đang chuyển đến trang thanh toán VNPay...', 'success');
+        
+        // Delay nhỏ để toast hiển thị trước khi redirect
+        setTimeout(() => {
+          window.location.href = paymentUrl;
+        }, 500);
       } else {
+        console.error('❌ No payment URL found in response:', paymentData);
         showToast('Không nhận được paymentUrl từ server', 'error');
       }
     } catch (err: any) {
-      console.error('Create addon VNPAY payment error:', err);
-      showToast('Tạo thanh toán dịch vụ thất bại', 'error');
+      console.error('❌ Create addon VNPAY payment error:', err);
+      const errorMessage = err.response?.data?.message || 
+                          err.message || 
+                          'Tạo thanh toán dịch vụ thất bại';
+      showToast(errorMessage, 'error');
     } finally {
       setPayingAddon(false);
     }

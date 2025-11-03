@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
-import { Service, ServiceService } from '@/services/ServiceService';
+import { Service } from '@/services/ServiceService';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -12,7 +12,6 @@ import {
   Check,
   ArrowLeft,
   ShoppingCart,
-  DollarSign,
   Plus,
   RefreshCw,
   Search
@@ -23,6 +22,7 @@ import api from '@/services/axios';
 interface ContractAddonRequest {
   contractId: number;
   serviceId: number;
+  chargedTo: 'BUYER' | 'SELLER';
 }
 
 interface ContractAddonResponse {
@@ -54,6 +54,7 @@ const ContractAddon: React.FC = () => {
   const [services, setServices] = useState<Service[]>([]);
   const [addedAddons, setAddedAddons] = useState<ContractAddonResponse['data'][]>([]);
   const [selectedServices, setSelectedServices] = useState<Set<number>>(new Set());
+  const [chargedTo, setChargedTo] = useState<'BUYER' | 'SELLER'>('BUYER');
   const [loading, setLoading] = useState(false);
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -176,10 +177,13 @@ const ContractAddon: React.FC = () => {
       const promises = Array.from(selectedServices).map(async (serviceId) => {
         const requestData: ContractAddonRequest = {
           contractId: contractIdNum,
-          serviceId
+          serviceId,
+          chargedTo
         };
 
+        console.log('📤 Sending contract addon request:', requestData);
         const response = await api.post<ContractAddonResponse>('/addon/contract-addon', requestData);
+        console.log('✅ Contract addon response:', response.data);
         return response.data.data;
       });
 
@@ -472,30 +476,70 @@ const ContractAddon: React.FC = () => {
 
                 {/* Action Buttons */}
                 {selectedServices.size > 0 && (
-                  <div className="flex justify-between items-center pt-4 border-t bg-green-50 p-4 rounded-lg">
-                    <div>
-                      <div className="text-sm text-gray-600">Đã chọn:</div>
-                      <div className="text-lg font-bold text-green-700">
-                        {selectedServices.size} services - {formatCurrency(calculateSelectedTotal())}
+                  <div className="pt-4 border-t bg-green-50 p-6 rounded-lg space-y-4">
+                    <div className="flex justify-between items-start">
+                      <div>
+                        <div className="text-sm text-gray-600">Đã chọn:</div>
+                        <div className="text-lg font-bold text-green-700">
+                          {selectedServices.size} services - {formatCurrency(calculateSelectedTotal())}
+                        </div>
+                      </div>
+                      
+                      {/* Charged To Selector */}
+                      <div className="bg-white p-4 rounded-lg border border-gray-200">
+                        <Label className="text-sm font-semibold text-gray-700 mb-3 block">
+                          Bên chịu phí:
+                        </Label>
+                        <div className="flex gap-3">
+                          <button
+                            onClick={() => setChargedTo('BUYER')}
+                            className={`px-4 py-2 rounded-lg font-medium transition-all ${
+                              chargedTo === 'BUYER'
+                                ? 'bg-green-600 text-white shadow-md'
+                                : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+                            }`}
+                          >
+                            👤 BUYER (Người mua)
+                          </button>
+                          <button
+                            onClick={() => setChargedTo('SELLER')}
+                            className={`px-4 py-2 rounded-lg font-medium transition-all ${
+                              chargedTo === 'SELLER'
+                                ? 'bg-blue-600 text-white shadow-md'
+                                : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+                            }`}
+                          >
+                            🏪 SELLER (Người bán)
+                          </button>
+                        </div>
+                        <p className="text-xs text-gray-500 mt-2">
+                          {chargedTo === 'BUYER' 
+                            ? '💰 Người mua sẽ thanh toán các dịch vụ này'
+                            : '💰 Người bán sẽ thanh toán các dịch vụ này'}
+                        </p>
                       </div>
                     </div>
-                    <Button
-                      onClick={handleAddToContract}
-                      disabled={submitting}
-                      className="bg-green-600 hover:bg-green-700"
-                    >
-                      {submitting ? (
-                        <>
-                          <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2"></div>
-                          Đang thêm...
-                        </>
-                      ) : (
-                        <>
-                          <Plus className="h-4 w-4 mr-2" />
-                          Thêm vào Contract
-                        </>
-                      )}
-                    </Button>
+                    
+                    <div className="flex justify-end">
+                      <Button
+                        onClick={handleAddToContract}
+                        disabled={submitting}
+                        size="lg"
+                        className="bg-green-600 hover:bg-green-700"
+                      >
+                        {submitting ? (
+                          <>
+                            <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2"></div>
+                            Đang thêm...
+                          </>
+                        ) : (
+                          <>
+                            <Plus className="h-4 w-4 mr-2" />
+                            Thêm vào Contract
+                          </>
+                        )}
+                      </Button>
+                    </div>
                   </div>
                 )}
               </>

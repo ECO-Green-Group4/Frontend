@@ -6,6 +6,14 @@ import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from '@/components/ui/dialog';
+import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
@@ -24,17 +32,25 @@ import {
   User,
   Calendar,
   ChevronDown,
-  Filter
+  Filter,
+  Eye,
+  MapPin,
+  Package
 } from 'lucide-react';
 import { showToast } from '@/utils/toast';
 
 const PostManagement: React.FC = () => {
-  const [posts, setPosts] = useState<Post[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
-  const [searchQuery, setSearchQuery] = useState('');
-  const [statusFilter, setStatusFilter] = useState<string>('all');
-  const [categoryFilter, setCategoryFilter] = useState<string>('all');
+  const [posts, setPosts] = useState<Post[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+  const [searchQuery, setSearchQuery] = useState('');
+  const [statusFilter, setStatusFilter] = useState<string>('all');
+  const [categoryFilter, setCategoryFilter] = useState<string>('all');
+  
+  // Modal state
+  const [selectedPost, setSelectedPost] = useState<Post | null>(null);
+  const [isDetailModalOpen, setIsDetailModalOpen] = useState(false);
+  const [loadingDetail, setLoadingDetail] = useState(false);
 
   // Fetch listings (user submissions)
   const fetchPosts = async () => {
@@ -77,41 +93,91 @@ const PostManagement: React.FC = () => {
     return matchesSearch && matchesStatus && matchesCategory;
   });
 
-  // Handle approve listing - chuyển thành ACTIVE
-  const handleApproveListing = async (postId: number) => {
+  // View listing detail
+  const handleViewDetail = async (postId: number) => {
     try {
-      console.log('handleApproveListing called with postId:', postId);
-      console.log('postId type:', typeof postId);
+      setLoadingDetail(true);
+      console.log('📋 Opening detail modal for listing:', postId);
+      
+      // Tìm post từ danh sách hiện có trước
+      const existingPost = posts.find(p => (p.id || p.listingId) === postId);
+      
+      if (existingPost) {
+        console.log('✅ Using existing post data from list');
+        setSelectedPost(existingPost);
+        setIsDetailModalOpen(true);
+        setLoadingDetail(false);
+      } else {
+        console.log('🔍 Post not found in list, fetching from API...');
+        const detail = await PostService.getPostById(postId);
+        setSelectedPost(detail);
+        setIsDetailModalOpen(true);
+      }
+    } catch (error: any) {
+      console.error('❌ Error loading detail:', error);
+      showToast(`Lỗi tải chi tiết: ${error.response?.data?.message || error.message}`, 'error');
+    } finally {
+      setLoadingDetail(false);
+    }
+  };
+
+  // Handle approve listing - chuyển thành ACTIVE
+  const handleApproveListing = async (postId: number, closeModal: boolean = false) => {
+    try {
+      console.log('✅ Approving listing with postId:', postId);
       
       if (!postId || postId === undefined) {
         showToast('Lỗi: Không tìm thấy ID của bài đăng', 'error');
         return;
       }
       
-      await PostService.updatePostStatus(postId, 'ACTIVE');
-      showToast('Cập nhật trạng thái thành công!', 'success');
-      fetchPosts();
+      const response = await PostService.updatePostStatus(postId, 'ACTIVE');
+      console.log('✅ Approve response:', response);
+      
+      // Hiển thị message từ backend
+      showToast(response.message || 'Duyệt bài đăng thành công!', 'success');
+      
+      if (closeModal) {
+        setIsDetailModalOpen(false);
+        setSelectedPost(null);
+      }
+      
+      // Refresh danh sách để cập nhật status mới
+      await fetchPosts();
     } catch (error: any) {
-      showToast(`Lỗi cập nhật: ${error.message}`, 'error');
+      console.error('❌ Error approving listing:', error);
+      const errorMessage = error.response?.data?.message || error.message || 'Lỗi không xác định';
+      showToast(`Lỗi duyệt bài: ${errorMessage}`, 'error');
     }
   };
 
   // Handle reject listing - chuyển thành REJECTED
-  const handleRejectListing = async (postId: number) => {
+  const handleRejectListing = async (postId: number, closeModal: boolean = false) => {
     try {
-      console.log('handleRejectListing called with postId:', postId);
-      console.log('postId type:', typeof postId);
+      console.log('❌ Rejecting listing with postId:', postId);
       
       if (!postId || postId === undefined) {
         showToast('Lỗi: Không tìm thấy ID của bài đăng', 'error');
         return;
       }
       
-      await PostService.updatePostStatus(postId, 'REJECTED');
-      showToast('Cập nhật trạng thái thành công!', 'success');
-      fetchPosts();
+      const response = await PostService.updatePostStatus(postId, 'REJECTED');
+      console.log('✅ Reject response:', response);
+      
+      // Hiển thị message từ backend
+      showToast(response.message || 'Từ chối bài đăng thành công!', 'success');
+      
+      if (closeModal) {
+        setIsDetailModalOpen(false);
+        setSelectedPost(null);
+      }
+      
+      // Refresh danh sách để cập nhật status mới
+      await fetchPosts();
     } catch (error: any) {
-      showToast(`Lỗi cập nhật: ${error.message}`, 'error');
+      console.error('❌ Error rejecting listing:', error);
+      const errorMessage = error.response?.data?.message || error.message || 'Lỗi không xác định';
+      showToast(`Lỗi từ chối bài: ${errorMessage}`, 'error');
     }
   };
 
@@ -571,24 +637,26 @@ const PostManagement: React.FC = () => {
 
                     {/* ===== KHỐI NÂNG CẤP: ADMIN ACTIONS ===== */}
                     <div className="flex gap-2 pt-2">
+                      {/* Nút xem chi tiết luôn hiển thị */}
+                      <Button
+                        size="sm"
+                        variant="outline"
+                        className="flex-1"
+                        onClick={() => handleViewDetail(postId!)}
+                      >
+                        <Eye className="w-4 h-4 mr-1" />
+                        Xem chi tiết
+                      </Button>
+                      
                       {post.status === 'DRAFT' && (
                         <>
                           <Button
                             size="sm"
                             className="bg-green-600 hover:bg-green-700 text-white"
-                            onClick={() => handleApproveListing(postId!)}
+                            onClick={() => handleViewDetail(postId!)}
                           >
                             <CheckCircle className="w-4 h-4 mr-1" />
                             Duyệt
-                          </Button>
-                          <Button
-                            size="sm"
-                            variant="outline"
-                            className="text-red-600 border-red-600 hover:bg-red-50"
-                            onClick={() => handleRejectListing(postId!)}
-                          >
-                            <XCircle className="w-4 h-4 mr-1" />
-                            Từ chối
                           </Button>
                         </>
                       )}
@@ -614,19 +682,10 @@ const PostManagement: React.FC = () => {
                           <Button
                             size="sm"
                             className="bg-green-600 hover:bg-green-700 text-white"
-                            onClick={() => handleApproveListing(postId!)}
+                            onClick={() => handleViewDetail(postId!)}
                           >
                             <CheckCircle className="w-4 h-4 mr-1" />
                             Duyệt
-                          </Button>
-                          <Button
-                            size="sm"
-                            variant="outline"
-                            className="text-red-600 border-red-600 hover:bg-red-50"
-                            onClick={() => handleRejectListing(postId!)}
-                          >
-                            <XCircle className="w-4 h-4 mr-1" />
-                            Từ chối
                           </Button>
                         </>
                       )}
@@ -636,10 +695,10 @@ const PostManagement: React.FC = () => {
                         size="sm"
                         variant="outline"
                         className="text-red-600 border-red-600 hover:bg-red-50"
-                        onClick={() => handleRejectListing(postId!)}
+                        onClick={() => handleViewDetail(postId!)}
                       >
                         <XCircle className="w-4 h-4 mr-1" />
-                        Gỡ bài (Reject)
+                        Gỡ bài
                       </Button>
                     )}
 
@@ -647,7 +706,7 @@ const PostManagement: React.FC = () => {
                       <Button
                         size="sm"
                         className="bg-green-600 hover:bg-green-700 text-white"
-                        onClick={() => handleApproveListing(postId!)}
+                        onClick={() => handleViewDetail(postId!)}
                       >
                         <CheckCircle className="w-4 h-4 mr-1" />
                         Kích hoạt lại
@@ -658,10 +717,10 @@ const PostManagement: React.FC = () => {
                       <Button
                         size="sm"
                         className="bg-green-600 hover:bg-green-700 text-white"
-                        onClick={() => handleApproveListing(postId!)}
+                        onClick={() => handleViewDetail(postId!)}
                       >
                         <CheckCircle className="w-4 h-4 mr-1" />
-                        Duyệt lại (Activate)
+                        Duyệt lại
                       </Button>
                     )}
                     </div>
@@ -672,10 +731,346 @@ const PostManagement: React.FC = () => {
             })}
           </div>
         )}
-      </div>
+      </div>
 
-    </div>
-  );
+      {/* Modal Chi tiết Listing */}
+      <Dialog open={isDetailModalOpen} onOpenChange={setIsDetailModalOpen}>
+        <DialogContent className="max-w-[95vw] w-full max-h-[95vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle className="text-2xl font-bold">
+              Chi tiết Bài đăng
+            </DialogTitle>
+            <DialogDescription>
+              Xem thông tin chi tiết và quyết định duyệt hoặc từ chối bài đăng
+            </DialogDescription>
+          </DialogHeader>
+
+          {loadingDetail ? (
+            <div className="flex items-center justify-center py-8">
+              <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-green-500"></div>
+            </div>
+          ) : selectedPost ? (
+            <div className="space-y-6">
+              {/* Status Badge */}
+              <div className="flex items-center justify-between bg-gray-50 p-4 rounded-lg">
+                <Badge className={getStatusBadgeColor(selectedPost.status) + " text-base py-2 px-4"}>
+                  {getStatusIcon(selectedPost.status)}
+                  <span className="ml-2">{selectedPost.status}</span>
+                </Badge>
+                <span className="text-base font-medium text-gray-600">
+                  ID: {selectedPost.id || selectedPost.listingId}
+                </span>
+              </div>
+
+              {/* Basic Info */}
+              <div className="space-y-4 bg-white border border-gray-200 rounded-lg p-6">
+                <div>
+                  <h3 className="text-2xl font-bold text-gray-900 mb-2">
+                    {selectedPost.title}
+                  </h3>
+                  <p className="text-gray-700 text-base leading-relaxed">{selectedPost.description}</p>
+                </div>
+
+                <div className="grid grid-cols-3 gap-6 mt-4">
+                  <div className="flex items-center gap-3">
+                    <DollarSign className="w-6 h-6 text-green-600" />
+                    <div>
+                      <p className="text-sm text-gray-500">Giá</p>
+                      <p className="font-bold text-lg text-green-600">{formatPrice(selectedPost.price)}</p>
+                    </div>
+                  </div>
+                  <div className="flex items-center gap-3">
+                    <MapPin className="w-6 h-6 text-blue-600" />
+                    <div>
+                      <p className="text-sm text-gray-500">Địa điểm</p>
+                      <p className="font-semibold text-base">{selectedPost.location || 'N/A'}</p>
+                    </div>
+                  </div>
+                  <div className="flex items-center gap-3">
+                    <Calendar className="w-6 h-6 text-purple-600" />
+                    <div>
+                      <p className="text-sm text-gray-500">Ngày tạo</p>
+                      <p className="font-semibold text-base">
+                        {selectedPost.createdAt ? formatDate(selectedPost.createdAt) : 'N/A'}
+                      </p>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              {/* Layout 2 cột cho User Info và Vehicle/Battery Info */}
+              <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                {/* User Info */}
+                {selectedPost.user && (
+                  <Card className="shadow-md">
+                    <CardHeader className="bg-blue-50">
+                      <CardTitle className="text-xl flex items-center gap-2">
+                        <User className="w-6 h-6 text-blue-600" />
+                        Thông tin người đăng
+                      </CardTitle>
+                    </CardHeader>
+                    <CardContent className="space-y-4 pt-6">
+                      <div className="grid grid-cols-2 gap-4">
+                        <div className="p-3 bg-gray-50 rounded-lg">
+                          <p className="text-xs text-gray-500 mb-1">Họ tên</p>
+                          <p className="font-semibold text-base">{selectedPost.user.fullName}</p>
+                        </div>
+                        <div className="p-3 bg-gray-50 rounded-lg">
+                          <p className="text-xs text-gray-500 mb-1">Username</p>
+                          <p className="font-semibold text-base">{selectedPost.user.username || 'N/A'}</p>
+                        </div>
+                        <div className="p-3 bg-gray-50 rounded-lg">
+                          <p className="text-xs text-gray-500 mb-1">Email</p>
+                          <p className="font-semibold text-base break-all">{selectedPost.user.email}</p>
+                        </div>
+                        <div className="p-3 bg-gray-50 rounded-lg">
+                          <p className="text-xs text-gray-500 mb-1">Số điện thoại</p>
+                          <p className="font-semibold text-base">{selectedPost.user.phone || 'N/A'}</p>
+                        </div>
+                        {selectedPost.user.dateOfBirth && (
+                          <div className="p-3 bg-gray-50 rounded-lg">
+                            <p className="text-xs text-gray-500 mb-1">Ngày sinh</p>
+                            <p className="font-semibold text-base">{formatDate(selectedPost.user.dateOfBirth)}</p>
+                          </div>
+                        )}
+                        {selectedPost.user.gender && (
+                          <div className="p-3 bg-gray-50 rounded-lg">
+                            <p className="text-xs text-gray-500 mb-1">Giới tính</p>
+                            <p className="font-semibold text-base">{selectedPost.user.gender}</p>
+                          </div>
+                        )}
+                      </div>
+                    </CardContent>
+                  </Card>
+                )}
+
+                {/* Vehicle/Battery Details */}
+                {selectedPost.itemType === 'vehicle' ? (
+                  <Card className="shadow-md">
+                    <CardHeader className="bg-green-50">
+                      <CardTitle className="text-xl flex items-center gap-2">
+                        🚗 Thông tin Xe điện
+                      </CardTitle>
+                    </CardHeader>
+                    <CardContent className="space-y-4 pt-6">
+                      <div className="grid grid-cols-2 gap-4">
+                        <div className="p-3 bg-gray-50 rounded-lg">
+                          <p className="text-xs text-gray-500 mb-1">Hãng xe</p>
+                          <p className="font-semibold text-base">{selectedPost.brand || 'N/A'}</p>
+                        </div>
+                        <div className="p-3 bg-gray-50 rounded-lg">
+                          <p className="text-xs text-gray-500 mb-1">Mẫu xe</p>
+                          <p className="font-semibold text-base">{selectedPost.model || 'N/A'}</p>
+                        </div>
+                        <div className="p-3 bg-gray-50 rounded-lg">
+                          <p className="text-xs text-gray-500 mb-1">Năm sản xuất</p>
+                          <p className="font-semibold text-base">{selectedPost.year || 'N/A'}</p>
+                        </div>
+                        <div className="p-3 bg-gray-50 rounded-lg">
+                          <p className="text-xs text-gray-500 mb-1">Xuất xứ</p>
+                          <p className="font-semibold text-base">{selectedPost.origin || 'N/A'}</p>
+                        </div>
+                        <div className="p-3 bg-gray-50 rounded-lg">
+                          <p className="text-xs text-gray-500 mb-1">Màu sắc</p>
+                          <p className="font-semibold text-base">{selectedPost.color || 'N/A'}</p>
+                        </div>
+                        <div className="p-3 bg-gray-50 rounded-lg">
+                          <p className="text-xs text-gray-500 mb-1">Số chỗ ngồi</p>
+                          <p className="font-semibold text-base">{selectedPost.numberOfSeats || 'N/A'}</p>
+                        </div>
+                        <div className="p-3 bg-gray-50 rounded-lg">
+                          <p className="text-xs text-gray-500 mb-1">Biển số</p>
+                          <p className="font-semibold text-base">{selectedPost.licensePlate || 'N/A'}</p>
+                        </div>
+                        <div className="p-3 bg-gray-50 rounded-lg">
+                          <p className="text-xs text-gray-500 mb-1">Tình trạng</p>
+                          <p className="font-semibold text-base">{selectedPost.condition || 'N/A'}</p>
+                        </div>
+                        <div className="p-3 bg-gray-50 rounded-lg">
+                          <p className="text-xs text-gray-500 mb-1">Số km đã đi</p>
+                          <p className="font-semibold text-base">{selectedPost.mileage ? `${selectedPost.mileage} km` : 'N/A'}</p>
+                        </div>
+                        <div className="p-3 bg-gray-50 rounded-lg">
+                          <p className="text-xs text-gray-500 mb-1">Dung lượng pin</p>
+                          <p className="font-semibold text-base">{selectedPost.batteryCapacity ? `${selectedPost.batteryCapacity} kWh` : 'N/A'}</p>
+                        </div>
+                      </div>
+                    </CardContent>
+                  </Card>
+                ) : selectedPost.itemType === 'battery' ? (
+                  <Card className="shadow-md">
+                    <CardHeader className="bg-yellow-50">
+                      <CardTitle className="text-xl flex items-center gap-2">
+                        🔋 Thông tin Pin
+                      </CardTitle>
+                    </CardHeader>
+                    <CardContent className="space-y-4 pt-6">
+                      <div className="grid grid-cols-2 gap-4">
+                        <div className="p-3 bg-gray-50 rounded-lg">
+                          <p className="text-xs text-gray-500 mb-1">Hãng pin</p>
+                          <p className="font-semibold text-base">{selectedPost.batteryBrand || 'N/A'}</p>
+                        </div>
+                        <div className="p-3 bg-gray-50 rounded-lg">
+                          <p className="text-xs text-gray-500 mb-1">Loại pin</p>
+                          <p className="font-semibold text-base">{selectedPost.type || 'N/A'}</p>
+                        </div>
+                        <div className="p-3 bg-gray-50 rounded-lg">
+                          <p className="text-xs text-gray-500 mb-1">Điện áp</p>
+                          <p className="font-semibold text-base">{selectedPost.voltage ? `${selectedPost.voltage}V` : 'N/A'}</p>
+                        </div>
+                        <div className="p-3 bg-gray-50 rounded-lg">
+                          <p className="text-xs text-gray-500 mb-1">Dung lượng</p>
+                          <p className="font-semibold text-base">{selectedPost.capacity || 'N/A'}</p>
+                        </div>
+                        <div className="p-3 bg-gray-50 rounded-lg">
+                          <p className="text-xs text-gray-500 mb-1">Tình trạng sức khỏe</p>
+                          <p className="font-semibold text-base text-green-600">
+                            {selectedPost.healthPercent ? `${selectedPost.healthPercent}%` : 'N/A'}
+                          </p>
+                        </div>
+                        <div className="p-3 bg-gray-50 rounded-lg">
+                          <p className="text-xs text-gray-500 mb-1">Năm sản xuất</p>
+                          <p className="font-semibold text-base">{selectedPost.manufactureYear || 'N/A'}</p>
+                        </div>
+                        <div className="p-3 bg-gray-50 rounded-lg">
+                          <p className="text-xs text-gray-500 mb-1">Chu kỳ sạc</p>
+                          <p className="font-semibold text-base">{selectedPost.chargeCycles || 'N/A'}</p>
+                        </div>
+                        <div className="p-3 bg-gray-50 rounded-lg">
+                          <p className="text-xs text-gray-500 mb-1">Xuất xứ</p>
+                          <p className="font-semibold text-base">{selectedPost.origin || 'N/A'}</p>
+                        </div>
+                      </div>
+                    </CardContent>
+                  </Card>
+                ) : null}
+              </div>
+
+              {/* Package Info */}
+              {selectedPost.listingPackageId && (
+                <Card className="shadow-md">
+                  <CardHeader className="bg-purple-50">
+                    <CardTitle className="text-xl flex items-center gap-2">
+                      <Package className="w-6 h-6 text-purple-600" />
+                      Thông tin Gói dịch vụ
+                    </CardTitle>
+                  </CardHeader>
+                  <CardContent className="space-y-4 pt-6">
+                    <div className="grid grid-cols-4 gap-4">
+                      <div className="p-3 bg-gray-50 rounded-lg">
+                        <p className="text-xs text-gray-500 mb-1">ID Gói</p>
+                        <p className="font-semibold text-base">{selectedPost.listingPackageId}</p>
+                      </div>
+                      <div className="p-3 bg-gray-50 rounded-lg">
+                        <p className="text-xs text-gray-500 mb-1">Số tiền</p>
+                        <p className="font-semibold text-base text-purple-600">
+                          {selectedPost.packageAmount ? formatPrice(selectedPost.packageAmount) : 'N/A'}
+                        </p>
+                      </div>
+                      <div className="p-3 bg-gray-50 rounded-lg">
+                        <p className="text-xs text-gray-500 mb-1">Trạng thái</p>
+                        <p className="font-semibold text-base">{selectedPost.packageStatus || 'N/A'}</p>
+                      </div>
+                      <div className="p-3 bg-gray-50 rounded-lg">
+                        <p className="text-xs text-gray-500 mb-1">Ngày hết hạn</p>
+                        <p className="font-semibold text-base">
+                          {selectedPost.packageExpiredAt ? formatDate(selectedPost.packageExpiredAt) : 'N/A'}
+                        </p>
+                      </div>
+                    </div>
+                  </CardContent>
+                </Card>
+              )}
+
+              {/* Images */}
+              {selectedPost.images && selectedPost.images.length > 0 && (
+                <Card className="shadow-md">
+                  <CardHeader className="bg-indigo-50">
+                    <CardTitle className="text-xl flex items-center gap-2">
+                      📸 Hình ảnh ({selectedPost.images.length})
+                    </CardTitle>
+                  </CardHeader>
+                  <CardContent className="pt-6">
+                    <div className="grid grid-cols-3 gap-6">
+                      {selectedPost.images.map((image, index) => (
+                        <div key={index} className="relative rounded-lg overflow-hidden shadow-md border border-gray-200">
+                          <img
+                            src={image}
+                            alt={`${selectedPost.title} - Ảnh ${index + 1}`}
+                            className="w-full h-64 object-contain bg-white"
+                            crossOrigin="anonymous"
+                            loading="lazy"
+                            onError={(e) => {
+                              console.error('❌ Image load error:', image);
+                              const target = e.target as HTMLImageElement;
+                              target.onerror = null;
+                              target.src = 'data:image/svg+xml,%3Csvg xmlns="http://www.w3.org/2000/svg" width="400" height="300" viewBox="0 0 400 300"%3E%3Crect fill="%23f3f4f6" width="400" height="300"/%3E%3Ctext x="50%25" y="50%25" dominant-baseline="middle" text-anchor="middle" font-family="sans-serif" font-size="16" fill="%239ca3af"%3E⚠️ Ảnh không tải được%3C/text%3E%3C/svg%3E';
+                            }}
+                            onLoad={() => {
+                              console.log('✅ Image loaded successfully:', image);
+                            }}
+                          />
+                          {/* Badge số thứ tự */}
+                          <div className="absolute top-3 left-3 bg-black/70 text-white text-sm px-3 py-1 rounded-full font-medium">
+                            {index + 1}/{selectedPost.images?.length || 0}
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  </CardContent>
+                </Card>
+              )}
+            </div>
+          ) : null}
+
+          <DialogFooter className="flex gap-3 pt-6 border-t sticky bottom-0 bg-white">
+            <Button
+              variant="outline"
+              size="lg"
+              onClick={() => setIsDetailModalOpen(false)}
+              className="min-w-[120px]"
+            >
+              Đóng
+            </Button>
+            
+            {selectedPost && (
+              <>
+                {(selectedPost.status === 'PENDING_APPROVAL' || 
+                  selectedPost.status === 'DRAFT' ||
+                  selectedPost.status === 'REJECTED' ||
+                  selectedPost.status === 'INACTIVE') && (
+                  <Button
+                    size="lg"
+                    className="bg-green-600 hover:bg-green-700 text-white min-w-[180px]"
+                    onClick={() => handleApproveListing(selectedPost.id || selectedPost.listingId!, true)}
+                  >
+                    <CheckCircle className="w-5 h-5 mr-2" />
+                    Duyệt bài đăng
+                  </Button>
+                )}
+                
+                {(selectedPost.status === 'PENDING_APPROVAL' || 
+                  selectedPost.status === 'DRAFT' ||
+                  selectedPost.status === 'ACTIVE' ||
+                  selectedPost.status === 'APPROVED') && (
+                  <Button
+                    size="lg"
+                    variant="outline"
+                    className="text-red-600 border-red-600 hover:bg-red-50 min-w-[180px]"
+                    onClick={() => handleRejectListing(selectedPost.id || selectedPost.listingId!, true)}
+                  >
+                    <XCircle className="w-5 h-5 mr-2" />
+                    Từ chối / Gỡ bài
+                  </Button>
+                )}
+              </>
+            )}
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+    </div>
+  );
 };
 
 export default PostManagement;
