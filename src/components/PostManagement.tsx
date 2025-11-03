@@ -438,7 +438,7 @@ const PostManagement: React.FC = () => {
                       {categoryFilter === 'all' ? 'Tất cả loại' : 
                        categoryFilter === 'EV' ? 'Xe điện' :
                        categoryFilter === 'BATTERY' ? 'Pin' :
-                       categoryFilter === 'ACCESSORY' ? 'Phụ kiện' : 'Loại'}
+                       'Loại'}
                     </div>
                     <ChevronDown className="w-4 h-4" />
                   </Button>
@@ -466,13 +466,7 @@ const PostManagement: React.FC = () => {
                     <span className="text-lg mr-3 flex-shrink-0">🔋</span>
                     <span className="text-sm">Pin</span>
                   </DropdownMenuItem>
-                  <DropdownMenuItem 
-                    onClick={() => setCategoryFilter('ACCESSORY')}
-                    className={`px-2 py-2 cursor-pointer flex items-center ${categoryFilter === 'ACCESSORY' ? 'bg-accent' : ''}`}
-                  >
-                    <span className="text-lg mr-3 flex-shrink-0">🔧</span>
-                    <span className="text-sm">Phụ kiện</span>
-                  </DropdownMenuItem>
+                  
                 </DropdownMenuContent>
               </DropdownMenu>
             </div>

@@ -1,13 +1,16 @@
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useState, useRef } from "react";
 import { useNavigate } from "react-router-dom";
 import api from "../services/axios";
+import FavoriteService from "../services/FavoriteService";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import Header from "../components/ui/Header";
 import Footer from "../components/Footer";
 import VIPBadge from "../components/VIPBadge";
-import { Search, Filter, Zap, MapPin, Car, Calendar, Camera, CheckCircle2, Phone, Heart, Star, Battery, Users, Gauge, Building2, ShieldCheck, Activity } from "lucide-react";
+import VehiclePostCard from "../components/VehiclePostCard";
+import { Search, Filter, Zap, MapPin, Car, Calendar, Camera, CheckCircle2, Phone, Heart, Star, Battery, Users, Gauge, Building2, ShieldCheck, Activity, Sparkles, TrendingUp, Award, Loader2, X, SlidersHorizontal, ChevronLeft, ChevronRight } from "lucide-react";
+import { toast } from "react-toastify";
 
 const MainScreen = () => {
   const navigate = useNavigate();
@@ -153,6 +156,20 @@ const MainScreen = () => {
   const [activeFilter, setActiveFilter] = useState<"All" | "EV" | "Battery">(
     "All"
   );
+  
+  // Filter sidebar state
+  const [showFilterSidebar, setShowFilterSidebar] = useState(false);
+  
+  // Filter values
+  const [priceRange, setPriceRange] = useState<[number, number]>([0, 1000000000]); // 0 - 1 tỷ
+  const [yearRange, setYearRange] = useState<[number, number]>([2015, new Date().getFullYear() + 1]);
+  const [mileageRange, setMileageRange] = useState<[number, number]>([0, 500000]); // 0 - 500k km
+  const [batteryCapacityRange, setBatteryCapacityRange] = useState<[number, number]>([0, 200]); // 0 - 200 kWh
+  const [brandFilter, setBrandFilter] = useState<string>(""); // Input field for brand
+  
+  // Pagination state
+  const [currentPage, setCurrentPage] = useState(1);
+  const itemsPerPage = 5;
 
   useEffect(() => {
     let mounted = true;
@@ -184,13 +201,41 @@ const MainScreen = () => {
   const filteredPosts = useMemo(() => {
     const term = searchQuery.trim().toLowerCase();
     const filtered = posts.filter((p) => {
+      // Category filter
       const matchFilter =
         activeFilter === "All" || p.category === activeFilter;
+      
+      // Search filter
       const matchSearch =
         !term ||
         p.title.toLowerCase().includes(term) ||
-        (p.description ?? "").toLowerCase().includes(term);
-      return matchFilter && matchSearch;
+        (p.description ?? "").toLowerCase().includes(term) ||
+        (p.brand?.toLowerCase().includes(term)) ||
+        (p.model?.toLowerCase().includes(term));
+      
+      // Price filter
+      const matchPrice = p.price >= priceRange[0] && p.price <= priceRange[1];
+      
+      // Year filter
+      const matchYear = !p.year || (p.year >= yearRange[0] && p.year <= yearRange[1]);
+      
+      // Mileage filter
+      const matchMileage = !p.mileage || (p.mileage >= mileageRange[0] && p.mileage <= mileageRange[1]);
+      
+      // Battery capacity filter
+      let matchBattery = true;
+      if (batteryCapacityRange[0] > 0 || batteryCapacityRange[1] < 200) {
+        const batteryCapacity = p.batteryCapacity ? parseFloat(p.batteryCapacity) : (p.capacity ? parseFloat(p.capacity) : 0);
+        matchBattery = batteryCapacity >= batteryCapacityRange[0] && batteryCapacity <= batteryCapacityRange[1];
+      }
+      
+      // Brand filter
+      const matchBrand = !brandFilter.trim() || 
+        (p.brand?.toLowerCase().includes(brandFilter.toLowerCase()) ||
+         p.batteryBrand?.toLowerCase().includes(brandFilter.toLowerCase()) ||
+         p.model?.toLowerCase().includes(brandFilter.toLowerCase()));
+      
+      return matchFilter && matchSearch && matchPrice && matchYear && matchMileage && matchBattery && matchBrand;
     });
 
     // Sort by VIP priority + mới nhất lên đầu trong cùng 1 nhóm VIP
@@ -210,7 +255,18 @@ const MainScreen = () => {
       }
       return 0;
     });
-  }, [posts, activeFilter, searchQuery]);
+  }, [posts, activeFilter, searchQuery, priceRange, yearRange, mileageRange, batteryCapacityRange, brandFilter]);
+
+  // Pagination calculations
+  const totalPages = Math.ceil(filteredPosts.length / itemsPerPage);
+  const startIndex = (currentPage - 1) * itemsPerPage;
+  const endIndex = startIndex + itemsPerPage;
+  const currentPosts = filteredPosts.slice(startIndex, endIndex);
+
+  // Reset to page 1 when filters change
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [activeFilter, searchQuery, priceRange, yearRange, mileageRange, batteryCapacityRange, brandFilter]);
 
   const handlePostClick = (post: Post) => {
     console.log("🖱️ Click vào post:", post);
@@ -221,609 +277,184 @@ const MainScreen = () => {
     }
   };
 
-  function PostCard({ post }: { post: Post }) {
-    const [showPhone, setShowPhone] = useState(false);
-
-    const formatPrice = (price: number) => {
-      const billions = Math.floor(price / 1000000000);
-      const millions = Math.floor((price % 1000000000) / 1000000);
-      
-      if (billions > 0) {
-        return `${billions}${millions > 0 ? `.${Math.floor(millions / 100)}` : ""} tỷ`;
-      }
-      if (millions > 0) {
-        return `${millions} triệu`;
-      }
-      return new Intl.NumberFormat("vi-VN", {
-        style: "currency",
-        currency: "VND",
-        maximumFractionDigits: 0,
-      }).format(price);
-    };
-
-    const formatDate = (dateString?: string) => {
-      if (!dateString) return "Không rõ";
-      const date = new Date(dateString);
-      const today = new Date();
-      const diffTime = today.getTime() - date.getTime();
-      const diffDays = Math.floor(diffTime / (1000 * 60 * 60 * 24));
-      
-      if (diffDays === 0) return "Hôm nay";
-      if (diffDays === 1) return "Hôm qua";
-      if (diffDays < 7) return `${diffDays} ngày trước`;
-      
-      return date.toLocaleDateString("vi-VN", {
-        day: "2-digit",
-        month: "2-digit",
-        year: "numeric",
-      });
-    };
-
-    const formatPhone = (phone?: string) => {
-      if (!phone) return "";
-      if (showPhone) return phone;
-      return phone.slice(0, 7) + " ***";
-    };
-
-    const displayImages = post.images && post.images.length > 0 ? post.images : [post.imageUrl].filter(Boolean);
-    const mainImage = displayImages[0] || post.imageUrl;
-    // Chỉ hiển thị tối đa 3 thumbnail trên trang chủ
-    const thumbnails = displayImages.slice(1, 4); // Show max 3 thumbnails
-    const totalImages = displayImages.length;
-
+  // Loading Skeleton Component
+  function PostCardSkeleton() {
     return (
-      <div
-        className="bg-white rounded-xl border border-gray-200 shadow-lg hover:shadow-xl transition-all duration-300 overflow-hidden mb-6"
-      >
-        {/* Top Header - Seller Info & Phone Button */}
-        <div className="px-6 py-4 border-b border-gray-100 flex items-center justify-between">
-          {/* Seller Info - Left */}
-          <div className="flex items-center gap-3">
-            <div className="w-10 h-10 rounded-full bg-gradient-to-br from-green-400 to-green-600 flex items-center justify-center text-white font-semibold text-sm">
-              {post.user?.fullName?.charAt(0) || "?"}
-            </div>
-            <div>
-              <div className="flex items-center gap-1">
-                <span className="font-semibold text-gray-900">{post.user?.fullName || "Người bán"}</span>
-                <Star className="w-4 h-4 text-yellow-400 fill-yellow-400" />
-              </div>
-              <span className="text-xs text-gray-500">Đăng {formatDate(post.createdAt)}</span>
+      <div className="bg-white rounded-3xl border border-gray-200 shadow-lg overflow-hidden mb-8 animate-pulse">
+        <div className="grid grid-cols-1 lg:grid-cols-5 gap-6 p-6">
+          <div className="lg:col-span-2">
+            <div className="w-full bg-gray-200 rounded-2xl mb-3" style={{ aspectRatio: "16/10" }}></div>
+            <div className="grid grid-cols-4 gap-2">
+              {[...Array(4)].map((_, i) => (
+                <div key={i} className="aspect-square bg-gray-200 rounded-xl"></div>
+              ))}
             </div>
           </div>
-
-          {/* Phone Button - Right */}
-          {post.user?.phone && (
-            <div className="flex items-center gap-2">
-              <Button
-                className="bg-teal-600 hover:bg-teal-700 text-white px-4 py-2 rounded-lg flex items-center gap-2"
-                onClick={(e) => {
-                  e.stopPropagation();
-                  setShowPhone(!showPhone);
-                }}
-              >
-                <Phone className="w-4 h-4" />
-                <span>{formatPhone(post.user.phone)}</span>
-                {!showPhone && <span className="text-xs">. Hiện số</span>}
-              </Button>
-              <button
-                className="p-2 hover:bg-gray-100 rounded-full transition-colors"
-                onClick={(e) => e.stopPropagation()}
-              >
-                <Heart className="w-5 h-5 text-gray-400 hover:text-red-500 transition-colors" />
-              </button>
-            </div>
-          )}
-        </div>
-
-        {/* Main Content */}
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6" onClick={() => handlePostClick(post)}>
-          {/* Left Section - Main Image & Thumbnails (2 columns) */}
-          <div className="lg:col-span-2 space-y-4">
-            {/* Main Image - Large */}
-            <div className="relative w-full bg-gray-100 rounded-xl overflow-hidden" style={{ aspectRatio: "16/10" }}>
-              <VIPBadge postType={post.postType} className="!top-4 !left-4 !right-auto z-20" />
-              <img
-                src={mainImage}
-                alt={post.title}
-                className="w-full h-full object-cover"
-                onError={(e) => {
-                  (e.target as HTMLImageElement).src = "https://via.placeholder.com/1200x750/cccccc/666666?text=Không+có+ảnh";
-                }}
-              />
-              
-              {/* Image Count Badge */}
-              {totalImages > 0 && (
-                <div className="absolute bottom-4 right-4 bg-black/70 backdrop-blur-sm px-3 py-1.5 rounded-lg flex items-center gap-2 text-sm font-semibold text-white shadow-lg z-10">
-                  <Camera className="w-4 h-4" />
-                  <span>{totalImages}</span>
-                </div>
-              )}
-            </div>
-
-            {/* Thumbnail Gallery - Below Main Image */}
-            {thumbnails.length > 0 && (
-              <div className="grid grid-cols-3 gap-3">
-                {thumbnails.map((img, idx) => (
-                  <div 
-                    key={idx} 
-                    className="relative aspect-square rounded-lg overflow-hidden border-2 border-gray-300 hover:border-green-500 transition-colors cursor-pointer bg-gray-200"
-                  >
-                    <img
-                      src={img}
-                      alt={`${post.title} ${idx + 2}`}
-                      className="w-full h-full object-cover"
-                      onError={(e) => {
-                        (e.target as HTMLImageElement).src = "https://via.placeholder.com/300/cccccc/666666?text=IMG";
-                      }}
-                    />
-                    {/* Nếu là thumbnail cuối và còn nhiều ảnh hơn, hiển thị overlay */}
-                    {idx === thumbnails.length - 1 && totalImages > 4 && (
-                      <div className="absolute inset-0 bg-black/50 flex items-center justify-center">
-                        <span className="text-white font-bold text-lg">+{totalImages - 4}</span>
-                      </div>
-                    )}
-                  </div>
-                ))}
-              </div>
-            )}
-          </div>
-
-          {/* Right Section - Content & Sidebar (1 column) */}
-          <div className="space-y-4">
-            {/* Main Content Card */}
-            <div className="bg-white rounded-xl border border-gray-200 shadow-lg p-6">
-              {/* Top Section - Title & Price */}
-              <div className="space-y-4 mb-6">
-              {/* Verified Badge & Title */}
-              <div className="flex items-start gap-3">
-                <Badge className="bg-green-600 text-white hover:bg-green-700 flex items-center gap-1 px-3 py-1.5 shrink-0">
-                  <CheckCircle2 className="w-3.5 h-3.5" />
-                  XÁC THỰC
-                </Badge>
-                <h3 className="text-2xl font-bold text-gray-900 leading-tight flex-1">
-                  {post.title}
-                </h3>
-              </div>
-
-              {/* Price - Large & Prominent */}
-              <div className="flex items-baseline gap-3">
-                <span className="text-3xl font-bold text-green-600">
-                  {formatPrice(post.price)}
-                </span>
-                {post.category === "EV" && post.batteryCapacity && (
-                  <span className="text-lg text-gray-500">
-                    • {post.batteryCapacity} kWh
-                  </span>
-                )}
-              </div>
-
-              {/* Key Info - Brand, Model, Year */}
-              <div className="flex flex-wrap items-center gap-3 text-base">
-                {post.brand && (
-                  <div className="flex items-center gap-2 px-3 py-1.5 bg-green-50 rounded-lg">
-                    <Car className="w-5 h-5 text-green-600" />
-                    <span className="font-semibold text-gray-900">{post.brand}</span>
-                  </div>
-                )}
-                {post.model && (
-                  <div className="px-3 py-1.5 bg-blue-50 rounded-lg">
-                    <span className="font-medium text-gray-800">{post.model}</span>
-                  </div>
-                )}
-                {post.year && (
-                  <div className="px-3 py-1.5 bg-purple-50 rounded-lg">
-                    <span className="font-medium text-gray-800">{post.year}</span>
-                  </div>
-                )}
+          <div className="lg:col-span-3 flex flex-col">
+            <div className="flex items-center gap-3 mb-4">
+              <div className="w-12 h-12 rounded-full bg-gray-200"></div>
+              <div className="flex-1">
+                <div className="h-4 bg-gray-200 rounded w-32 mb-2"></div>
+                <div className="h-3 bg-gray-200 rounded w-24"></div>
               </div>
             </div>
-
-            {/* Specifications Grid - 3 Columns để cân bằng hơn - Tất cả màu xám */}
-            <div className="grid grid-cols-3 gap-3 mb-6">
-              {/* Mileage */}
-              {post.mileage && (
-                <div className="bg-gray-50 rounded-lg p-3 border border-gray-200">
-                  <div className="flex items-center gap-2 mb-1.5">
-                    <Gauge className="w-4 h-4 text-gray-600" />
-                    <span className="text-xs font-medium text-gray-500 uppercase">Quãng đường</span>
-                  </div>
-                  <p className="text-base font-bold text-gray-900">
-                    {new Intl.NumberFormat("vi-VN").format(post.mileage)} km
-                  </p>
-                </div>
-              )}
-
-              {/* Condition */}
-              {post.condition && (
-                <div className="bg-gray-50 rounded-lg p-3 border border-gray-200">
-                  <div className="flex items-center gap-2 mb-1.5">
-                    <ShieldCheck className="w-4 h-4 text-gray-600" />
-                    <span className="text-xs font-medium text-gray-500 uppercase">Tình trạng</span>
-                  </div>
-                  <p className="text-base font-bold text-gray-900 capitalize">{post.condition}</p>
-                </div>
-              )}
-
-              {/* Body Type */}
-              {post.bodyType && (
-                <div className="bg-gray-50 rounded-lg p-3 border border-gray-200">
-                  <div className="flex items-center gap-2 mb-1.5">
-                    <Building2 className="w-4 h-4 text-gray-600" />
-                    <span className="text-xs font-medium text-gray-500 uppercase">Kiểu dáng</span>
-                  </div>
-                  <p className="text-base font-bold text-gray-900">{post.bodyType}</p>
-                </div>
-              )}
-
-              {/* Number of Seats */}
-              {post.numberOfSeats && (
-                <div className="bg-gray-50 rounded-lg p-3 border border-gray-200">
-                  <div className="flex items-center gap-2 mb-1.5">
-                    <Users className="w-4 h-4 text-gray-600" />
-                    <span className="text-xs font-medium text-gray-500 uppercase">Số chỗ ngồi</span>
-                  </div>
-                  <p className="text-base font-bold text-gray-900">{post.numberOfSeats} chỗ</p>
-                </div>
-              )}
-
-              {/* Battery Capacity */}
-              {post.category === "EV" && post.batteryCapacity && (
-                <div className="bg-gray-50 rounded-lg p-3 border border-gray-200">
-                  <div className="flex items-center gap-2 mb-1.5">
-                    <Battery className="w-4 h-4 text-gray-600" />
-                    <span className="text-xs font-medium text-gray-500 uppercase">Dung lượng pin</span>
-                  </div>
-                  <p className="text-base font-bold text-gray-900">{post.batteryCapacity} kWh</p>
-                </div>
-              )}
-
-              {/* Color */}
-              {post.color && (
-                <div className="bg-gray-50 rounded-lg p-3 border border-gray-200">
-                  <div className="flex items-center gap-2 mb-1.5">
-                    <div className="w-4 h-4 rounded-full border-2 border-gray-300" style={{ backgroundColor: post.color.toLowerCase() }} />
-                    <span className="text-xs font-medium text-gray-500 uppercase">Màu sắc</span>
-                  </div>
-                  <p className="text-base font-bold text-gray-900 capitalize">{post.color}</p>
-                </div>
-              )}
-
-              {/* Origin */}
-              {post.origin && (
-                <div className="bg-gray-50 rounded-lg p-3 border border-gray-200">
-                  <div className="flex items-center gap-2 mb-1.5">
-                    <MapPin className="w-4 h-4 text-gray-600" />
-                    <span className="text-xs font-medium text-gray-500 uppercase">Xuất xứ</span>
-                  </div>
-                  <p className="text-base font-bold text-gray-900">{post.origin}</p>
-                </div>
-              )}
-
-              {/* License Plate */}
-              {post.licensePlate && (
-                <div className="bg-gray-50 rounded-lg p-3 border border-gray-200">
-                  <div className="flex items-center gap-2 mb-1.5">
-                    <Car className="w-4 h-4 text-gray-600" />
-                    <span className="text-xs font-medium text-gray-500 uppercase">Biển số</span>
-                  </div>
-                  <p className="text-base font-bold text-gray-900 font-mono">{post.licensePlate}</p>
-                </div>
-              )}
-
-              {/* Inspection - Chỉ hiển thị cho Battery */}
-              {post.category === "Battery" && post.inspection && (
-                <div className="bg-gray-50 rounded-lg p-3 border border-gray-200">
-                  <div className="flex items-center gap-2 mb-1.5">
-                    <ShieldCheck className="w-4 h-4 text-gray-600" />
-                    <span className="text-xs font-medium text-gray-500 uppercase">Đã kiểm định</span>
-                  </div>
-                  <p className="text-base font-bold text-gray-900">{post.inspection}</p>
-                </div>
-              )}
-
-              {/* Battery Brand - Chỉ cho Battery */}
-              {post.category === "Battery" && post.batteryBrand && (
-                <div className="bg-gray-50 rounded-lg p-3 border border-gray-200">
-                  <div className="flex items-center gap-2 mb-1.5">
-                    <Battery className="w-4 h-4 text-gray-600" />
-                    <span className="text-xs font-medium text-gray-500 uppercase">Hãng pin</span>
-                  </div>
-                  <p className="text-base font-bold text-gray-900">{post.batteryBrand}</p>
-                </div>
-              )}
-
-              {/* Voltage - Chỉ cho Battery */}
-              {post.category === "Battery" && post.voltage && (
-                <div className="bg-gray-50 rounded-lg p-3 border border-gray-200">
-                  <div className="flex items-center gap-2 mb-1.5">
-                    <Activity className="w-4 h-4 text-gray-600" />
-                    <span className="text-xs font-medium text-gray-500 uppercase">Điện áp</span>
-                  </div>
-                  <p className="text-base font-bold text-gray-900">{post.voltage}V</p>
-                </div>
-              )}
-
-              {/* Capacity - Chỉ cho Battery */}
-              {post.category === "Battery" && post.capacity && (
-                <div className="bg-gray-50 rounded-lg p-3 border border-gray-200">
-                  <div className="flex items-center gap-2 mb-1.5">
-                    <Zap className="w-4 h-4 text-gray-600" />
-                    <span className="text-xs font-medium text-gray-500 uppercase">Dung lượng</span>
-                  </div>
-                  <p className="text-base font-bold text-gray-900">{post.capacity}</p>
-                </div>
-              )}
-
-              {/* Health Percent - Chỉ cho Battery */}
-              {post.category === "Battery" && post.healthPercent && (
-                <div className="bg-gray-50 rounded-lg p-3 border border-gray-200">
-                  <div className="flex items-center gap-2 mb-1.5">
-                    <ShieldCheck className="w-4 h-4 text-gray-600" />
-                    <span className="text-xs font-medium text-gray-500 uppercase">Sức khỏe</span>
-                  </div>
-                  <p className="text-base font-bold text-gray-900">{post.healthPercent}%</p>
-                </div>
-              )}
-
-              {/* Charge Cycles - Chỉ cho Battery */}
-              {post.category === "Battery" && post.chargeCycles && (
-                <div className="bg-gray-50 rounded-lg p-3 border border-gray-200">
-                  <div className="flex items-center gap-2 mb-1.5">
-                    <Gauge className="w-4 h-4 text-gray-600" />
-                    <span className="text-xs font-medium text-gray-500 uppercase">Số lần sạc</span>
-                  </div>
-                  <p className="text-base font-bold text-gray-900">{post.chargeCycles} lần</p>
-                </div>
-              )}
-
-              {/* Type - Chỉ cho Battery */}
-              {post.category === "Battery" && post.type && (
-                <div className="bg-gray-50 rounded-lg p-3 border border-gray-200">
-                  <div className="flex items-center gap-2 mb-1.5">
-                    <Car className="w-4 h-4 text-gray-600" />
-                    <span className="text-xs font-medium text-gray-500 uppercase">Loại pin</span>
-                  </div>
-                  <p className="text-base font-bold text-gray-900">{post.type}</p>
-                </div>
-              )}
+            <div className="h-8 bg-gray-200 rounded-lg w-3/4 mb-4"></div>
+            <div className="h-10 bg-gray-200 rounded-lg w-1/3 mb-6"></div>
+            <div className="grid grid-cols-4 gap-3 mb-4">
+              {[...Array(4)].map((_, i) => (
+                <div key={i} className="h-20 bg-gray-100 rounded-xl"></div>
+              ))}
             </div>
-
-            {/* Location & Additional Info */}
-            <div className="mb-4 space-y-3">
-              {/* Location */}
-              {post.location && (
-                <div className="flex items-center gap-2 text-base text-gray-700 p-3 bg-red-50 rounded-lg border border-red-200">
-                  <MapPin className="w-5 h-5 text-red-500 flex-shrink-0" />
-                  <span className="font-semibold">{post.location}</span>
-                </div>
-              )}
-
-              {/* Accessories */}
-              {post.accessories && (
-                <div className="bg-amber-50 rounded-lg p-3 border border-amber-200">
-                  <div className="flex items-center gap-2 mb-1">
-                    <Star className="w-4 h-4 text-amber-600" />
-                    <span className="text-xs font-semibold text-amber-700 uppercase">Phụ kiện đi kèm</span>
-                  </div>
-                  <p className="text-sm text-gray-700">{post.accessories}</p>
-                </div>
-              )}
-            </div>
-
-            {/* Description - Longer */}
-            {post.description && (
-              <div className="bg-gray-50 rounded-lg p-4 border border-gray-200">
-                <h4 className="text-sm font-semibold text-gray-700 mb-2 uppercase">Mô tả</h4>
-                <p className="text-gray-700 leading-relaxed line-clamp-4 text-sm">
-                  {post.description}
-                </p>
-              </div>
-            )}
-              </div>
-
-            {/* Sidebar Cards - Additional Info */}
-            <div className="space-y-4">
-              {/* Price Highlight Card */}
-              <div className="bg-gradient-to-br from-green-600 to-green-500 rounded-xl border border-green-400 shadow-lg p-6 text-white">
-                <div className="text-sm font-medium mb-1 opacity-90">GIÁ CHỈ TỪ</div>
-                <div className="text-3xl font-bold mb-2">{formatPrice(post.price)}</div>
-                <Badge className="bg-red-600 text-white hover:bg-red-700 px-3 py-1">
-                  GIÁ TỐT NHẤT THỊ TRƯỜNG
-                </Badge>
-              </div>
-
-              {/* Key Features Card */}
-              <div className="bg-white rounded-xl border border-gray-200 shadow-lg p-5">
-                <h4 className="font-bold text-gray-900 mb-4">Đặc điểm nổi bật</h4>
-                <div className="space-y-3">
-                  {post.category === "EV" && post.batteryCapacity && (
-                    <div className="flex items-center gap-3">
-                      <div className="w-10 h-10 rounded-full bg-green-100 flex items-center justify-center">
-                        <Battery className="w-5 h-5 text-green-600" />
-                      </div>
-                      <div>
-                        <div className="font-semibold text-gray-900">Dung lượng pin</div>
-                        <div className="text-sm text-gray-600">{post.batteryCapacity} kWh</div>
-                      </div>
-                    </div>
-                  )}
-                  
-                  {post.mileage && (
-                    <div className="flex items-center gap-3">
-                      <div className="w-10 h-10 rounded-full bg-blue-100 flex items-center justify-center">
-                        <Gauge className="w-5 h-5 text-blue-600" />
-                      </div>
-                      <div>
-                        <div className="font-semibold text-gray-900">Quãng đường</div>
-                        <div className="text-sm text-gray-600">{new Intl.NumberFormat("vi-VN").format(post.mileage)} km</div>
-                      </div>
-                    </div>
-                  )}
-
-                  {post.condition && (
-                    <div className="flex items-center gap-3">
-                      <div className="w-10 h-10 rounded-full bg-purple-100 flex items-center justify-center">
-                        <ShieldCheck className="w-5 h-5 text-purple-600" />
-                      </div>
-                      <div>
-                        <div className="font-semibold text-gray-900">Tình trạng</div>
-                        <div className="text-sm text-gray-600 capitalize">{post.condition}</div>
-                      </div>
-                    </div>
-                  )}
-
-                  {post.location && (
-                    <div className="flex items-center gap-3">
-                      <div className="w-10 h-10 rounded-full bg-red-100 flex items-center justify-center">
-                        <MapPin className="w-5 h-5 text-red-600" />
-                      </div>
-                      <div>
-                        <div className="font-semibold text-gray-900">Địa điểm</div>
-                        <div className="text-sm text-gray-600">{post.location}</div>
-                      </div>
-                    </div>
-                  )}
-                </div>
-              </div>
-
-              {/* Contact Card */}
-              {post.user?.phone && (
-                <div className="bg-white rounded-xl border-2 border-green-500 shadow-lg p-5">
-                  <div className="text-center">
-                    <div className="text-sm font-medium text-gray-600 mb-2">Liên hệ ngay</div>
-                    <Button
-                      className="w-full bg-green-600 hover:bg-green-700 text-white py-6 text-lg font-bold rounded-lg"
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        setShowPhone(!showPhone);
-                      }}
-                    >
-                      <Phone className="w-5 h-5 mr-2" />
-                      {showPhone ? post.user.phone : `${formatPhone(post.user.phone)} - Hiện số`}
-                    </Button>
-                  </div>
-                </div>
-              )}
+            <div className="h-20 bg-gray-100 rounded-xl mb-4"></div>
+            <div className="flex gap-3 mt-auto">
+              <div className="flex-1 h-12 bg-gray-200 rounded-xl"></div>
+              <div className="w-32 h-12 bg-gray-200 rounded-xl"></div>
             </div>
           </div>
-        </div>
-
-        {/* Footer - Seller Info & Phone Button */}
-        <div className="px-6 py-4 border-t border-gray-100 flex items-center justify-between bg-gray-50">
-          {/* Seller Info - Left */}
-          <div className="flex items-center gap-3">
-            <div className="w-10 h-10 rounded-full bg-gradient-to-br from-green-400 to-green-600 flex items-center justify-center text-white font-semibold text-sm">
-              {post.user?.fullName?.charAt(0) || "?"}
-            </div>
-            <div>
-              <div className="flex items-center gap-1">
-                <span className="font-semibold text-gray-900">{post.user?.fullName || "Người bán"}</span>
-                <Star className="w-4 h-4 text-yellow-400 fill-yellow-400" />
-              </div>
-              <span className="text-xs text-gray-500">Đăng {formatDate(post.createdAt)}</span>
-            </div>
-          </div>
-
-          {/* Phone Button - Right */}
-          {post.user?.phone && (
-            <Button
-              className="bg-teal-600 hover:bg-teal-700 text-white px-6 py-2 rounded-lg flex items-center gap-2"
-              onClick={(e) => {
-                e.stopPropagation();
-                setShowPhone(!showPhone);
-              }}
-            >
-              <Phone className="w-4 h-4" />
-              <span>{formatPhone(post.user.phone)}</span>
-              {!showPhone && <span className="text-xs">. Hiện số</span>}
-            </Button>
-          )}
         </div>
       </div>
     );
   }
 
+
   return (
-    // 1. Thêm 'flex flex-col' để làm container chính
-    <div className="min-h-screen bg-gray-50 flex flex-col">
+    <div className="min-h-screen bg-gradient-to-br from-gray-50 via-white to-gray-50 flex flex-col">
       <Header />
 
-      {/* 2. Thêm 'flex-1' để <main> lấp đầy không gian và đẩy footer xuống */}
-      <main className="flex-1 w-full">
-        {/* Hero Section - Banner đẹp về xe điện */}
-        <div className="relative overflow-hidden bg-gradient-to-br from-green-600 via-green-500 to-teal-600 mb-8">
-          {/* Background Pattern */}
+      <main className="flex-1 w-full relative">
+        {/* Enhanced Hero Section with Parallax Effect */}
+        <div className="relative overflow-hidden bg-gradient-to-br from-green-600 via-emerald-600 via-teal-600 to-cyan-600 mb-16">
+          {/* Animated Gradient Overlay */}
+          <div className="absolute inset-0 bg-gradient-to-r from-green-600/0 via-emerald-600/50 to-teal-600/0 animate-pulse"></div>
+          
+          {/* Floating Particles Background */}
+          <div className="absolute inset-0 overflow-hidden">
+            {useMemo(() => [...Array(20)].map((_, i) => {
+              const positions = [
+                { left: "10%", top: "20%", delay: "0s", duration: "4s" },
+                { left: "20%", top: "60%", delay: "0.5s", duration: "5s" },
+                { left: "30%", top: "40%", delay: "1s", duration: "6s" },
+                { left: "40%", top: "80%", delay: "1.5s", duration: "4.5s" },
+                { left: "50%", top: "30%", delay: "2s", duration: "5.5s" },
+                { left: "60%", top: "70%", delay: "0.3s", duration: "6.5s" },
+                { left: "70%", top: "25%", delay: "0.8s", duration: "4s" },
+                { left: "80%", top: "55%", delay: "1.2s", duration: "5s" },
+                { left: "15%", top: "75%", delay: "0.6s", duration: "6s" },
+                { left: "25%", top: "15%", delay: "1.8s", duration: "4.5s" },
+                { left: "35%", top: "65%", delay: "0.4s", duration: "5.5s" },
+                { left: "45%", top: "35%", delay: "1.1s", duration: "6s" },
+                { left: "55%", top: "85%", delay: "0.9s", duration: "4s" },
+                { left: "65%", top: "45%", delay: "1.3s", duration: "5.5s" },
+                { left: "75%", top: "20%", delay: "0.7s", duration: "6s" },
+                { left: "85%", top: "60%", delay: "1.6s", duration: "4.5s" },
+                { left: "5%", top: "50%", delay: "0.2s", duration: "5s" },
+                { left: "90%", top: "35%", delay: "1.4s", duration: "6.5s" },
+                { left: "12%", top: "90%", delay: "0.1s", duration: "4s" },
+                { left: "95%", top: "75%", delay: "1.7s", duration: "5s" }
+              ];
+              const pos = positions[i] || { left: "50%", top: "50%", delay: "0s", duration: "4s" };
+              return (
+                <div
+                  key={i}
+                  className="absolute w-2 h-2 bg-white/30 rounded-full animate-float"
+                  style={{
+                    left: pos.left,
+                    top: pos.top,
+                    animationDelay: pos.delay,
+                    animationDuration: pos.duration
+                  }}
+                ></div>
+              );
+            }), [])}
+          </div>
+
+          {/* Animated Grid Pattern */}
           <div className="absolute inset-0 opacity-10">
             <div className="absolute inset-0" style={{
               backgroundImage: `url("data:image/svg+xml,%3Csvg width='60' height='60' viewBox='0 0 60 60' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='none' fill-rule='evenodd'%3E%3Cg fill='%23ffffff' fill-opacity='1'%3E%3Cpath d='M36 34v-4h-2v4h-4v2h4v4h2v-4h4v-2h-4zm0-30V0h-2v4h-4v2h4v4h2V6h4V4h-4zM6 34v-4H4v4H0v2h4v4h2v-4h4v-2H6zM6 4V0H4v4H0v2h4v4h2V6h4V4H6z'/%3E%3C/g%3E%3C/g%3E%3C/svg%3E")`,
+              animation: "slide 20s linear infinite"
             }}></div>
           </div>
 
           {/* Content */}
-          <div className="relative max-w-7xl mx-auto px-4 py-12 md:py-16 lg:py-20">
-            <div className="flex flex-col md:flex-row items-center justify-between gap-8">
+          <div className="relative max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-20 md:py-28 lg:py-32">
+            <div className="flex flex-col lg:flex-row items-center justify-between gap-12 lg:gap-16">
               {/* Left Side - Text Content */}
-              <div className="flex-1 text-center md:text-left">
-                <div className="inline-flex items-center gap-2 mb-4 px-4 py-2 bg-white/20 backdrop-blur-sm rounded-full text-white text-sm font-medium">
-                  <Zap className="w-4 h-4" />
-                  <span>Nền tảng xe điện hàng đầu</span>
+              <div className="flex-1 text-center lg:text-left">
+                {/* Premium Badge */}
+                <div className="inline-flex items-center gap-2 mb-6 px-5 py-2.5 bg-white/25 backdrop-blur-xl rounded-full text-white text-sm font-bold shadow-2xl border border-white/40 hover:bg-white/30 transition-all duration-300 transform hover:scale-105">
+                  <Sparkles className="w-4 h-4 animate-pulse" />
+                  <span>Nền tảng xe điện hàng đầu Việt Nam</span>
+                  <TrendingUp className="w-4 h-4" />
                 </div>
                 
-                <h1 className="text-4xl md:text-5xl lg:text-6xl font-bold text-white mb-4 leading-tight">
-                  Mua bán xe điện
-                  <br />
-                  <span className="text-green-200">trên toàn quốc</span>
+                {/* Main Heading with Gradient */}
+                <h1 className="text-5xl sm:text-6xl md:text-7xl lg:text-8xl font-black text-white mb-6 leading-tight">
+                  <span className="block">Mua bán</span>
+                  <span className="block bg-gradient-to-r from-yellow-300 via-yellow-200 to-yellow-400 bg-clip-text text-transparent drop-shadow-2xl" style={{
+                    backgroundSize: "200% auto",
+                    animation: "gradient 3s linear infinite"
+                  }}>
+                    xe điện
+                  </span>
+                  <span className="block text-4xl sm:text-5xl md:text-6xl lg:text-7xl mt-2">trên toàn quốc</span>
                 </h1>
                 
-                <p className="text-lg md:text-xl text-green-50 mb-6 max-w-2xl">
+                <p className="text-xl md:text-2xl lg:text-3xl text-green-50/95 mb-10 max-w-2xl font-medium leading-relaxed">
                   Khám phá hàng nghìn phương tiện điện hiện đại, tiết kiệm nhiên liệu và thân thiện với môi trường
                 </p>
                 
-                <div className="flex flex-wrap items-center gap-4 text-white">
-                  <div className="flex items-center gap-2">
-                    <div className="w-12 h-12 rounded-full bg-white/20 backdrop-blur-sm flex items-center justify-center">
-                      <Car className="w-6 h-6" />
+                {/* Enhanced Stats Cards */}
+                <div className="flex flex-wrap items-center gap-4 lg:gap-6 text-white">
+                  <div className="group flex items-center gap-4 bg-white/15 backdrop-blur-xl px-6 py-4 rounded-2xl border border-white/30 shadow-2xl hover:bg-white/25 hover:scale-105 transition-all duration-300">
+                    <div className="w-16 h-16 rounded-full bg-gradient-to-br from-white/30 to-white/10 backdrop-blur-sm flex items-center justify-center border-2 border-white/40 shadow-lg group-hover:scale-110 transition-transform">
+                      <Car className="w-8 h-8" />
                     </div>
                     <div>
-                      <div className="text-2xl font-bold">{filteredPosts.length}</div>
-                      <div className="text-sm text-green-100">Phương tiện đang bán</div>
+                      <div className="text-4xl font-black">{filteredPosts.length}+</div>
+                      <div className="text-sm text-green-100 font-bold uppercase tracking-wide">Phương tiện</div>
                     </div>
                   </div>
                   
-                  <div className="flex items-center gap-2">
-                    <div className="w-12 h-12 rounded-full bg-white/20 backdrop-blur-sm flex items-center justify-center">
-                      <Battery className="w-6 h-6" />
+                  <div className="group flex items-center gap-4 bg-white/15 backdrop-blur-xl px-6 py-4 rounded-2xl border border-white/30 shadow-2xl hover:bg-white/25 hover:scale-105 transition-all duration-300">
+                    <div className="w-16 h-16 rounded-full bg-gradient-to-br from-white/30 to-white/10 backdrop-blur-sm flex items-center justify-center border-2 border-white/40 shadow-lg group-hover:scale-110 transition-transform">
+                      <Battery className="w-8 h-8" />
                     </div>
                     <div>
-                      <div className="text-2xl font-bold">100%</div>
-                      <div className="text-sm text-green-100">Điện năng</div>
+                      <div className="text-4xl font-black">100%</div>
+                      <div className="text-sm text-green-100 font-bold uppercase tracking-wide">Điện năng</div>
                     </div>
                   </div>
                   
-                  <div className="flex items-center gap-2">
-                    <div className="w-12 h-12 rounded-full bg-white/20 backdrop-blur-sm flex items-center justify-center">
-                      <ShieldCheck className="w-6 h-6" />
+                  <div className="group flex items-center gap-4 bg-white/15 backdrop-blur-xl px-6 py-4 rounded-2xl border border-white/30 shadow-2xl hover:bg-white/25 hover:scale-105 transition-all duration-300">
+                    <div className="w-16 h-16 rounded-full bg-gradient-to-br from-white/30 to-white/10 backdrop-blur-sm flex items-center justify-center border-2 border-white/40 shadow-lg group-hover:scale-110 transition-transform">
+                      <Award className="w-8 h-8" />
                     </div>
                     <div>
-                      <div className="text-2xl font-bold">✓</div>
-                      <div className="text-sm text-green-100">Đã xác thực</div>
+                      <div className="text-4xl font-black">✓</div>
+                      <div className="text-sm text-green-100 font-bold uppercase tracking-wide">Đã xác thực</div>
                     </div>
                   </div>
                 </div>
               </div>
 
-              {/* Right Side - Visual Element */}
-              <div className="hidden lg:block flex-1 max-w-md">
+              {/* Right Side - Enhanced Visual Element */}
+              <div className="hidden lg:block flex-1 max-w-xl">
                 <div className="relative">
-                  {/* Electric Car Illustration */}
-                  <div className="relative w-full h-64 flex items-center justify-center">
-                    <div className="absolute inset-0 bg-white/10 backdrop-blur-sm rounded-2xl border border-white/20"></div>
-                    <div className="relative z-10 text-center">
-                      <Car className="w-32 h-32 text-white/30 mx-auto mb-4" />
-                      <div className="flex items-center justify-center gap-2">
-                        <Zap className="w-6 h-6 text-yellow-300" />
-                        <span className="text-white font-semibold">Xe điện EcoGreen</span>
-                        <Zap className="w-6 h-6 text-yellow-300" />
+                  {/* Glowing Orb Effect */}
+                  <div className="absolute inset-0 bg-gradient-to-br from-yellow-400/20 to-orange-400/20 rounded-full blur-3xl animate-pulse"></div>
+                  
+                  <div className="relative w-full h-96 flex items-center justify-center">
+                    <div className="absolute inset-0 bg-gradient-to-br from-white/25 to-white/10 backdrop-blur-2xl rounded-3xl border-2 border-white/40 shadow-2xl transform rotate-3 hover:rotate-6 transition-transform duration-500"></div>
+                    <div className="relative z-10 text-center transform -rotate-3 hover:-rotate-6 transition-transform duration-500">
+                      <div className="relative">
+                        <Car className="w-48 h-48 text-white/50 mx-auto mb-8 drop-shadow-2xl animate-bounce-slow" />
+                        <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-32 h-32 bg-yellow-400/20 rounded-full blur-2xl animate-pulse"></div>
+                      </div>
+                      <div className="flex items-center justify-center gap-3 bg-white/20 backdrop-blur-xl px-8 py-4 rounded-full border-2 border-white/40 shadow-2xl">
+                        <Zap className="w-7 h-7 text-yellow-300 animate-pulse" />
+                        <span className="text-white font-black text-xl">Xe điện EcoGreen</span>
+                        <Zap className="w-7 h-7 text-yellow-300 animate-pulse" />
                       </div>
                     </div>
                   </div>
@@ -832,83 +463,227 @@ const MainScreen = () => {
             </div>
           </div>
 
-          {/* Bottom Wave */}
+          {/* Enhanced Bottom Wave with Gradient */}
           <div className="absolute bottom-0 left-0 right-0">
-            <svg className="w-full h-12 text-gray-50" viewBox="0 0 1200 120" preserveAspectRatio="none">
-              <path d="M0,0 C150,80 350,80 600,40 C850,0 1050,0 1200,40 L1200,120 L0,120 Z" fill="currentColor"></path>
+            <svg className="w-full h-20 text-gray-50" viewBox="0 0 1200 120" preserveAspectRatio="none">
+              <defs>
+                <linearGradient id="waveGradient" x1="0%" y1="0%" x2="100%" y2="0%">
+                  <stop offset="0%" stopColor="rgb(249, 250, 251)" />
+                  <stop offset="50%" stopColor="rgb(243, 244, 246)" />
+                  <stop offset="100%" stopColor="rgb(249, 250, 251)" />
+                </linearGradient>
+              </defs>
+              <path d="M0,0 C150,80 350,80 600,40 C850,0 1050,0 1200,40 L1200,120 L0,120 Z" fill="url(#waveGradient)"></path>
             </svg>
           </div>
         </div>
 
-        {/* Search and Filter Section */}
-        <div className="max-w-7xl mx-auto px-4 mb-6">
-          {/* Search and Filter Bar */}
-          <div className="mb-6 flex flex-col sm:flex-row gap-3">
-          <div className="relative flex-1">
-            <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 w-5 h-5" />
-            <Input
-              placeholder="Tìm kiếm xe điện, pin..."
-              value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
-              className="pl-10 pr-4 py-2.5 bg-white border-gray-300 focus:bg-white focus:border-green-500 shadow-sm"
-            />
+        {/* Enhanced Search and Filter Section */}
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 mb-12 -mt-8 relative z-10">
+          {/* Floating Search Bar with Glassmorphism */}
+          <div className="bg-white/95 backdrop-blur-xl rounded-3xl shadow-2xl border border-gray-200/50 p-6 lg:p-8 mb-8 hover:shadow-3xl transition-all duration-300">
+            <div className="flex flex-col sm:flex-row gap-4">
+              <div className="relative flex-1 group">
+                <Search className="absolute left-5 top-1/2 -translate-y-1/2 text-gray-400 group-focus-within:text-green-600 w-6 h-6 transition-colors" />
+                <Input
+                  placeholder="🔍 Tìm kiếm xe điện, pin, model, thương hiệu..."
+                  value={searchQuery}
+                  onChange={(e) => setSearchQuery(e.target.value)}
+                  className="pl-14 pr-5 py-7 text-base lg:text-lg bg-gray-50/80 border-2 border-gray-200 focus:bg-white focus:border-green-500 focus:ring-4 focus:ring-green-500/20 shadow-sm rounded-2xl transition-all duration-300 font-medium"
+                  onKeyDown={(e) => {
+                    if (e.key === 'Enter') {
+                      // Search automatically on Enter
+                    }
+                  }}
+                />
+              </div>
+              <Button 
+                className="bg-gradient-to-r from-green-600 to-emerald-600 hover:from-green-700 hover:to-emerald-700 text-white px-10 py-7 text-base lg:text-lg font-bold rounded-2xl shadow-xl hover:shadow-2xl transition-all duration-300 transform hover:scale-105 active:scale-95 whitespace-nowrap"
+                onClick={() => {}}
+              >
+                <Search className="w-5 h-5 lg:w-6 lg:h-6 mr-2" />
+                Tìm kiếm
+              </Button>
+            </div>
           </div>
-          <Button 
-            className="bg-green-600 hover:bg-green-700 text-white px-6"
-            onClick={() => {}}
-          >
-            Tìm kiếm
-          </Button>
-        </div>
 
-        {/* Filter Tags */}
-        <div className="flex flex-wrap gap-2 mb-8">
-          <Button
-            variant="outline"
-            className="border-gray-300 text-gray-700 hover:bg-gray-50 flex items-center gap-2"
-          >
-            <Filter className="w-4 h-4" /> Bộ lọc
-          </Button>
-          {(["All", "EV", "Battery"] as const).map((filter) => (
-            <Badge
-              key={filter}
-              onClick={() => setActiveFilter(filter)}
-              className={`cursor-pointer px-4 py-1.5 text-sm font-medium transition-colors ${
-                activeFilter === filter
-                  ? "bg-green-600 text-white hover:bg-green-700"
-                  : "bg-white text-gray-700 border-gray-300 hover:bg-gray-50"
-              }`}
+          {/* Enhanced Filter Tags */}
+          <div className="flex flex-wrap items-center gap-3 mb-10">
+            <Button
+              variant="outline"
+              onClick={() => setShowFilterSidebar(!showFilterSidebar)}
+              className={`border-2 ${
+                showFilterSidebar 
+                  ? "border-green-500 bg-green-50 text-green-700" 
+                  : "border-gray-300 text-gray-700 hover:bg-gradient-to-r hover:from-green-50 hover:to-emerald-50 hover:border-green-500"
+              } flex items-center gap-2 px-6 py-3 rounded-xl font-bold shadow-md hover:shadow-lg transition-all duration-300 transform hover:scale-105`}
             >
-              {filter === "All" ? "Tất cả" : filter === "EV" ? "Xe điện" : "Pin"}
-            </Badge>
-          ))}
-          </div>
-
-          {loading ? (
-          <div className="text-center py-20 text-gray-500">
-            <Zap className="w-6 h-6 mx-auto mb-2 animate-pulse" />
-            Loading posts...
-          </div>
-        ) : error ? (
-          <div className="bg-red-50 border border-red-200 text-red-700 p-4 rounded">
-            {error}
-          </div>
-        ) : filteredPosts.length === 0 ? (
-          <div className="text-center py-20 text-gray-500">
-            <Zap className="w-10 h-10 mx-auto mb-3 text-gray-300" />
-            No vehicles found.
-          </div>
-        ) : (
-          <div className="space-y-0">
-            {filteredPosts.map((p) => (
-              <PostCard key={p.id} post={p} />
+              <SlidersHorizontal className="w-5 h-5" /> 
+              <span className="hidden sm:inline">Bộ lọc</span>
+            </Button>
+            {(["All", "EV", "Battery"] as const).map((filter, index) => (
+              <Badge
+                key={filter}
+                onClick={() => setActiveFilter(filter)}
+                className={`cursor-pointer px-6 py-3 text-sm lg:text-base font-bold transition-all duration-300 rounded-xl shadow-md transform hover:scale-110 active:scale-95 ${
+                  activeFilter === filter
+                    ? "bg-gradient-to-r from-green-600 to-emerald-600 text-white hover:from-green-700 hover:to-emerald-700 shadow-xl scale-110 ring-4 ring-green-500/30"
+                    : "bg-white text-gray-700 border-2 border-gray-200 hover:bg-gray-50 hover:border-green-400 hover:shadow-lg"
+                }`}
+                style={{
+                  animation: activeFilter === filter ? "pulse 2s infinite" : "none"
+                }}
+              >
+                {filter === "All" ? "✨ Tất cả" : filter === "EV" ? "🚗 Xe điện" : "🔋 Pin"}
+              </Badge>
             ))}
           </div>
+
+          {/* Content Area - Full Width Layout */}
+          <div className="flex gap-6 relative">
+            {/* Posts List - Full Width */}
+            <div className="w-full min-w-0">
+          {loading ? (
+            <div className="space-y-6 pb-8">
+              {[...Array(3)].map((_, i) => (
+                <PostCardSkeleton key={i} />
+              ))}
+            </div>
+          ) : error ? (
+            <div className="bg-gradient-to-br from-red-50 to-red-100 border-2 border-red-300 text-red-800 p-8 rounded-3xl shadow-2xl max-w-2xl mx-auto">
+              <div className="flex items-center gap-4">
+                <div className="w-14 h-14 rounded-full bg-red-200 flex items-center justify-center flex-shrink-0 shadow-lg">
+                  <svg className="w-7 h-7 text-red-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                  </svg>
+                </div>
+                <div>
+                  <p className="font-black text-xl mb-1">Có lỗi xảy ra</p>
+                  <p className="text-sm font-medium">{error}</p>
+                </div>
+              </div>
+            </div>
+          ) : filteredPosts.length === 0 ? (
+            <div className="text-center py-32">
+              <div className="inline-flex flex-col items-center gap-6 max-w-md mx-auto">
+                <div className="relative">
+                  <div className="w-32 h-32 rounded-full bg-gradient-to-br from-gray-100 to-gray-200 flex items-center justify-center shadow-2xl">
+                    <Car className="w-16 h-16 text-gray-400" />
+                  </div>
+                  <div className="absolute -top-2 -right-2 w-12 h-12 bg-yellow-400 rounded-full flex items-center justify-center animate-bounce">
+                    <Search className="w-6 h-6 text-yellow-800" />
+                  </div>
+                </div>
+                <div>
+                  <p className="text-3xl font-black text-gray-800 mb-3">Không tìm thấy phương tiện</p>
+                  <p className="text-gray-600 mb-8 text-lg">Thử điều chỉnh bộ lọc hoặc từ khóa tìm kiếm của bạn</p>
+                  <Button
+                    onClick={() => {
+                      setSearchQuery("");
+                      setActiveFilter("All");
+                    }}
+                    className="bg-gradient-to-r from-green-600 to-emerald-600 hover:from-green-700 hover:to-emerald-700 text-white px-8 py-6 rounded-xl text-lg font-bold shadow-xl hover:shadow-2xl transition-all duration-300 transform hover:scale-105"
+                  >
+                    <span>🔄 Xóa bộ lọc</span>
+                  </Button>
+                </div>
+              </div>
+            </div>
+          ) : (
+            <div className="space-y-8 pb-12">
+              <div className="flex items-center justify-between mb-2">
+                <div className="flex items-center gap-3">
+                  <TrendingUp className="w-5 h-5 text-green-600" />
+                  <p className="text-base lg:text-lg text-gray-700 font-bold">
+                    Tìm thấy <span className="text-2xl lg:text-3xl font-black text-transparent bg-clip-text bg-gradient-to-r from-green-600 to-emerald-600">{filteredPosts.length}</span> phương tiện
+                    {filteredPosts.length > itemsPerPage && (
+                      <span className="ml-2 text-sm text-gray-500 font-normal">
+                        (Trang {currentPage} / {totalPages})
+                      </span>
+                    )}
+                  </p>
+                </div>
+              </div>
+              {currentPosts.map((p, index) => (
+                <div
+                  key={p.id}
+                  style={{
+                    animationDelay: `${index * 0.1}s`
+                  }}
+                >
+                  <VehiclePostCard post={p} />
+                </div>
+              ))}
+
+              {/* Pagination Controls */}
+              {totalPages > 1 && (
+                <div className="flex items-center justify-center gap-2 mt-8 pt-8 border-t border-gray-200">
+                  <Button
+                    variant="outline"
+                    onClick={() => setCurrentPage(prev => Math.max(1, prev - 1))}
+                    disabled={currentPage === 1}
+                    className="px-4 py-2 border-2 border-gray-300 hover:border-green-500 hover:bg-green-50 disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-300"
+                  >
+                    <ChevronLeft className="w-4 h-4 mr-1" />
+                    Trước
+                  </Button>
+                  
+                  <div className="flex items-center gap-1">
+                    {Array.from({ length: totalPages }, (_, i) => i + 1).map((page) => {
+                      // Show first page, last page, current page, and pages around current
+                      if (
+                        page === 1 ||
+                        page === totalPages ||
+                        (page >= currentPage - 1 && page <= currentPage + 1) ||
+                        (currentPage <= 3 && page <= 5) ||
+                        (currentPage >= totalPages - 2 && page >= totalPages - 4)
+                      ) {
+                        return (
+                          <Button
+                            key={page}
+                            variant={currentPage === page ? "default" : "outline"}
+                            onClick={() => setCurrentPage(page)}
+                            className={`min-w-[40px] px-3 py-2 ${
+                              currentPage === page
+                                ? "bg-gradient-to-r from-green-600 to-emerald-600 text-white hover:from-green-700 hover:to-emerald-700 border-0 shadow-lg scale-105"
+                                : "border-2 border-gray-300 hover:border-green-500 hover:bg-green-50 text-gray-700"
+                            } transition-all duration-300 transform hover:scale-110 active:scale-95`}
+                          >
+                            {page}
+                          </Button>
+                        );
+                      } else if (
+                        page === currentPage - 2 ||
+                        page === currentPage + 2
+                      ) {
+                        return (
+                          <span key={page} className="px-2 text-gray-400">
+                            ...
+                          </span>
+                        );
+                      }
+                      return null;
+                    })}
+                  </div>
+
+                  <Button
+                    variant="outline"
+                    onClick={() => setCurrentPage(prev => Math.min(totalPages, prev + 1))}
+                    disabled={currentPage === totalPages}
+                    className="px-4 py-2 border-2 border-gray-300 hover:border-green-500 hover:bg-green-50 disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-300"
+                  >
+                    Sau
+                    <ChevronRight className="w-4 h-4 ml-1" />
+                  </Button>
+                </div>
+              )}
+            </div>
           )}
+            </div>
+          </div>
         </div>
       </main>
 
-      {/* 3. Thêm <Footer /> vào đây, bên ngoài <main> */}
       <Footer />
     </div>
   );
