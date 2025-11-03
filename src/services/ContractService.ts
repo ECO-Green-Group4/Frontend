@@ -28,6 +28,12 @@ export interface ContractOtpResponse {
   data: string;
 }
 
+export interface CompleteContractResponse {
+  message: string;
+  success: boolean;
+  data: ContractData;
+}
+
 export const ContractService = {
   // Generate contract từ orderId
   generateContract: async (orderId: number): Promise<ContractData> => {
@@ -86,8 +92,14 @@ export const ContractService = {
     try {
       const response = await api.get<GetContractByOrderResponse>(`/contract/order/${orderId}`);
       return response.data.data;
-    } catch (error) {
-      console.error('Error getting contract by orderId:', error);
+    } catch (error: any) {
+      // Xử lý lỗi một cách graceful - không log error khi order chưa có contract (404/500 là bình thường)
+      if (error.response?.status === 404 || error.response?.status === 500) {
+        // Order chưa có contract - đây là trường hợp bình thường, không cần log error
+        return null;
+      }
+      // Chỉ log error cho các lỗi khác (401, 403, network error, etc.)
+      console.error(`Error getting contract by orderId ${orderId}:`, error.response?.status || error.message);
       return null;
     }
   },
@@ -111,6 +123,39 @@ export const ContractService = {
       console.error('Error getting contract OTP:', error);
       
       let errorMessage = 'Gửi OTP thất bại. Vui lòng thử lại.';
+      if (error.response?.data?.message) {
+        errorMessage = error.response.data.message;
+      } else if (error.message) {
+        errorMessage = error.message;
+      }
+      
+      throw new Error(errorMessage);
+    }
+  },
+
+  // Xác nhận hoàn tất contract bằng orderId (sau khi 2 bên đã ký)
+  completeContractByOrderId: async (orderId: number): Promise<number> => {
+    try {
+      console.log(`Completing contract for orderId: ${orderId}`);
+      const response = await api.put<CompleteContractResponse>(
+        `/contract/order/${orderId}/complete`
+      );
+      console.log('Complete contract response:', response.data);
+      
+      if (!response.data.success) {
+        throw new Error(response.data.message || 'Không thể hoàn tất contract');
+      }
+      
+      // Chỉ trả về contractId từ response data
+      if (response.data.data && response.data.data.contractId) {
+        return response.data.data.contractId;
+      }
+      
+      throw new Error('Response không chứa contractId');
+    } catch (error: any) {
+      console.error('Error completing contract:', error);
+      
+      let errorMessage = 'Hoàn tất contract thất bại. Vui lòng thử lại.';
       if (error.response?.data?.message) {
         errorMessage = error.response.data.message;
       } else if (error.message) {
