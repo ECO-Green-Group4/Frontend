@@ -3,16 +3,17 @@ import { Service, ServiceService, CreateServiceRequest } from '@/services/Servic
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Card, CardContent } from '@/components/ui/card';
 import { Label } from '@/components/ui/label';
 import { 
   Search, 
   Plus, 
   Edit, 
   Trash2, 
-  Settings
+  Settings as SettingsIcon
 } from 'lucide-react';
 import SimpleModal from '@/components/ui/simple-modal';
+import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { showToast } from '@/utils/toast';
 
 const ServiceManagement: React.FC = () => {
@@ -22,6 +23,8 @@ const ServiceManagement: React.FC = () => {
   const [searchQuery, setSearchQuery] = useState('');
   const [isCreateDialogOpen, setIsCreateDialogOpen] = useState(false);
   const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
+  const [isDetailDialogOpen, setIsDetailDialogOpen] = useState(false);
+  const [viewingService, setViewingService] = useState<Service | null>(null);
   const [editingService, setEditingService] = useState<Service | null>(null);
 
   // Helper function to get service ID
@@ -176,6 +179,12 @@ const ServiceManagement: React.FC = () => {
     });
   };
 
+  // Open detail dialog
+  const openDetailDialog = (service: Service) => {
+    setViewingService(service);
+    setIsDetailDialogOpen(true);
+  };
+
   // Open edit dialog
   const openEditDialog = (service: Service) => {
     const serviceId = getServiceId(service);
@@ -236,7 +245,7 @@ const ServiceManagement: React.FC = () => {
     return (
       <div className="text-center py-12">
         <div className="text-red-600 mb-4">
-          <Settings className="h-12 w-12 mx-auto mb-2" />
+          <SettingsIcon className="h-12 w-12 mx-auto mb-2" />
           <h3 className="text-lg font-semibold">Lỗi tải dữ liệu</h3>
           <p className="text-sm">{error}</p>
         </div>
@@ -350,7 +359,7 @@ const ServiceManagement: React.FC = () => {
         {filteredServices.length === 0 ? (
           <Card>
             <CardContent className="text-center py-12">
-              <Settings className="h-12 w-12 text-gray-400 mx-auto mb-4" />
+              <SettingsIcon className="h-12 w-12 text-gray-400 mx-auto mb-4" />
               <h3 className="text-lg font-semibold text-gray-900 mb-2">
                 {searchQuery ? 'Không tìm thấy service nào' : 'Chưa có service nào'}
               </h3>
@@ -373,21 +382,25 @@ const ServiceManagement: React.FC = () => {
             const serviceId = getServiceId(service);
             console.log('Rendering service:', service, 'ID:', serviceId);
             return (
-            <Card key={serviceId || `service-${index}`} className="hover:shadow-md transition-shadow">
-              <CardHeader>
-                <div className="flex justify-between items-start">
-                  <div className="flex-1">
-                    <CardTitle className="flex items-center gap-2">
-                      {service.name}
-                      <Badge className={getStatusBadgeColor(service.status)}>
-                        {formatStatus(service.status) || 'N/A'}
-                      </Badge>
-                    </CardTitle>
-                    <div className="mt-2 text-sm text-gray-600">
-                      <p>{service.description}</p>
+            <Card 
+              key={serviceId || `service-${index}`} 
+              className="hover:shadow-md transition-shadow cursor-pointer"
+              onClick={() => openDetailDialog(service)}
+            >
+              <CardContent className="p-4">
+                <div className="flex justify-between items-center">
+                  <div className="flex items-center gap-3">
+                    <SettingsIcon className="h-5 w-5 text-gray-400" />
+                    <div>
+                      <h3 className="text-lg font-semibold text-gray-900">{service.name}</h3>
+                      <div className="flex items-center gap-2 mt-1">
+                        <Badge className={getStatusBadgeColor(service.status)}>
+                          {formatStatus(service.status) || 'N/A'}
+                        </Badge>
+                      </div>
                     </div>
                   </div>
-                  <div className="flex gap-2">
+                  <div className="flex gap-2" onClick={(e) => e.stopPropagation()}>
                     <Button
                       variant="outline"
                       size="sm"
@@ -412,34 +425,115 @@ const ServiceManagement: React.FC = () => {
                     </Button>
                   </div>
                 </div>
-              </CardHeader>
-              <CardContent>
-                <div className="grid grid-cols-2 md:grid-cols-3 gap-4 text-sm">
-                  <div>
-                    <span className="text-gray-500">Phí dịch vụ:</span>
-                    <p className="font-semibold">{formatCurrency(service.defaultFee || service.fee)}</p>
-                  </div>
-                  {service.createdAt && (
-                    <div>
-                      <span className="text-gray-500">Tạo lúc:</span>
-                      <p className="font-semibold">
-                        {new Date(service.createdAt).toLocaleDateString('vi-VN')}
-                      </p>
-                    </div>
-                  )}
-                  {service.serviceId && (
-                    <div>
-                      <span className="text-gray-500">ID:</span>
-                      <p className="font-semibold">{service.serviceId}</p>
-                    </div>
-                  )}
-                </div>
               </CardContent>
             </Card>
             );
           })
         )}
       </div>
+
+      {/* Detail Dialog */}
+      <Dialog open={isDetailDialogOpen} onOpenChange={setIsDetailDialogOpen}>
+        <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              {viewingService?.name}
+              <Badge className={getStatusBadgeColor(viewingService?.status || '')}>
+                {viewingService ? formatStatus(viewingService.status) : 'N/A'}
+              </Badge>
+            </DialogTitle>
+            <DialogDescription>
+              Chi tiết thông tin service
+            </DialogDescription>
+          </DialogHeader>
+          
+          {viewingService && (
+            <div className="space-y-6 py-4">
+              {/* Status */}
+              <div className="flex items-center gap-2">
+                <span className="text-sm font-medium text-gray-500">Trạng thái:</span>
+                <Badge className={getStatusBadgeColor(viewingService.status)}>
+                  {formatStatus(viewingService.status) || 'N/A'}
+                </Badge>
+              </div>
+
+              {/* Service Details */}
+              <div className="space-y-4">
+                <div className="space-y-1">
+                  <span className="text-sm text-gray-500">Mô tả:</span>
+                  <p className="text-base font-medium">{viewingService.description}</p>
+                </div>
+                
+                <div className="grid grid-cols-2 gap-6">
+                  <div className="space-y-1">
+                    <span className="text-sm text-gray-500">Phí dịch vụ:</span>
+                    <p className="text-base font-semibold">
+                      {formatCurrency(viewingService.defaultFee || viewingService.fee)}
+                    </p>
+                  </div>
+                  
+                  {viewingService.serviceId && (
+                    <div className="space-y-1">
+                      <span className="text-sm text-gray-500">ID:</span>
+                      <p className="text-base font-semibold">{viewingService.serviceId}</p>
+                    </div>
+                  )}
+                  
+                  {viewingService.createdAt && (
+                    <div className="space-y-1 col-span-2">
+                      <span className="text-sm text-gray-500">Tạo lúc:</span>
+                      <p className="text-base font-semibold">
+                        {new Date(viewingService.createdAt).toLocaleString('vi-VN', {
+                          year: 'numeric',
+                          month: '2-digit',
+                          day: '2-digit',
+                          hour: '2-digit',
+                          minute: '2-digit'
+                        })}
+                      </p>
+                    </div>
+                  )}
+                  
+                  {viewingService.updatedAt && (
+                    <div className="space-y-1 col-span-2">
+                      <span className="text-sm text-gray-500">Cập nhật lúc:</span>
+                      <p className="text-base font-semibold">
+                        {new Date(viewingService.updatedAt).toLocaleString('vi-VN', {
+                          year: 'numeric',
+                          month: '2-digit',
+                          day: '2-digit',
+                          hour: '2-digit',
+                          minute: '2-digit'
+                        })}
+                      </p>
+                    </div>
+                  )}
+                </div>
+              </div>
+
+              {/* Action Buttons */}
+              <div className="flex justify-end gap-2 pt-4 border-t">
+                <Button
+                  variant="outline"
+                  onClick={() => {
+                    setIsDetailDialogOpen(false);
+                    openEditDialog(viewingService);
+                  }}
+                >
+                  <Edit className="h-4 w-4 mr-2" />
+                  Chỉnh sửa
+                </Button>
+                <Button
+                  variant="outline"
+                  onClick={() => setIsDetailDialogOpen(false)}
+                >
+                  Đóng
+                </Button>
+              </div>
+            </div>
+          )}
+        </DialogContent>
+      </Dialog>
 
       {/* Edit Modal */}
       <SimpleModal

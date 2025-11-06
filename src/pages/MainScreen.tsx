@@ -420,7 +420,7 @@ const MainScreen = () => {
                       <Car className="w-8 h-8" />
                     </div>
                     <div>
-                      <div className="text-4xl font-black">{filteredPosts.length}+</div>
+                      <div className="text-4xl font-black">{filteredPosts.length}</div>
                       <div className="text-sm text-green-100 font-bold uppercase tracking-wide">Phương tiện</div>
                     </div>
                   </div>

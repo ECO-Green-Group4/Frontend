@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '@/hooks/useAuth';
 import UserManagement from '@/components/UserManagement';
+import StatisticsChart from '@/components/StatisticsChart';
 import { Button } from '@/components/ui/button';
 import {
   DropdownMenu,
@@ -138,6 +139,8 @@ const Dashboard = () => {
           {/* Content based on active menu */}
           {activeMenu === 'user-management' ? (
             <UserManagement />
+          ) : activeMenu === 'reports-statistics' ? (
+            <StatisticsChart />
           ) : (
             <div className="text-center py-12">
               <h2 className="text-2xl font-semibold text-gray-800 mb-4">
