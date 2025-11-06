@@ -14,6 +14,7 @@ import {
   Filter
 } from 'lucide-react';
 import SimpleModal from '@/components/ui/simple-modal';
+import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { showToast } from '@/utils/toast';
 
 const PackageManagement: React.FC = () => {
@@ -23,6 +24,8 @@ const PackageManagement: React.FC = () => {
   const [searchQuery, setSearchQuery] = useState('');
   const [isCreateDialogOpen, setIsCreateDialogOpen] = useState(false);
   const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
+  const [isDetailDialogOpen, setIsDetailDialogOpen] = useState(false);
+  const [viewingPackage, setViewingPackage] = useState<Package | null>(null);
   const [editingPackage, setEditingPackage] = useState<Package | null>(null);
   const [showFilters, setShowFilters] = useState(false);
 
@@ -175,6 +178,12 @@ const PackageManagement: React.FC = () => {
       commissionDiscount: 0,
       status: 'ACTIVE'
     });
+  };
+
+  // Open detail dialog
+  const openDetailDialog = (pkg: Package) => {
+    setViewingPackage(pkg);
+    setIsDetailDialogOpen(true);
   };
 
   // Open edit dialog
@@ -441,27 +450,33 @@ const PackageManagement: React.FC = () => {
             const packageId = getPackageId(pkg);
             console.log('Rendering package:', pkg, 'ID:', packageId);
             return (
-            <Card key={packageId || `package-${index}`} className="hover:shadow-md transition-shadow">
-              <CardHeader>
-                <div className="flex justify-between items-start">
-                  <div className="flex-1">
-                    <CardTitle className="flex items-center gap-2">
-                      {pkg.name}
-                      <Badge className={getPackageTypeBadgeColor(pkg.packageType)}>
-                        {pkg.packageType.replace('LISTING_', '')}
-                      </Badge>
-                      {pkg.highlight && (
-                        <Badge variant="outline" className="text-yellow-600 border-yellow-600">
-                          Highlight
+            <Card 
+              key={packageId || `package-${index}`} 
+              className="hover:shadow-md transition-shadow cursor-pointer"
+              onClick={() => openDetailDialog(pkg)}
+            >
+              <CardContent className="p-4">
+                <div className="flex justify-between items-center">
+                  <div className="flex items-center gap-3">
+                    <PackageIcon className="h-5 w-5 text-gray-400" />
+                    <div>
+                      <h3 className="text-lg font-semibold text-gray-900">{pkg.name}</h3>
+                      <div className="flex items-center gap-2 mt-1">
+                        <Badge className={getPackageTypeBadgeColor(pkg.packageType)}>
+                          {pkg.packageType.replace('LISTING_', '')}
                         </Badge>
-                      )}
-                    </CardTitle>
-                    <div className="flex items-center gap-4 mt-2 text-sm text-gray-600">
-                      <span>Trạng thái: <Badge className={getStatusBadgeColor(pkg.status)}>{pkg.status || 'N/A'}</Badge></span>
-                      <span>Thời hạn: {pkg.durationDays || 0} ngày</span>
+                        {pkg.highlight && (
+                          <Badge variant="outline" className="text-yellow-600 border-yellow-600">
+                            Highlight
+                          </Badge>
+                        )}
+                        <Badge className={getStatusBadgeColor(pkg.status)}>
+                          {pkg.status || 'N/A'}
+                        </Badge>
+                      </div>
                     </div>
                   </div>
-                  <div className="flex gap-2">
+                  <div className="flex gap-2" onClick={(e) => e.stopPropagation()}>
                     <Button
                       variant="outline"
                       size="sm"
@@ -486,34 +501,129 @@ const PackageManagement: React.FC = () => {
                     </Button>
                   </div>
                 </div>
-              </CardHeader>
-              <CardContent>
-                <div className="grid grid-cols-2 md:grid-cols-4 gap-4 text-sm">
-                  <div>
-                    <span className="text-gray-500">Giới hạn Listing:</span>
-                    <p className="font-semibold">{pkg.listingLimit}</p>
-                  </div>
-                  <div>
-                    <span className="text-gray-500">Phí Listing:</span>
-                    <p className="font-semibold">{formatCurrency(pkg.listingFee)}</p>
-                  </div>
-                  <div>
-                    <span className="text-gray-500">Giảm giá hoa hồng:</span>
-                    <p className="font-semibold">{pkg.commissionDiscount}%</p>
-                  </div>
-                  <div>
-                    <span className="text-gray-500">Tạo lúc:</span>
-                    <p className="font-semibold">
-                      {pkg.createdAt ? new Date(pkg.createdAt).toLocaleDateString('vi-VN') : 'N/A'}
-                    </p>
-                  </div>
-                </div>
               </CardContent>
             </Card>
             );
           })
         )}
       </div>
+
+      {/* Detail Dialog */}
+      <Dialog open={isDetailDialogOpen} onOpenChange={setIsDetailDialogOpen}>
+        <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              {viewingPackage?.name}
+              <Badge className={getPackageTypeBadgeColor(viewingPackage?.packageType || '')}>
+                {viewingPackage?.packageType.replace('LISTING_', '')}
+              </Badge>
+              {viewingPackage?.highlight && (
+                <Badge variant="outline" className="text-yellow-600 border-yellow-600">
+                  Highlight
+                </Badge>
+              )}
+            </DialogTitle>
+            <DialogDescription>
+              Chi tiết thông tin package
+            </DialogDescription>
+          </DialogHeader>
+          
+          {viewingPackage && (
+            <div className="space-y-6 py-4">
+              {/* Status */}
+              <div className="flex items-center gap-2">
+                <span className="text-sm font-medium text-gray-500">Trạng thái:</span>
+                <Badge className={getStatusBadgeColor(viewingPackage.status)}>
+                  {viewingPackage.status || 'N/A'}
+                </Badge>
+              </div>
+
+              {/* Package Details Grid */}
+              <div className="grid grid-cols-2 gap-6">
+                <div className="space-y-1">
+                  <span className="text-sm text-gray-500">Thời hạn:</span>
+                  <p className="text-base font-semibold">{viewingPackage.durationDays || 0} ngày</p>
+                </div>
+                
+                <div className="space-y-1">
+                  <span className="text-sm text-gray-500">Giới hạn Listing:</span>
+                  <p className="text-base font-semibold">{viewingPackage.listingLimit}</p>
+                </div>
+                
+                <div className="space-y-1">
+                  <span className="text-sm text-gray-500">Phí Listing:</span>
+                  <p className="text-base font-semibold">{formatCurrency(viewingPackage.listingFee)}</p>
+                </div>
+                
+                <div className="space-y-1">
+                  <span className="text-sm text-gray-500">Giảm giá hoa hồng:</span>
+                  <p className="text-base font-semibold">{viewingPackage.commissionDiscount}%</p>
+                </div>
+                
+                <div className="space-y-1">
+                  <span className="text-sm text-gray-500">Loại Package:</span>
+                  <p className="text-base font-semibold">{viewingPackage.packageType}</p>
+                </div>
+                
+                <div className="space-y-1">
+                  <span className="text-sm text-gray-500">Highlight:</span>
+                  <p className="text-base font-semibold">{viewingPackage.highlight ? 'Có' : 'Không'}</p>
+                </div>
+                
+                <div className="space-y-1 col-span-2">
+                  <span className="text-sm text-gray-500">Tạo lúc:</span>
+                  <p className="text-base font-semibold">
+                    {viewingPackage.createdAt 
+                      ? new Date(viewingPackage.createdAt).toLocaleString('vi-VN', {
+                          year: 'numeric',
+                          month: '2-digit',
+                          day: '2-digit',
+                          hour: '2-digit',
+                          minute: '2-digit'
+                        })
+                      : 'N/A'}
+                  </p>
+                </div>
+                
+                {viewingPackage.updatedAt && (
+                  <div className="space-y-1 col-span-2">
+                    <span className="text-sm text-gray-500">Cập nhật lúc:</span>
+                    <p className="text-base font-semibold">
+                      {new Date(viewingPackage.updatedAt).toLocaleString('vi-VN', {
+                        year: 'numeric',
+                        month: '2-digit',
+                        day: '2-digit',
+                        hour: '2-digit',
+                        minute: '2-digit'
+                      })}
+                    </p>
+                  </div>
+                )}
+              </div>
+
+              {/* Action Buttons */}
+              <div className="flex justify-end gap-2 pt-4 border-t">
+                <Button
+                  variant="outline"
+                  onClick={() => {
+                    setIsDetailDialogOpen(false);
+                    openEditDialog(viewingPackage);
+                  }}
+                >
+                  <Edit className="h-4 w-4 mr-2" />
+                  Chỉnh sửa
+                </Button>
+                <Button
+                  variant="outline"
+                  onClick={() => setIsDetailDialogOpen(false)}
+                >
+                  Đóng
+                </Button>
+              </div>
+            </div>
+          )}
+        </DialogContent>
+      </Dialog>
 
       {/* Edit Modal */}
       <SimpleModal
