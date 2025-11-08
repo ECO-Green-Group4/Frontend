@@ -171,21 +171,39 @@ const OrderManagement: React.FC = () => {
     }
   };
 
-  const formatDate = (dateString: string) => {
-    return new Date(dateString).toLocaleDateString('vi-VN', {
-      year: 'numeric',
-      month: '2-digit',
-      day: '2-digit',
-      hour: '2-digit',
-      minute: '2-digit'
-    });
+  const formatDate = (dateString: string | null | undefined): string | null => {
+    if (!dateString) {
+      return null;
+    }
+    try {
+      const date = new Date(dateString);
+      if (isNaN(date.getTime())) {
+        return null;
+      }
+      return date.toLocaleDateString('vi-VN', {
+        year: 'numeric',
+        month: '2-digit',
+        day: '2-digit',
+        hour: '2-digit',
+        minute: '2-digit'
+      });
+    } catch (error) {
+      return null;
+    }
   };
 
-  const formatCurrency = (amount: number) => {
-    return new Intl.NumberFormat('vi-VN', {
-      style: 'currency',
-      currency: 'VND'
-    }).format(amount);
+  const formatCurrency = (amount: number | null | undefined): string | null => {
+    if (amount === null || amount === undefined || isNaN(amount)) {
+      return null;
+    }
+    try {
+      return new Intl.NumberFormat('vi-VN', {
+        style: 'currency',
+        currency: 'VND'
+      }).format(amount);
+    } catch (error) {
+      return null;
+    }
   };
 
   if (loading) {
@@ -350,16 +368,27 @@ const OrderManagement: React.FC = () => {
                       </div>
                     )}
 
-                    <div className="flex items-center space-x-6 text-sm text-gray-600">
-                      <div className="flex items-center">
-                        <Calendar className="w-4 h-4 mr-1" />
-                        <span>{formatDate(order.createdAt)}</span>
-                      </div>
-                      <div className="flex items-center">
-                        <DollarSign className="w-4 h-4 mr-1" />
-                        <span>{formatCurrency(order.totalAmount)}</span>
-                      </div>
-                    </div>
+                    {(() => {
+                      const formattedDate = formatDate(order.createdAt);
+                      const formattedAmount = formatCurrency(order.totalAmount);
+                      if (!formattedDate && !formattedAmount) return null;
+                      return (
+                        <div className="flex items-center space-x-6 text-sm text-gray-600">
+                          {formattedDate && (
+                            <div className="flex items-center">
+                              <Calendar className="w-4 h-4 mr-1" />
+                              <span>{formattedDate}</span>
+                            </div>
+                          )}
+                          {formattedAmount && (
+                            <div className="flex items-center">
+                              <DollarSign className="w-4 h-4 mr-1" />
+                              <span>{formattedAmount}</span>
+                            </div>
+                          )}
+                        </div>
+                      );
+                    })()}
                   </div>
 
                   <div className="flex flex-col space-y-2">
