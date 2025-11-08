@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { 
-  Mail, Calendar, User, Phone, MapPin, BadgeCheck, FileText, LogOut, Loader2, Edit, X, Check
+  Mail, Calendar, User, Phone, MapPin, BadgeCheck, FileText, Loader2, Edit, X, Check, Lock, Eye, EyeOff
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -16,7 +16,8 @@ import Header from '@/components/ui/Header';
 import Footer from '@/components/Footer';
 import api from '@/services/axios';
 import { useAuth } from '@/hooks/useAuth';
-import { showToast } from '@/utils/toast'; 
+import { showToast } from '@/utils/toast';
+import AuthService from '@/services/AuthService'; 
 
 // 1. Định nghĩa TypeScript interface khớp với Java DTO
 interface UserInfo {
@@ -53,6 +54,8 @@ const Profile: React.FC = () => {
   const [error, setError] = useState<string | null>(null);
   const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [isResetPasswordDialogOpen, setIsResetPasswordDialogOpen] = useState(false);
+  const [resetPasswordStep, setResetPasswordStep] = useState<'send-otp' | 'reset'>('send-otp');
   const { updateProfileComplete } = useAuth();
   
   // Form state
@@ -65,6 +68,18 @@ const Profile: React.FC = () => {
   });
 
   const [formErrors, setFormErrors] = useState<Record<string, string>>({});
+  
+  // Reset Password form state
+  const [resetPasswordData, setResetPasswordData] = useState({
+    email: '',
+    otp: '',
+    newPassword: '',
+    confirmPassword: ''
+  });
+  const [resetPasswordErrors, setResetPasswordErrors] = useState<Record<string, string>>({});
+  const [resetPasswordLoading, setResetPasswordLoading] = useState(false);
+  const [showNewPassword, setShowNewPassword] = useState(false);
+  const [showConfirmPassword, setShowConfirmPassword] = useState(false);
 
   // 2. Fetch dữ liệu từ backend khi component được mount
   useEffect(() => {
@@ -252,7 +267,25 @@ const Profile: React.FC = () => {
               <InfoRow icon={<User size={20} />} label="Giới tính" value={userInfo.gender} />
               <InfoRow icon={<Calendar size={20} />} label="Ngày sinh" value={userInfo.dateOfBirth} />
               <InfoRow icon={<FileText size={20} />} label="Số CCCD" value={userInfo.identityCard} />
-              <InfoRow icon={<BadgeCheck size={20} />} label="Trạng thái" value={userInfo.status} />
+              <div>
+                <InfoRow icon={<BadgeCheck size={20} />} label="Trạng thái" value={userInfo.status} />
+                {/* Reset Password Button - Ngay sau Trạng thái */}
+                <div className="mt-4">
+                  <Button
+                    onClick={() => {
+                      setResetPasswordData({ email: userInfo.email || '', otp: '', newPassword: '', confirmPassword: '' });
+                      setResetPasswordStep('send-otp');
+                      setResetPasswordErrors({});
+                      setIsResetPasswordDialogOpen(true);
+                    }}
+                    variant="outline"
+                    className="w-full border-green-500 text-green-600 hover:bg-green-50"
+                  >
+                    <Lock className="w-4 h-4 mr-2" />
+                    Đặt lại mật khẩu
+                  </Button>
+                </div>
+              </div>
               <div className="md:col-span-2">
                 <InfoRow icon={<MapPin size={20} />} label="Địa chỉ" value={userInfo.address} />
               </div>
@@ -401,10 +434,318 @@ const Profile: React.FC = () => {
         </DialogContent>
       </Dialog>
 
+      {/* Reset Password Dialog */}
+      <Dialog open={isResetPasswordDialogOpen} onOpenChange={setIsResetPasswordDialogOpen}>
+        <DialogContent className="max-w-md">
+          <DialogHeader>
+            <DialogTitle className="text-2xl font-bold">Đặt lại mật khẩu</DialogTitle>
+            <DialogDescription>
+              {resetPasswordStep === 'send-otp' 
+                ? 'Nhập email để nhận mã OTP'
+                : 'Nhập mã OTP và mật khẩu mới'}
+            </DialogDescription>
+          </DialogHeader>
+
+          {resetPasswordStep === 'send-otp' ? (
+            <form 
+              onSubmit={async (e) => {
+                e.preventDefault();
+                e.stopPropagation();
+                
+                try {
+                  // Clear previous errors
+                  setResetPasswordErrors({});
+                  
+                  // Validate email
+                  if (!resetPasswordData.email || !resetPasswordData.email.trim()) {
+                    setResetPasswordErrors({ email: 'Email là bắt buộc' });
+                    return;
+                  }
+                  
+                  const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+                  if (!emailRegex.test(resetPasswordData.email.trim())) {
+                    setResetPasswordErrors({ email: 'Email không hợp lệ' });
+                    return;
+                  }
+
+                  setResetPasswordLoading(true);
+                  
+                  // Send OTP
+                  await AuthService.forgotPassword(resetPasswordData.email.trim());
+                  showToast('OTP đã được gửi đến email của bạn', 'success');
+                  setResetPasswordStep('reset');
+                } catch (error: any) {
+                  console.error('Error sending OTP:', error);
+                  const errorMessage = error?.message || 'Không thể gửi OTP. Vui lòng thử lại.';
+                  setResetPasswordErrors({ general: errorMessage });
+                  showToast(errorMessage, 'error');
+                } finally {
+                  setResetPasswordLoading(false);
+                }
+              }}
+              className="space-y-4"
+            >
+              {resetPasswordErrors.general && (
+                <div className="p-3 bg-red-50 border border-red-200 text-red-700 rounded-lg text-sm">
+                  {resetPasswordErrors.general}
+                </div>
+              )}
+
+              <div className="space-y-2">
+                <Label htmlFor="reset-email">Email</Label>
+                <Input
+                  id="reset-email"
+                  type="email"
+                  value={resetPasswordData.email}
+                  onChange={(e) => {
+                    setResetPasswordData(prev => ({ ...prev, email: e.target.value }));
+                    if (resetPasswordErrors.email) {
+                      setResetPasswordErrors(prev => ({ ...prev, email: '' }));
+                    }
+                    if (resetPasswordErrors.general) {
+                      setResetPasswordErrors(prev => ({ ...prev, general: '' }));
+                    }
+                  }}
+                  placeholder="Nhập email của bạn"
+                  className={resetPasswordErrors.email ? 'border-red-500' : ''}
+                  required
+                />
+                {resetPasswordErrors.email && (
+                  <p className="text-sm text-red-500">{resetPasswordErrors.email}</p>
+                )}
+              </div>
+
+              <div className="flex justify-end gap-3 pt-4">
+                <Button
+                  type="button"
+                  variant="outline"
+                  onClick={() => {
+                    setIsResetPasswordDialogOpen(false);
+                    setResetPasswordErrors({});
+                  }}
+                  disabled={resetPasswordLoading}
+                >
+                  Hủy
+                </Button>
+                <Button
+                  type="submit"
+                  disabled={resetPasswordLoading}
+                  className="bg-green-500 hover:bg-green-600"
+                >
+                  {resetPasswordLoading ? (
+                    <>
+                      <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                      Đang gửi...
+                    </>
+                  ) : (
+                    'Gửi OTP'
+                  )}
+                </Button>
+              </div>
+            </form>
+          ) : (
+            <form
+              onSubmit={async (e) => {
+                e.preventDefault();
+                e.stopPropagation();
+                
+                try {
+                  // Clear previous errors
+                  setResetPasswordErrors({});
+                  
+                  // Validate form manually
+                  const errors: Record<string, string> = {};
+                  
+                  // Validate email
+                  if (!resetPasswordData.email || !resetPasswordData.email.trim()) {
+                    errors.email = 'Email là bắt buộc';
+                  } else {
+                    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+                    if (!emailRegex.test(resetPasswordData.email.trim())) {
+                      errors.email = 'Email không hợp lệ';
+                    }
+                  }
+                  
+                  // Validate OTP
+                  if (!resetPasswordData.otp || !resetPasswordData.otp.trim()) {
+                    errors.otp = 'Mã OTP là bắt buộc';
+                  } else if (resetPasswordData.otp.trim().length < 4) {
+                    errors.otp = 'Mã OTP phải có ít nhất 4 ký tự';
+                  }
+                  
+                  // Validate password
+                  if (!resetPasswordData.newPassword || !resetPasswordData.newPassword.trim()) {
+                    errors.newPassword = 'Mật khẩu là bắt buộc';
+                  } else {
+                    const passwordRegex = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)[a-zA-Z\d@$!%*?&]{8,}$/;
+                    if (!passwordRegex.test(resetPasswordData.newPassword)) {
+                      errors.newPassword = 'Mật khẩu phải có ít nhất 8 ký tự, bao gồm chữ hoa, chữ thường và số';
+                    }
+                  }
+                  
+                  // Kiểm tra xác nhận mật khẩu
+                  if (resetPasswordData.newPassword !== resetPasswordData.confirmPassword) {
+                    errors.confirmPassword = 'Mật khẩu xác nhận không khớp';
+                  }
+                  
+                  setResetPasswordErrors(errors);
+                  if (Object.keys(errors).length > 0) {
+                    return;
+                  }
+
+                  setResetPasswordLoading(true);
+                  
+                  await AuthService.resetPassword(
+                    resetPasswordData.email.trim(),
+                    resetPasswordData.otp.trim(),
+                    resetPasswordData.newPassword
+                  );
+                  showToast('Đặt lại mật khẩu thành công!', 'success');
+                  setIsResetPasswordDialogOpen(false);
+                  setResetPasswordStep('send-otp');
+                  setResetPasswordData({ email: '', otp: '', newPassword: '', confirmPassword: '' });
+                } catch (error: any) {
+                  console.error('Error resetting password:', error);
+                  const errorMessage = error?.message || 'Không thể đặt lại mật khẩu. Vui lòng thử lại.';
+                  setResetPasswordErrors({ general: errorMessage });
+                  showToast(errorMessage, 'error');
+                } finally {
+                  setResetPasswordLoading(false);
+                }
+              }}
+              className="space-y-4"
+            >
+              {resetPasswordErrors.general && (
+                <div className="p-3 bg-red-50 border border-red-200 text-red-700 rounded-lg text-sm">
+                  {resetPasswordErrors.general}
+                </div>
+              )}
+
+              <div className="space-y-2">
+                <Label htmlFor="reset-otp">Mã OTP</Label>
+                <Input
+                  id="reset-otp"
+                  type="text"
+                  value={resetPasswordData.otp}
+                  onChange={(e) => {
+                    setResetPasswordData(prev => ({ ...prev, otp: e.target.value }));
+                    if (resetPasswordErrors.otp) {
+                      setResetPasswordErrors(prev => ({ ...prev, otp: '' }));
+                    }
+                  }}
+                  placeholder="Nhập mã OTP"
+                  className={resetPasswordErrors.otp ? 'border-red-500' : ''}
+                  maxLength={6}
+                  required
+                />
+                {resetPasswordErrors.otp && (
+                  <p className="text-sm text-red-500">{resetPasswordErrors.otp}</p>
+                )}
+              </div>
+
+              <div className="space-y-2">
+                <Label htmlFor="reset-new-password">Mật khẩu mới</Label>
+                <div className="relative">
+                  <Input
+                    id="reset-new-password"
+                    type={showNewPassword ? "text" : "password"}
+                    value={resetPasswordData.newPassword}
+                    onChange={(e) => {
+                      setResetPasswordData(prev => ({ ...prev, newPassword: e.target.value }));
+                      if (resetPasswordErrors.newPassword) {
+                        setResetPasswordErrors(prev => ({ ...prev, newPassword: '' }));
+                      }
+                    }}
+                    placeholder="Nhập mật khẩu mới"
+                    className={resetPasswordErrors.newPassword ? 'border-red-500 pr-10' : 'pr-10'}
+                    required
+                  />
+                  <button
+                    type="button"
+                    onClick={() => setShowNewPassword(!showNewPassword)}
+                    className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-gray-600"
+                  >
+                    {showNewPassword ? (
+                      <EyeOff className="h-4 w-4" />
+                    ) : (
+                      <Eye className="h-4 w-4" />
+                    )}
+                  </button>
+                </div>
+                {resetPasswordErrors.newPassword && (
+                  <p className="text-sm text-red-500">{resetPasswordErrors.newPassword}</p>
+                )}
+              </div>
+
+              <div className="space-y-2">
+                <Label htmlFor="reset-confirm-password">Xác nhận mật khẩu</Label>
+                <div className="relative">
+                  <Input
+                    id="reset-confirm-password"
+                    type={showConfirmPassword ? "text" : "password"}
+                    value={resetPasswordData.confirmPassword}
+                    onChange={(e) => {
+                      setResetPasswordData(prev => ({ ...prev, confirmPassword: e.target.value }));
+                      if (resetPasswordErrors.confirmPassword) {
+                        setResetPasswordErrors(prev => ({ ...prev, confirmPassword: '' }));
+                      }
+                    }}
+                    placeholder="Nhập lại mật khẩu mới"
+                    className={resetPasswordErrors.confirmPassword ? 'border-red-500 pr-10' : 'pr-10'}
+                    required
+                  />
+                  <button
+                    type="button"
+                    onClick={() => setShowConfirmPassword(!showConfirmPassword)}
+                    className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-gray-600"
+                  >
+                    {showConfirmPassword ? (
+                      <EyeOff className="h-4 w-4" />
+                    ) : (
+                      <Eye className="h-4 w-4" />
+                    )}
+                  </button>
+                </div>
+                {resetPasswordErrors.confirmPassword && (
+                  <p className="text-sm text-red-500">{resetPasswordErrors.confirmPassword}</p>
+                )}
+              </div>
+
+              <div className="flex justify-end gap-3 pt-4">
+                <Button
+                  type="button"
+                  variant="outline"
+                  onClick={() => {
+                    setResetPasswordStep('send-otp');
+                    setResetPasswordErrors({});
+                  }}
+                  disabled={resetPasswordLoading}
+                >
+                  Quay lại
+                </Button>
+                <Button
+                  type="submit"
+                  disabled={resetPasswordLoading}
+                  className="bg-green-500 hover:bg-green-600"
+                >
+                  {resetPasswordLoading ? (
+                    <>
+                      <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                      Đang xử lý...
+                    </>
+                  ) : (
+                    'Đặt lại mật khẩu'
+                  )}
+                </Button>
+              </div>
+            </form>
+          )}
+        </DialogContent>
+      </Dialog>
+
       <Footer />
     </div>
   );
 };
 
 export default Profile;
-
