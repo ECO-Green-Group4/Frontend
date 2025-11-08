@@ -58,9 +58,22 @@ const Login = () => {
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [loading, setLoading] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
+  const [successMessage, setSuccessMessage] = useState<string>('');
 
   // Lấy redirect path từ state hoặc mặc định về trang chủ
   const from = location.state?.from?.pathname || '/';
+
+  // Kiểm tra nếu có message từ reset password
+  useEffect(() => {
+    if (location.state?.message) {
+      setSuccessMessage(location.state.message);
+      // Xóa message sau 5 giây
+      const timer = setTimeout(() => {
+        setSuccessMessage('');
+      }, 5000);
+      return () => clearTimeout(timer);
+    }
+  }, [location.state]);
 
   // Google OAuth Client ID
   const GOOGLE_CLIENT_ID = '614758931877-ea5s7e905dsooe6qbdg0j9p8lcsfc4qk.apps.googleusercontent.com';
@@ -232,6 +245,13 @@ const Login = () => {
             Log in
           </h1>
 
+          {/* Success Message */}
+          {successMessage && (
+            <div className="mb-6 p-4 bg-green-50 border border-green-200 text-green-700 rounded-lg text-sm">
+              {successMessage}
+            </div>
+          )}
+
           {/* Error Message */}
           {errors.general && (
             <div className="mb-6 p-4 bg-red-50 border border-red-200 text-red-700 rounded-lg text-sm">
@@ -264,9 +284,17 @@ const Login = () => {
 
             {/* Password Field */}
             <div className="space-y-2">
-              <Label htmlFor="password" className="text-gray-700 font-medium">
-                Password
-              </Label>
+              <div className="flex items-center justify-between">
+                <Label htmlFor="password" className="text-gray-700 font-medium">
+                  Password
+                </Label>
+                <Link 
+                  to="/forgot-password" 
+                  className="text-sm text-green-500 hover:text-green-600 font-medium"
+                >
+                  Quên mật khẩu?
+                </Link>
+              </div>
               <div className="relative">
                 <Input
                   id="password"

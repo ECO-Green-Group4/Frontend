@@ -435,6 +435,73 @@ class AuthService {
 
     return null;
   }
+
+  //  Quên mật khẩu - Gửi OTP đến email
+  async forgotPassword(email: string): Promise<string> {
+    const response = await fetch(`${API_BASE_URL}/auth/forgot-password`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ email }),
+    });
+
+    if (!response.ok) {
+      let errorMessage = 'Không thể gửi OTP';
+      try {
+        const errorData = await response.json();
+        console.error('Forgot password API error:', errorData);
+        errorMessage = errorData.message || errorData.error || errorMessage;
+      } catch (e) {
+        try {
+          const errorText = await response.text();
+          console.error('Error text:', errorText);
+          errorMessage = errorText || errorMessage;
+        } catch (e2) {
+          errorMessage = response.statusText || errorMessage;
+        }
+      }
+      throw new Error(errorMessage);
+    }
+
+    // API trả về string message theo documentation
+    const result = await response.text();
+    return result || 'OTP đã được gửi đến email của bạn';
+  }
+
+  //  Đặt lại mật khẩu - Sử dụng OTP
+  async resetPassword(email: string, otp: string, newPassword: string): Promise<string> {
+    const response = await fetch(`${API_BASE_URL}/auth/reset-password`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ email, otp, newPassword }),
+    });
+
+    if (!response.ok) {
+      let errorMessage = 'Không thể đặt lại mật khẩu';
+      try {
+        const errorData = await response.json();
+        console.error('Reset password API error:', errorData);
+        errorMessage = errorData.message || errorData.error || errorMessage;
+        
+        // Xử lý trường hợp OTP không hợp lệ
+        if (response.status === 400 && errorData.message) {
+          errorMessage = errorData.message;
+        }
+      } catch (e) {
+        try {
+          const errorText = await response.text();
+          console.error('Error text:', errorText);
+          errorMessage = errorText || errorMessage;
+        } catch (e2) {
+          errorMessage = response.statusText || errorMessage;
+        }
+      }
+      throw new Error(errorMessage);
+    }
+
+    // API trả về string message theo documentation
+    const result = await response.text();
+    return result || 'Đặt lại mật khẩu thành công';
+  }
 }
 
 export default new AuthService();
