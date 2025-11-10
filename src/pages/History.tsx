@@ -37,6 +37,14 @@ import { showToast } from "@/utils/toast";
 import Header from "@/components/ui/Header";
 import { useAuth } from "@/hooks/useAuth";
 import {
+  ReviewService,
+  Review,
+  CreateReviewPayload,
+  UpdateReviewPayload,
+} from "@/services/ReviewService";
+import { Label } from "@/components/ui/label";
+import { Textarea } from "@/components/ui/textarea";
+import {
   CalendarDays,
   Filter,
   Loader2,
@@ -44,8 +52,9 @@ import {
   Search,
   Wallet,
   Receipt,
-  ShieldCheck,
   Ban,
+  Star,
+  MessageSquare,
 } from "lucide-react";
 
 type FilterState = {
@@ -79,6 +88,19 @@ const History: React.FC = () => {
   const [detailData, setDetailData] = useState<Transaction | null>(null);
   const [detailError, setDetailError] = useState<string | null>(null);
   const [detailOrderId, setDetailOrderId] = useState<number | null>(null);
+  const [reviewOpen, setReviewOpen] = useState(false);
+  const [reviewOrderId, setReviewOrderId] = useState<number | null>(null);
+  const [reviewTargetUserId, setReviewTargetUserId] = useState<number | null>(
+    null
+  );
+  const [reviewTargetUserName, setReviewTargetUserName] = useState<string>("");
+  const [reviewRating, setReviewRating] = useState<number>(5);
+  const [reviewComment, setReviewComment] = useState<string>("");
+  const [reviewLoading, setReviewLoading] = useState(false);
+  const [reviewSubmitting, setReviewSubmitting] = useState(false);
+  const [userReviews, setUserReviews] = useState<Map<number, Review | null>>(
+    new Map()
+  );
   const { user } = useAuth();
 
   const currentUserId = useMemo(() => {
@@ -222,6 +244,29 @@ const History: React.FC = () => {
     fetchHistory();
   }, []);
 
+  // Load reviews for all orders
+  useEffect(() => {
+    const loadReviews = async () => {
+      if (!currentUserId || visibleOrders.length === 0) return;
+
+      const reviewMap = new Map<number, Review | null>();
+      const promises = visibleOrders.map(async (order) => {
+        try {
+          const review = await ReviewService.getMyReviewByOrder(order.orderId);
+          reviewMap.set(order.orderId, review);
+        } catch (error) {
+          // Silently fail - review might not exist
+          reviewMap.set(order.orderId, null);
+        }
+      });
+
+      await Promise.all(promises);
+      setUserReviews(reviewMap);
+    };
+
+    loadReviews();
+  }, [visibleOrders, currentUserId]);
+
   const handleFilter = async () => {
     const params: TransactionFilterParams = {};
     if (filters.role !== "all") {
@@ -314,6 +359,140 @@ const History: React.FC = () => {
     } finally {
       setDetailLoading(false);
     }
+  };
+
+  const handleOpenReview = async (order: Transaction) => {
+    if (!currentUserId) {
+      showToast("Vui lòng đăng nhập để đánh giá", "error");
+      return;
+    }
+
+    const isBuyer = Number(order.buyer?.userId) === Number(currentUserId);
+    const isSeller = Number(order.seller?.userId) === Number(currentUserId);
+
+    if (!isBuyer && !isSeller) {
+      showToast("Bạn không thể đánh giá đơn hàng này", "error");
+      return;
+    }
+
+    const targetUser = isBuyer ? order.seller : order.buyer;
+    if (!targetUser?.userId) {
+      showToast("Không tìm thấy thông tin người dùng", "error");
+      return;
+    }
+
+    setReviewOrderId(order.orderId);
+    setReviewTargetUserId(targetUser.userId);
+    setReviewTargetUserName(targetUser.fullName || "Người dùng");
+    setReviewOpen(true);
+    setReviewLoading(true);
+
+    try {
+      const existingReview = await ReviewService.getMyReviewByOrder(
+        order.orderId
+      );
+      if (existingReview) {
+        setReviewRating(existingReview.rating);
+        setReviewComment(existingReview.comment || "");
+      } else {
+        setReviewRating(5);
+        setReviewComment("");
+      }
+    } catch (error) {
+      setReviewRating(5);
+      setReviewComment("");
+    } finally {
+      setReviewLoading(false);
+    }
+  };
+
+  const handleCloseReview = () => {
+    setReviewOpen(false);
+    setReviewOrderId(null);
+    setReviewTargetUserId(null);
+    setReviewTargetUserName("");
+    setReviewRating(5);
+    setReviewComment("");
+    setReviewLoading(false);
+  };
+
+  const handleSubmitReview = async () => {
+    if (!reviewOrderId || !reviewTargetUserId || !currentUserId) {
+      showToast("Thông tin không hợp lệ", "error");
+      return;
+    }
+
+    if (reviewComment.trim().length === 0) {
+      showToast("Vui lòng nhập bình luận", "error");
+      return;
+    }
+
+    setReviewSubmitting(true);
+
+    try {
+      const existingReview = userReviews.get(reviewOrderId);
+
+      if (existingReview) {
+        // Update existing review
+        const payload: UpdateReviewPayload = {
+          rating: reviewRating,
+          comment: reviewComment.trim(),
+        };
+        await ReviewService.updateReview(existingReview.reviewId, payload);
+        showToast("Cập nhật đánh giá thành công", "success");
+      } else {
+        // Create new review
+        const payload: CreateReviewPayload = {
+          orderId: reviewOrderId,
+          targetUserId: reviewTargetUserId,
+          rating: reviewRating,
+          comment: reviewComment.trim(),
+        };
+        await ReviewService.createReview(payload);
+        showToast("Đánh giá thành công", "success");
+      }
+
+      // Reload review
+      const updatedReview = await ReviewService.getMyReviewByOrder(
+        reviewOrderId
+      );
+      setUserReviews((prev) => {
+        const newMap = new Map(prev);
+        newMap.set(reviewOrderId, updatedReview);
+        return newMap;
+      });
+
+      handleCloseReview();
+    } catch (error: any) {
+      showToast(
+        error?.message || "Không thể gửi đánh giá. Vui lòng thử lại.",
+        "error"
+      );
+    } finally {
+      setReviewSubmitting(false);
+    }
+  };
+
+  const canReview = (order: Transaction): boolean => {
+    if (!currentUserId) return false;
+    const status = order.orderStatus?.toUpperCase();
+    // Allow review for SUCCESS, COMPLETED, or any completed status
+    return status === "SUCCESS" || status === "COMPLETED" || status === "COMPLETE";
+  };
+
+  const getMyReview = (orderId: number): Review | null => {
+    return userReviews.get(orderId) || null;
+  };
+
+  const isUserInOrder = (order: Transaction): boolean => {
+    if (!currentUserId) return false;
+    const buyerId = order.buyer?.userId;
+    const sellerId = order.seller?.userId;
+    // Compare as numbers to handle both string and number IDs
+    return (
+      Number(buyerId) === Number(currentUserId) ||
+      Number(sellerId) === Number(currentUserId)
+    );
   };
 
   const formatCurrency = (value: number) => {
@@ -479,20 +658,7 @@ const History: React.FC = () => {
             </CardContent>
           </Card>
 
-          <Card className="border-emerald-200/40 bg-white/85 shadow-xl backdrop-blur">
-            <CardHeader className="pb-2">
-              <CardDescription>Giao dịch thành công</CardDescription>
-              <CardTitle className="flex items-center gap-2 text-3xl text-emerald-600">
-                <ShieldCheck className="h-6 w-6 text-emerald-500" />
-                {summary.success}
-              </CardTitle>
-            </CardHeader>
-            <CardContent className="text-sm text-slate-500">
-              {summary.pending} đang chờ • {summary.cancelled} hủy
-            </CardContent>
-          </Card>
-
-          <Card className="border-emerald-200/40 bg-white/85 shadow-xl backdrop-blur">
+          <Card className="border-emerald-200/40 bg-white/85 shadow-xl backdrop-blur xl:col-span-2">
             <CardHeader className="pb-2">
               <CardDescription>Tổng giá trị giao dịch</CardDescription>
               <CardTitle className="text-3xl text-emerald-600">
@@ -800,18 +966,128 @@ const History: React.FC = () => {
                     </div>
                   </div>
 
-                  {order.reviews && order.reviews.length > 0 && (
-                    <div className="rounded-xl border border-emerald-100 bg-emerald-50/70 p-4">
-                      <p className="text-xs uppercase tracking-wide text-emerald-600">
-                        Đánh giá
-                      </p>
-                      <p className="mt-2 text-sm text-emerald-700">
-                        Đơn hàng có {order.reviews.length} đánh giá. Bạn có thể xem trực tiếp trong phần quản lý review.
-                      </p>
-                    </div>
-                  )}
+                  {(() => {
+                    const myReview = getMyReview(order.orderId);
+                    const canReviewOrder = canReview(order);
+                    const userInOrder = isUserInOrder(order);
 
-                  <div className="flex justify-end">
+                    // Show review section if user is in order and can review
+                    if (!userInOrder) {
+                      // User is not buyer or seller, show other reviews if exist
+                      if (order.reviews && order.reviews.length > 0) {
+                        return (
+                          <div className="rounded-xl border border-emerald-100 bg-emerald-50/70 p-4">
+                            <p className="text-xs uppercase tracking-wide text-emerald-600">
+                              Đánh giá
+                            </p>
+                            <p className="mt-2 text-sm text-emerald-700">
+                              Đơn hàng có {order.reviews.length} đánh giá. Bạn có thể xem trực tiếp trong phần quản lý review.
+                            </p>
+                          </div>
+                        );
+                      }
+                      return null;
+                    }
+
+                    // User is buyer or seller
+                    if (myReview) {
+                      return (
+                        <div className="rounded-xl border border-emerald-200 bg-emerald-50/70 p-4">
+                          <div className="flex items-start justify-between">
+                            <div className="flex-1">
+                              <p className="text-xs uppercase tracking-wide text-emerald-600 mb-2">
+                                Đánh giá của bạn
+                              </p>
+                              <div className="flex items-center gap-1 mb-2">
+                                {[1, 2, 3, 4, 5].map((star) => (
+                                  <Star
+                                    key={star}
+                                    className={`h-4 w-4 ${
+                                      star <= myReview.rating
+                                        ? "fill-amber-400 text-amber-400"
+                                        : "text-slate-300"
+                                    }`}
+                                  />
+                                ))}
+                                <span className="ml-2 text-sm font-semibold text-emerald-700">
+                                  {myReview.rating}/5
+                                </span>
+                              </div>
+                              <p className="text-sm text-emerald-700">
+                                {myReview.comment}
+                              </p>
+                              <p className="text-xs text-emerald-500 mt-2">
+                                {formatDate(myReview.createdAt)}
+                              </p>
+                            </div>
+                            {canReviewOrder && (
+                              <Button
+                                variant="outline"
+                                size="sm"
+                                className="border-emerald-400 text-emerald-600 hover:bg-emerald-50"
+                                onClick={() => handleOpenReview(order)}
+                              >
+                                <MessageSquare className="h-3 w-3 mr-1" />
+                                Sửa
+                              </Button>
+                            )}
+                          </div>
+                        </div>
+                      );
+                    }
+
+                    // User hasn't reviewed yet
+                    if (canReviewOrder) {
+                      return (
+                        <div className="rounded-xl border border-amber-200 bg-amber-50/70 p-4">
+                          <div className="flex items-center justify-between">
+                            <div>
+                              <p className="text-xs uppercase tracking-wide text-amber-600 mb-1">
+                                Bạn chưa đánh giá
+                              </p>
+                              <p className="text-sm text-amber-700">
+                                Hãy chia sẻ trải nghiệm của bạn về giao dịch này
+                              </p>
+                            </div>
+                            <Button
+                              variant="outline"
+                              className="border-amber-400 text-amber-600 hover:bg-amber-50"
+                              onClick={() => handleOpenReview(order)}
+                            >
+                              <Star className="h-4 w-4 mr-1" />
+                              Đánh giá
+                            </Button>
+                          </div>
+                        </div>
+                      );
+                    }
+
+                    // Order not completed yet, but user is in order
+                    return (
+                      <div className="rounded-xl border border-slate-200 bg-slate-50/70 p-4">
+                        <p className="text-xs uppercase tracking-wide text-slate-600 mb-1">
+                          Đánh giá
+                        </p>
+                        <p className="text-sm text-slate-700">
+                          Bạn có thể đánh giá sau khi đơn hàng hoàn thành.
+                        </p>
+                      </div>
+                    );
+                  })()}
+
+                  <div className="flex justify-end gap-2">
+                    {canReview(order) &&
+                      isUserInOrder(order) &&
+                      !getMyReview(order.orderId) && (
+                        <Button
+                          variant="outline"
+                          className="border-amber-400 text-amber-600 hover:bg-amber-50"
+                          onClick={() => handleOpenReview(order)}
+                        >
+                          <Star className="h-4 w-4 mr-1" />
+                          Đánh giá
+                        </Button>
+                      )}
                     <Button
                       variant="outline"
                       className="border-emerald-400 text-emerald-600 hover:bg-emerald-50"
@@ -1025,6 +1301,103 @@ const History: React.FC = () => {
               <p className="text-sm text-slate-500">
                 Không có dữ liệu để hiển thị.
               </p>
+            )}
+          </DialogContent>
+        </Dialog>
+
+        <Dialog open={reviewOpen} onOpenChange={handleCloseReview}>
+          <DialogContent className="w-[95vw] max-w-2xl">
+            <DialogHeader>
+              <DialogTitle className="text-2xl font-semibold text-emerald-700">
+                {userReviews.get(reviewOrderId || 0)
+                  ? "Cập nhật đánh giá"
+                  : "Đánh giá giao dịch"}
+              </DialogTitle>
+              <DialogDescription>
+                Chia sẻ trải nghiệm của bạn về{" "}
+                <span className="font-semibold">{reviewTargetUserName}</span>
+              </DialogDescription>
+            </DialogHeader>
+
+            {reviewLoading ? (
+              <div className="flex items-center justify-center gap-3 py-12 text-emerald-600">
+                <Loader2 className="h-5 w-5 animate-spin" />
+                Đang tải...
+              </div>
+            ) : (
+              <div className="space-y-6">
+                <div className="space-y-2">
+                  <Label className="text-base font-semibold text-slate-700">
+                    Đánh giá (sao)
+                  </Label>
+                  <div className="flex items-center gap-2">
+                    {[1, 2, 3, 4, 5].map((star) => (
+                      <button
+                        key={star}
+                        type="button"
+                        onClick={() => setReviewRating(star)}
+                        className="transition hover:scale-110"
+                      >
+                        <Star
+                          className={`h-8 w-8 ${
+                            star <= reviewRating
+                              ? "fill-amber-400 text-amber-400"
+                              : "text-slate-300 hover:text-amber-300"
+                          }`}
+                        />
+                      </button>
+                    ))}
+                    <span className="ml-2 text-sm font-semibold text-slate-600">
+                      {reviewRating}/5
+                    </span>
+                  </div>
+                </div>
+
+                <div className="space-y-2">
+                  <Label
+                    htmlFor="review-comment"
+                    className="text-base font-semibold text-slate-700"
+                  >
+                    Bình luận
+                  </Label>
+                  <Textarea
+                    id="review-comment"
+                    placeholder="Chia sẻ trải nghiệm của bạn về giao dịch này..."
+                    className="min-h-[120px] resize-none"
+                    value={reviewComment}
+                    onChange={(e) => setReviewComment(e.target.value)}
+                  />
+                  <p className="text-xs text-slate-500">
+                    {reviewComment.length} ký tự
+                  </p>
+                </div>
+
+                <div className="flex justify-end gap-3">
+                  <Button
+                    variant="outline"
+                    onClick={handleCloseReview}
+                    disabled={reviewSubmitting}
+                  >
+                    Hủy
+                  </Button>
+                  <Button
+                    onClick={handleSubmitReview}
+                    disabled={reviewSubmitting || reviewComment.trim().length === 0}
+                    className="bg-emerald-600 hover:bg-emerald-500"
+                  >
+                    {reviewSubmitting ? (
+                      <>
+                        <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                        Đang xử lý...
+                      </>
+                    ) : userReviews.get(reviewOrderId || 0) ? (
+                      "Cập nhật"
+                    ) : (
+                      "Gửi đánh giá"
+                    )}
+                  </Button>
+                </div>
+              </div>
             )}
           </DialogContent>
         </Dialog>

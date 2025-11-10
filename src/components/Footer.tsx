@@ -1,5 +1,5 @@
 import React from 'react';
-import { Facebook, Twitter, Instagram } from 'lucide-react'; // Thư viện icon
+import { Facebook, Twitter, Instagram, Mail, Phone, Globe } from 'lucide-react'; // Thư viện icon
 
 // Định nghĩa props, ví dụ nếu bạn muốn truyền tên thương hiệu vào
 interface FooterProps {
@@ -31,12 +31,48 @@ const Footer: React.FC<FooterProps> = ({ brandName = "ECO GREEN" }) => {
             <a href="/ve-chung-toi" className="text-gray-200 hover:text-white transition-colors font-medium">
               Về chúng tôi
             </a>
-            <a href="/lien-he" className="text-gray-200 hover:text-white transition-colors font-medium">
-              Liên hệ
-            </a>
           </nav>
 
-          {/* 3. Các icon mạng xã hội */}
+          {/* 3. Thông tin liên hệ */}
+          <div className="w-full">
+            <h3 className="text-white text-lg font-semibold mb-4 text-center">Liên hệ</h3>
+            <div className="flex flex-col items-center gap-3 text-gray-300">
+              <div className="flex items-center gap-2">
+                <Mail size={18} className="text-gray-400" />
+                <span>Email: </span>
+                <a 
+                  href="mailto:support@evtrade.com" 
+                  className="text-blue-400 hover:text-blue-300 transition-colors hover:underline"
+                >
+                  support@evtrade.com
+                </a>
+              </div>
+              <div className="flex items-center gap-2">
+                <Phone size={18} className="text-gray-400" />
+                <span>Phone: </span>
+                <a 
+                  href="tel:+84123456789" 
+                  className="text-blue-400 hover:text-blue-300 transition-colors hover:underline"
+                >
+                  +84 123 456 789
+                </a>
+              </div>
+              <div className="flex items-center gap-2">
+                <Globe size={18} className="text-gray-400" />
+                <span>Website: </span>
+                <a 
+                  href="https://evtrade.com" 
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="text-blue-400 hover:text-blue-300 transition-colors hover:underline"
+                >
+                  https://evtrade.com
+                </a>
+              </div>
+            </div>
+          </div>
+
+          {/* 4. Các icon mạng xã hội */}
           <div className="flex gap-5">
             <a 
               href="https://facebook.com" 
