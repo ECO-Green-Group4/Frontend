@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { 
-  Mail, Calendar, User, Phone, MapPin, BadgeCheck, FileText, Loader2, Edit, X, Check, Lock, Eye, EyeOff
+  Mail, Calendar, User, Phone, MapPin, FileText, Loader2, Edit, X, Check, Lock, Eye, EyeOff
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -268,8 +268,7 @@ const Profile: React.FC = () => {
               <InfoRow icon={<Calendar size={20} />} label="Ngày sinh" value={userInfo.dateOfBirth} />
               <InfoRow icon={<FileText size={20} />} label="Số CCCD" value={userInfo.identityCard} />
               <div>
-                <InfoRow icon={<BadgeCheck size={20} />} label="Trạng thái" value={userInfo.status} />
-                {/* Reset Password Button - Ngay sau Trạng thái */}
+                {/* Reset Password Button */}
                 <div className="mt-4">
                   <Button
                     onClick={() => {
