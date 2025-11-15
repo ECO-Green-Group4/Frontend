@@ -272,7 +272,7 @@ const PackageManagement: React.FC = () => {
       <div className="flex justify-between items-center">
         <div>
           <h2 className="text-2xl font-bold text-gray-900">Quản lý Packages</h2>
-          <p className="text-gray-600">Quản lý các gói membership trong hệ thống</p>
+          <p className="text-gray-600">Quản lý các gói dịch vụ trong hệ thống</p>
         </div>
         <div className="flex items-center gap-2">
           <Button

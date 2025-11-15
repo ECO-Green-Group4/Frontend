@@ -12,8 +12,6 @@ export interface Buyer {
   identityCard: string;
   address: string;
   createdAt: string | null;
-  currentMembershipId: number | null;
-  membershipExpiry: string | null;
   availableCoupons: number | null;
 }
 
@@ -29,8 +27,6 @@ export interface Seller {
   identityCard: string;
   address: string;
   createdAt: string | null;
-  currentMembershipId: number | null;
-  membershipExpiry: string | null;
   availableCoupons: number | null;
 }
 
@@ -59,8 +55,6 @@ export interface ListingDetailUser {
   identityCard: string;
   address: string;
   createdAt: string;
-  currentMembershipId: number;
-  membershipExpiry: string;
   availableCoupons: number;
 }
 

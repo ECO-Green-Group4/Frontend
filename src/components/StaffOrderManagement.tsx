@@ -542,12 +542,6 @@ const StaffOrderManagement: React.FC = () => {
                           {selectedListing.user.status}
                         </Badge>
                       </div>
-                      {selectedListing.user.membershipExpiry && (
-                        <div className="p-3 bg-gray-50 rounded-lg">
-                          <p className="text-xs text-gray-500 mb-1">Hết hạn membership</p>
-                          <p className="font-semibold text-base">{formatDate(selectedListing.user.membershipExpiry)}</p>
-                        </div>
-                      )}
                       {selectedListing.user.availableCoupons !== null && (
                         <div className="p-3 bg-gray-50 rounded-lg">
                           <p className="text-xs text-gray-500 mb-1">Coupons khả dụng</p>

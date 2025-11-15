@@ -5,7 +5,7 @@ export interface PaymentInfo {
   packageId: number;
   packageName: string;
   amount: number;
-  type: 'post' | 'vehicle' | 'battery' | 'membership';
+  type: 'post' | 'vehicle' | 'battery';
   description: string;
 }
 
@@ -38,21 +38,6 @@ export const createPostPaymentInfo = (
   };
 };
 
-// Utility function để tạo PaymentInfo cho membership
-export const createMembershipPaymentInfo = (
-  packageId: number,
-  packageName: string,
-  amount: number,
-  description: string
-): PaymentInfo => {
-  return {
-    packageId,
-    packageName,
-    amount,
-    type: 'membership',
-    description
-  };
-};
 
 // Utility function để tạo PaymentInfo cho mua xe
 export const createVehiclePurchasePaymentInfo = (

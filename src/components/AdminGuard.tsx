@@ -19,7 +19,6 @@ const AdminGuard: React.FC<AdminGuardProps> = ({ children }) => {
     '/view-cart',
     '/electric-vehicle',
     '/battery',
-    '/membership',
     '/favorited',
     '/history',
     '/waiting'

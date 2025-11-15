@@ -12,8 +12,6 @@ export interface ReviewUser {
   address?: string;
   status?: string | null;
   createdAt?: string | null;
-  currentMembershipId?: number | null;
-  membershipExpiry?: string | null;
   availableCoupons?: number | null;
 }
 

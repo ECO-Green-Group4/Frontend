@@ -76,8 +76,6 @@ const UserManagement: React.FC = () => {
       identityCard: "123456789",
       address: "System Address",
       createdAt: "2024-01-01T00:00:00Z",
-      currentMembershipId: null,
-      membershipExpiry: null,
       availableCoupons: null
     },
     {
@@ -93,8 +91,6 @@ const UserManagement: React.FC = () => {
       identityCard: "987654321",
       address: "123 Main Street, City",
       createdAt: "2024-01-15T10:30:00Z",
-      currentMembershipId: 1,
-      membershipExpiry: "2024-12-31T23:59:59Z",
       availableCoupons: 5
     }
   ];
