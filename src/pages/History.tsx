@@ -967,13 +967,10 @@ const History: React.FC = () => {
                   </div>
 
                   {(() => {
-                    const myReview = getMyReview(order.orderId);
-                    const canReviewOrder = canReview(order);
                     const userInOrder = isUserInOrder(order);
-
-                    // Show review section if user is in order and can review
+                    
+                    // If user is not buyer or seller, only show if there are other reviews
                     if (!userInOrder) {
-                      // User is not buyer or seller, show other reviews if exist
                       if (order.reviews && order.reviews.length > 0) {
                         return (
                           <div className="rounded-xl border border-emerald-100 bg-emerald-50/70 p-4">
@@ -989,7 +986,11 @@ const History: React.FC = () => {
                       return null;
                     }
 
-                    // User is buyer or seller
+                    // User is buyer or seller - ALWAYS show review section
+                    const myReview = getMyReview(order.orderId);
+                    const canReviewOrder = canReview(order);
+
+                    // User has already reviewed
                     if (myReview) {
                       return (
                         <div className="rounded-xl border border-emerald-200 bg-emerald-50/70 p-4">
@@ -1036,7 +1037,7 @@ const History: React.FC = () => {
                       );
                     }
 
-                    // User hasn't reviewed yet
+                    // User hasn't reviewed yet but can review
                     if (canReviewOrder) {
                       return (
                         <div className="rounded-xl border border-amber-200 bg-amber-50/70 p-4">
@@ -1062,7 +1063,7 @@ const History: React.FC = () => {
                       );
                     }
 
-                    // Order not completed yet, but user is in order
+                    // Order not completed yet, but user is in order - ALWAYS show this
                     return (
                       <div className="rounded-xl border border-slate-200 bg-slate-50/70 p-4">
                         <p className="text-xs uppercase tracking-wide text-slate-600 mb-1">

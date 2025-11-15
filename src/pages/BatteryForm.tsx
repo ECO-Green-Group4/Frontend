@@ -193,20 +193,6 @@ export default function BatteryForm({ onSubmit, packageId }: BatteryFormProps) {
           />
         </div>
 
-        {/* Price */}
-        <div className="col-span-2">
-          <label className={labelClass}>Price (VND)</label>
-          <input
-            type="number"
-            name="price"
-            value={batteryData.price}
-            onChange={handleChange}
-            className={inputClass}
-            placeholder="50000000"
-          />
-        </div>
-
-
         {/* Battery Brand */}
         <div>
           <label className={labelClass}>Battery Brand</label>
@@ -219,16 +205,16 @@ export default function BatteryForm({ onSubmit, packageId }: BatteryFormProps) {
           />
         </div>
 
-        {/* Voltage (V) */}
+        {/* Manufacture Year */}
         <div>
-          <label className={labelClass}>Voltage (V)</label>
+          <label className={labelClass}>Manufacture Year</label>
           <input
-            type="number" // <-- Nên đổi thành 'number' để user nhập số
-            name="voltage"
-            value={batteryData.voltage}
+            type="number"
+            name="manufactureYear"
+            value={batteryData.manufactureYear}
             onChange={handleChange}
             className={inputClass}
-            placeholder="72"
+            placeholder="2022"
           />
         </div>
 
@@ -236,11 +222,53 @@ export default function BatteryForm({ onSubmit, packageId }: BatteryFormProps) {
         <div>
           <label className={labelClass}>Capacity (Ah / Wh)</label>
           <input
-            name="capacity" // Giữ là text vì có "Ah", "Wh"
+            name="capacity"
             value={batteryData.capacity}
             onChange={handleChange}
             className={inputClass}
             placeholder="32Ah or 2000Wh"
+          />
+        </div>
+
+        {/* Origin */}
+        <div>
+          <label className={labelClass}>Origin</label>
+          <input
+            name="origin"
+            value={batteryData.origin}
+            onChange={handleChange}
+            className={inputClass}
+            placeholder="USA, China, Vietnam..."
+          />
+        </div>
+
+        {/* Battery Type */}
+        <div>
+          <label className={labelClass}>Battery Type</label>
+          <select
+            name="type"
+            value={batteryData.type}
+            onChange={handleChange}
+            className={inputClass}
+          >
+            <option value="">Select Type</option>
+            <option value="LFP">LFP</option>
+            <option value="NMC">NMC</option>
+            <option value="Li-ion">Li-ion</option>
+            <option value="Lead-acid">Lead-acid</option>
+          </select>
+        </div>
+
+        {/* Voltage (V) */}
+        <div>
+          <label className={labelClass}>Voltage (V)</label>
+          <input
+            type="number"
+            name="voltage"
+            value={batteryData.voltage}
+            onChange={handleChange}
+            className={inputClass}
+            placeholder="72"
           />
         </div>
 
@@ -270,56 +298,27 @@ export default function BatteryForm({ onSubmit, packageId }: BatteryFormProps) {
           />
         </div>
 
-        {/* Battery Type */}
-        <div>
-          <label className={labelClass}>Battery Type</label>
-          <select
-            name="type"
-            value={batteryData.type}
-            onChange={handleChange}
-            className={inputClass}
-          >
-            <option value="">Select Type</option>
-            <option value="LFP">LFP</option>
-            <option value="NMC">NMC</option>
-            <option value="Li-ion">Li-ion</option>
-            <option value="Lead-acid">Lead-acid</option>
-          </select>
-        </div>
-
-        {/* Manufacture Year (của pin) */}
-        <div>
-          <label className={labelClass}>Manufacture Year</label>
+        {/* Price (VND) */}
+        <div className="col-span-2">
+          <label className={labelClass}>Price (VND)</label>
           <input
             type="number"
-            name="manufactureYear"
-            value={batteryData.manufactureYear}
+            name="price"
+            value={batteryData.price}
             onChange={handleChange}
             className={inputClass}
-            placeholder="2022"
-          />
-        </div>
-
-        {/* Origin (của pin) */}
-        <div>
-          <label className={labelClass}>Origin</label>
-          <input
-            name="origin"
-            value={batteryData.origin}
-            onChange={handleChange}
-            className={inputClass}
-            placeholder="USA, China, Vietnam..."
+            placeholder="50000000"
           />
         </div>
 
         {/* Description */}
         <div className="col-span-2">
-          <label className={labelClass}>Post Description</label>
+          <label className={labelClass}>Description</label>
           <textarea
             name="description"
             value={batteryData.description}
             onChange={handleChange}
-            className={`${inputClass} h-32`} 
+            className={inputClass}
             placeholder="Describe battery condition, warranty, etc."
             rows={4}
           ></textarea>

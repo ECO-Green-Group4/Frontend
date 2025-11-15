@@ -605,13 +605,14 @@ const PostManagement: React.FC = () => {
                </div>
                 </CardHeader>
                 
-                <CardContent>
-                  <div className="space-y-3">
-                    <p className="text-gray-600 text-sm line-clamp-3">
-                      {post.description || post.content}
-                    </p>
-                    
-                    <div className="flex items-center gap-4 text-sm text-gray-500">
+                <CardContent>
+                  <div className="space-y-3">
+                    {/* Description hidden */}
+                    {/* <p className="text-gray-600 text-sm line-clamp-3">
+                      {post.description || post.content}
+                    </p> */}
+                    
+                    <div className="flex items-center gap-4 text-sm text-gray-500">
                    <div className="flex items-center">
                         <DollarSign className="w-4 h-4 mr-1" />
                         {formatPrice(post.price)}
