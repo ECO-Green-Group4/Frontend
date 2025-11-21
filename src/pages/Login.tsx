@@ -161,7 +161,7 @@ const Login = () => {
   }, [handleGoogleCredentialResponse]);
 
   const validationRules = {
-    email: [VALIDATION_RULES.EMAIL.REQUIRED, VALIDATION_RULES.EMAIL.FORMAT],
+    email: [VALIDATION_RULES.EMAIL.REQUIRED],
     password: [VALIDATION_RULES.PASSWORD.REQUIRED]
   };
 

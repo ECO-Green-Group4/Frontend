@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
@@ -33,7 +33,6 @@ import { showToast } from '@/utils/toast';
 
 const OrderManagement: React.FC = () => {
   const [orders, setOrders] = useState<Order[]>([]);
-  const [filteredOrders, setFilteredOrders] = useState<Order[]>([]);
   const [staffList, setStaffList] = useState<OrderUser[]>([]);
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState('');
@@ -48,10 +47,6 @@ const OrderManagement: React.FC = () => {
     fetchOrders();
     fetchStaffList();
   }, []);
-
-  useEffect(() => {
-    filterOrders();
-  }, [orders, searchTerm, statusFilter]);
 
   const fetchOrders = async () => {
     try {
@@ -99,26 +94,29 @@ const OrderManagement: React.FC = () => {
     }
   };
 
-  const filterOrders = () => {
+  // Filter orders using useMemo
+  const filteredOrders = useMemo(() => {
     let filtered = orders;
 
     // Filter by search term
     if (searchTerm) {
       filtered = filtered.filter(order =>
         order.orderId.toString().includes(searchTerm) ||
-        order.buyer.fullName.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        order.seller.fullName.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        order.buyer.email.toLowerCase().includes(searchTerm.toLowerCase())
+        order.buyer.fullName?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        order.seller.fullName?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        order.buyer.email?.toLowerCase().includes(searchTerm.toLowerCase())
       );
     }
 
-    // Filter by status
+    // Filter by status (case-insensitive)
     if (statusFilter !== 'all') {
-      filtered = filtered.filter(order => order.status === statusFilter);
+      filtered = filtered.filter(order => 
+        order.status?.toUpperCase() === statusFilter.toUpperCase()
+      );
     }
 
-    setFilteredOrders(filtered);
-  };
+    return filtered;
+  }, [orders, searchTerm, statusFilter]);
 
   const handleAssignStaff = async () => {
     if (!selectedOrder || !selectedStaffId) return;
@@ -459,6 +457,7 @@ const OrderManagement: React.FC = () => {
               <Button 
                 onClick={handleAssignStaff}
                 disabled={!selectedStaffId || staffList.length === 0}
+                className="bg-green-600 hover:bg-green-700 text-white disabled:bg-gray-300"
               >
                 Xác nhận
               </Button>
