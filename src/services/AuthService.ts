@@ -185,6 +185,99 @@ class AuthService {
     };
   }
 
+  //  Đăng ký với Google
+  async registerWithGoogle(idToken: string): Promise<any> {
+    // Thử endpoint register/google trước, nếu không có thì dùng login/google (nhiều backend tự động tạo account khi login lần đầu)
+    let response = await fetch(`${API_BASE_URL}/auth/register/google`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ idToken }),
+    });
+
+    // Nếu endpoint register/google không tồn tại (404), thử dùng login/google
+    if (response.status === 404) {
+      console.log('Register endpoint not found, using login endpoint instead');
+      response = await fetch(`${API_BASE_URL}/auth/login/google`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ idToken }),
+      });
+    }
+
+    if (!response.ok) {
+      let errorMessage = 'Đăng ký với Google thất bại';
+      try {
+        const errorData = await response.json();
+        console.error('Google register API error:', errorData);
+        errorMessage = errorData.message || errorData.error || errorMessage;
+      } catch (e) {
+        try {
+          const errorText = await response.text();
+          console.error('Error text:', errorText);
+          errorMessage = errorText || errorMessage;
+        } catch (e2) {
+          errorMessage = response.statusText || errorMessage;
+        }
+      }
+      throw new Error(errorMessage);
+    }
+
+    const data = await response.json();
+
+    //  Lưu token vào localStorage
+    if (data.token) {
+      localStorage.setItem('token', data.token);
+      if (data.refreshToken) localStorage.setItem('refreshToken', data.refreshToken);
+    }
+
+    // Map role từ backend thành roleId và normalize
+    const backendRole = (data.role || 'user').toUpperCase();
+    let roleId = data.roleId?.toString();
+    let normalizedRole: 'user' | 'admin' | 'staff' = 'user';
+    
+    // Nếu không có roleId từ backend, map từ role string
+    if (!roleId) {
+      if (backendRole === 'ADMIN' || backendRole === 'ROLE_ADMIN') {
+        roleId = '2';
+        normalizedRole = 'admin';
+      } else if (backendRole === 'STAFF' || backendRole === 'ROLE_STAFF') {
+        roleId = '3';
+        normalizedRole = 'staff';
+      } else {
+        roleId = '1';
+        normalizedRole = 'user';
+      }
+    } else {
+      // Nếu có roleId, map role tương ứng
+      if (roleId === '2') {
+        normalizedRole = 'admin';
+      } else if (roleId === '3') {
+        normalizedRole = 'staff';
+      } else {
+        normalizedRole = 'user';
+      }
+    }
+
+    // Tạo user object từ response data
+    const user: User = {
+      id: data.id?.toString() || '',
+      name: data.fullName || '',
+      email: data.email || '',
+      phone: data.phoneNumber || '',
+      role: normalizedRole as 'user' | 'admin' | 'staff',
+      roleId: roleId,
+      roleName: normalizedRole as 'user' | 'admin' | 'staff',
+      createdAt: new Date().toISOString(),
+      updatedAt: new Date().toISOString()
+    };
+
+    return {
+      user,
+      token: data.token,
+      refreshToken: data.refreshToken
+    };
+  }
+
   //  Đăng ký
   async register(registerData: RegisterData): Promise<AuthResponse> {
     const response = await fetch(`${API_BASE_URL}/auth/register`, {

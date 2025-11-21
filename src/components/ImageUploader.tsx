@@ -124,13 +124,13 @@ const ImageUploader: React.FC<ImageUploaderProps> = ({
           </div>
           <div>
             <p className="text-lg font-medium text-gray-700">
-              {images.length === 0 ? 'Upload ảnh' : 'Thêm ảnh khác'}
+              {images.length === 0 ? 'Upload ảnh (Bắt buộc)' : 'Thêm ảnh khác'}
             </p>
             <p className="text-sm text-gray-500">
               Kéo thả ảnh vào đây hoặc click để chọn
             </p>
             <p className="text-xs text-gray-400 mt-1">
-              Tối đa {maxImages} ảnh • JPG, PNG, GIF
+              Tối đa {maxImages} ảnh • JPG, PNG, GIF • Ít nhất 1 ảnh
             </p>
           </div>
         </div>

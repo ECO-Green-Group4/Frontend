@@ -25,6 +25,7 @@ import Waiting from '@/pages/Waiting';
 import Payment from '@/pages/Payment';
 import Unauthorized from '@/pages/Unauthorized';
 import VnPayCallback from '@/pages/VnPayCallback';
+import Terms from '@/pages/Terms';
 import AdminLayout from '@/layouts/AdminLayout';
 import UserManagement from '@/components/UserManagement';
 import PackageManagement from '@/components/PackageManagement';
@@ -69,6 +70,8 @@ const AppRoutes = () => {
             <ResetPassword />
           </PublicRoute>
         } />
+
+        <Route path="/terms" element={<Terms />} />
 
         {/* Protected Routes - Chỉ hiển thị khi đã đăng nhập */}
         <Route path="/profile" element={

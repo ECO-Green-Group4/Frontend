@@ -101,7 +101,7 @@ export default function VehicleForm({ onSubmit, packageId }: VehicleFormProps) {
       return;
     }
 
-    if (!vehicleData.price || Number(vehicleData.price) <= 0) {
+    if (!vehicleData.price || !vehicleData.price.trim() || Number(vehicleData.price.trim()) <= 0) {
       showToast("Vui lòng nhập giá xe hợp lệ", "error");
       return;
     }
@@ -121,14 +121,56 @@ export default function VehicleForm({ onSubmit, packageId }: VehicleFormProps) {
       return;
     }
 
-    if (!vehicleData.year || Number(vehicleData.year) <= 0) {
+    if (!vehicleData.year || !vehicleData.year.trim() || Number(vehicleData.year.trim()) <= 0) {
       showToast("Vui lòng nhập năm sản xuất hợp lệ", "error");
       return;
     }
+
+    if (!vehicleData.bodyType || !vehicleData.bodyType.trim()) {
+      showToast("Vui lòng nhập loại thân xe", "error");
+      return;
+    }
+
+    if (!vehicleData.color || !vehicleData.color.trim()) {
+      showToast("Vui lòng nhập màu sắc xe", "error");
+      return;
+    }
+
+    if (!vehicleData.mileage || !vehicleData.mileage.trim() || Number(vehicleData.mileage.trim()) < 0) {
+      showToast("Vui lòng nhập số km đã đi hợp lệ", "error");
+      return;
+    }
+
+    if (!vehicleData.inspection || !vehicleData.inspection.trim()) {
+      showToast("Vui lòng nhập thông tin kiểm định", "error");
+      return;
+    }
+
+    if (!vehicleData.origin || !vehicleData.origin.trim()) {
+      showToast("Vui lòng nhập xuất xứ", "error");
+      return;
+    }
+
+    if (!vehicleData.numberOfSeats || !vehicleData.numberOfSeats.trim() || Number(vehicleData.numberOfSeats.trim()) <= 0) {
+      showToast("Vui lòng nhập số chỗ ngồi hợp lệ", "error");
+      return;
+    }
+
+    if (!vehicleData.batteryCapacity || !vehicleData.batteryCapacity.trim() || Number(vehicleData.batteryCapacity.trim()) <= 0) {
+      showToast("Vui lòng nhập dung lượng pin hợp lệ", "error");
+      return;
+    }
+
+    if (!vehicleData.condition || !vehicleData.condition.trim()) {
+      showToast("Vui lòng nhập tình trạng xe", "error");
+      return;
+    }
     
-    // Check 3: Phải có ảnh
+    // Check 3: Phải có ảnh (BẮT BUỘC)
     if (images.length === 0) {
-      showToast("Vui lòng chọn ít nhất một ảnh!", "warning");
+      showToast("Vui lòng upload ít nhất một ảnh! Ảnh là bắt buộc để tạo bài đăng.", "error");
+      // Scroll đến phần upload ảnh
+      document.querySelector('[name="title"]')?.scrollIntoView({ behavior: "smooth", block: "center" });
       return;
     }
 
@@ -180,49 +222,58 @@ export default function VehicleForm({ onSubmit, packageId }: VehicleFormProps) {
         className="grid grid-cols-1 md:grid-cols-2 gap-x-8 gap-y-4"
       >
         
-        <h3 className="col-span-2 text-xl font-bold text-gray-700 border-b pb-2 mb-4 mt-6">
+        <div className="col-span-2 bg-blue-50 border border-blue-200 rounded-lg p-3 mb-4 mt-6">
+          <p className="text-sm text-blue-800">
+            <span className="font-bold">Lưu ý:</span> Các trường có dấu <span className="text-red-500 font-bold">*</span> là bắt buộc. Vui lòng điền đầy đủ thông tin trước khi tạo bài đăng.
+          </p>
+        </div>
+
+        <h3 className="col-span-2 text-xl font-bold text-gray-700 border-b pb-2 mb-4">
           Vehicle Details
         </h3>
 
         {/* Title */}
         <div className="col-span-2">
-          <label className={labelClass}>Title</label>
+          <label className={labelClass}>Title <span className="text-red-500">*</span></label>
           <input
             name="title"
             value={vehicleData.title}
             onChange={handleChange}
             className={inputClass}
             placeholder="Tesla Model 3 2022"
+            required
           />
         </div>
 
         {/* Location */}
         <div className="col-span-2">
-          <label className={labelClass}>Location</label>
+          <label className={labelClass}>Location <span className="text-red-500">*</span></label>
           <input
             name="location"
             value={vehicleData.location}
             onChange={handleChange}
             className={inputClass}
             placeholder="Hồ Chí Minh"
+            required
           />
         </div>
 
         {/* Car Brand */}
         <div>
-          <label className={labelClass}>Car Brand</label>
+          <label className={labelClass}>Car Brand <span className="text-red-500">*</span></label>
           <input
             name="brand"
             value={vehicleData.brand}
             onChange={handleChange}
             className={inputClass}
             placeholder="VinFast, Tesla, Yadea..."
+            required
           />
         </div>
 
         {/* Year */}
         <div>
-          <label className={labelClass}>Year</label>
+          <label className={labelClass}>Year <span className="text-red-500">*</span></label>
           <input
             type="number"
             name="year"
@@ -230,48 +281,52 @@ export default function VehicleForm({ onSubmit, packageId }: VehicleFormProps) {
             onChange={handleChange}
             className={inputClass}
             placeholder="2024"
+            required
           />
         </div>
 
         {/* Model */}
         <div>
-          <label className={labelClass}>Model</label>
+          <label className={labelClass}>Model <span className="text-red-500">*</span></label>
           <input
             name="model"
             value={vehicleData.model}
             onChange={handleChange}
             className={inputClass}
             placeholder="VF e34, Model 3..."
+            required
           />
         </div>
 
         {/* Origin */}
         <div>
-          <label className={labelClass}>Origin</label>
+          <label className={labelClass}>Origin <span className="text-red-500">*</span></label>
           <input
             name="origin"
             value={vehicleData.origin}
             onChange={handleChange}
             className={inputClass}
             placeholder="Vietnam, China, Japan..."
+            required
           />
         </div>
 
         {/* Body Type */}
         <div>
-          <label className={labelClass}>Body Type</label>
+          <label className={labelClass}>Body Type <span className="text-red-500">*</span></label>
           <input
             name="bodyType"
             value={vehicleData.bodyType}
             onChange={handleChange}
             className={inputClass}
             placeholder="SUV, Sedan, Scooter..."
+            required
           />
         </div>
 
         {/* Number of Seats */}
         <div>
-          <label className={labelClass}>Number of Seats</label>
+          <label className={labelClass}>Number of Seats <span className="text-red-500">*</span></label>
           <input
             type="number"
             name="numberOfSeats"
@@ -279,18 +334,20 @@ export default function VehicleForm({ onSubmit, packageId }: VehicleFormProps) {
             onChange={handleChange}
             className={inputClass}
             placeholder="2 / 4 / 5"
+            required
           />
         </div>
 
         {/* Color */}
         <div>
-          <label className={labelClass}>Color</label>
+          <label className={labelClass}>Color <span className="text-red-500">*</span></label>
           <input
             name="color"
             value={vehicleData.color}
             onChange={handleChange}
             className={inputClass}
             placeholder="Red, Blue, White..."
+            required
           />
         </div>
 
@@ -308,7 +365,7 @@ export default function VehicleForm({ onSubmit, packageId }: VehicleFormProps) {
 
         {/* Mileage (km) */}
         <div>
-          <label className={labelClass}>Mileage (km)</label>
+          <label className={labelClass}>Mileage (km) <span className="text-red-500">*</span></label>
           <input
             type="number"
             name="mileage"
@@ -316,6 +373,8 @@ export default function VehicleForm({ onSubmit, packageId }: VehicleFormProps) {
             onChange={handleChange}
             className={inputClass}
             placeholder="5000"
+            required
+            min="0"
           />
         </div>
 
@@ -333,19 +392,20 @@ export default function VehicleForm({ onSubmit, packageId }: VehicleFormProps) {
 
         {/* Inspection */}
         <div>
-          <label className={labelClass}>Inspection</label>
+          <label className={labelClass}>Inspection <span className="text-red-500">*</span></label>
           <input
             name="inspection"
             value={vehicleData.inspection}
             onChange={handleChange}
             className={inputClass}
             placeholder="Yes / No / Until 2025"
+            required
           />
         </div>
 
         {/* Battery Capacity (kWh) */}
         <div>
-          <label className={labelClass}>Battery Capacity (kWh)</label>
+          <label className={labelClass}>Battery Capacity (kWh) <span className="text-red-500">*</span></label>
           <input
             type="number"
             name="batteryCapacity"
@@ -353,24 +413,27 @@ export default function VehicleForm({ onSubmit, packageId }: VehicleFormProps) {
             onChange={handleChange}
             className={inputClass}
             placeholder="50"
+            required
+            min="0"
           />
         </div>
 
         {/* Condition */}
         <div>
-          <label className={labelClass}>Condition</label>
+          <label className={labelClass}>Condition <span className="text-red-500">*</span></label>
           <input
             name="condition"
             value={vehicleData.condition}
             onChange={handleChange}
             className={inputClass}
             placeholder="excellent, good, fair"
+            required
           />
         </div>
 
         {/* Price (VND) */}
         <div className="col-span-2">
-          <label className={labelClass}>Price (VND)</label>
+          <label className={labelClass}>Price (VND) <span className="text-red-500">*</span></label>
           <input
             type="number"
             name="price"
@@ -378,12 +441,14 @@ export default function VehicleForm({ onSubmit, packageId }: VehicleFormProps) {
             onChange={handleChange}
             className={inputClass}
             placeholder="50000000"
+            required
+            min="1"
           />
         </div>
 
         {/* DESCRIPTION */}
         <div className="col-span-2">
-          <label className={labelClass}>Description</label>
+          <label className={labelClass}>Description <span className="text-red-500">*</span></label>
           <textarea
             name="description"
             value={vehicleData.description}
@@ -391,12 +456,15 @@ export default function VehicleForm({ onSubmit, packageId }: VehicleFormProps) {
             className={inputClass}
             placeholder="Describe the condition, features, or notes..."
             rows={4}
+            required
           ></textarea>
         </div>
 
         {/* Upload Images */}
         <div className="col-span-2">
-          <label className={labelClass}>Upload Images</label>
+          <label className={labelClass}>
+            Upload Images <span className="text-red-500">*</span>
+          </label>
           <ImageUploader
             images={images}
             onImagesChange={handleImagesChange}

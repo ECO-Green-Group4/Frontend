@@ -1,9 +1,10 @@
 // Utility functions cho validation
-import type { ValidationRule, ValidationResult, FormData } from '@/types';
+import type { ValidationRule, ValidationResult } from '@/types';
 
 export const validateEmail = (email: string): boolean => {
-  const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-  return emailRegex.test(email);
+  // Email phải có đuôi @gmail.com
+  const emailRegex = /^[^\s@]+@gmail\.com$/;
+  return emailRegex.test(email.trim());
 };
 
 export const validatePassword = (password: string): boolean => {
@@ -13,9 +14,9 @@ export const validatePassword = (password: string): boolean => {
 };
 
 export const validatePhone = (phone: string): boolean => {
-  // Số điện thoại Việt Nam (10-11 số)
-  const phoneRegex = /^(0|\+84)[3|5|7|8|9][0-9]{8,9}$/;
-  return phoneRegex.test(phone.replace(/\s/g, ''));
+  // Số điện thoại phải bắt đầu bằng 09 và có độ dài 10 số
+  const phoneRegex = /^09\d{8}$/;
+  return phoneRegex.test(phone.trim().replace(/\s/g, ''));
 };
 
 export const validateRequired = (value: any): boolean => {
@@ -23,7 +24,7 @@ export const validateRequired = (value: any): boolean => {
 };
 
 export const validateMinLength = (value: string, minLength: number): boolean => {
-  return value && value.length >= minLength;
+  return !!(value && value.length >= minLength);
 };
 
 export const validateMaxLength = (value: string, maxLength: number): boolean => {
@@ -44,11 +45,11 @@ export const validateForm = (
       if (rule.type === 'required' && !validateRequired(value)) {
         errors[field] = rule.message || `${field} là bắt buộc`;
       } else if (rule.type === 'email' && value && !validateEmail(value as string)) {
-        errors[field] = rule.message || 'Email không hợp lệ';
+        errors[field] = rule.message || 'Email phải có đuôi @gmail.com';
       } else if (rule.type === 'password' && value && !validatePassword(value as string)) {
         errors[field] = rule.message || 'Mật khẩu phải có ít nhất 8 ký tự, bao gồm chữ hoa, chữ thường và số';
       } else if (rule.type === 'phone' && value && !validatePhone(value as string)) {
-        errors[field] = rule.message || 'Số điện thoại không hợp lệ';
+        errors[field] = rule.message || 'Số điện thoại phải bắt đầu bằng 09 và có 10 số';
       } else if (rule.type === 'minLength' && value && rule.value && !validateMinLength(value as string, rule.value)) {
         errors[field] = rule.message || `${field} phải có ít nhất ${rule.value} ký tự`;
       } else if (rule.type === 'maxLength' && value && rule.value && !validateMaxLength(value as string, rule.value)) {
