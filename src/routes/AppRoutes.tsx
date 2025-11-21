@@ -10,6 +10,8 @@ import Profile from '../pages/Profile';
 import MainScreen from '../pages/MainScreen';
 import CreatePost from '../pages/CreatePost';
 import ViewCart from '../pages/ViewCart';
+import ElectricVehicle from '../pages/ElectricVehicle';
+import Battery from '../pages/Battery';
 import Membership from '../pages/Membership';
 import Favorited from '../pages/Favorited';
 import History from '../pages/History';
@@ -106,11 +108,6 @@ const AppRoutes = () => {
 
 
 
-        <Route path="/membership" element={
-          <ProtectedRoute>
-            <Membership />
-          </ProtectedRoute>
-        } />
         <Route path="/favorited" element={
           <ProtectedRoute>
             <Favorited />

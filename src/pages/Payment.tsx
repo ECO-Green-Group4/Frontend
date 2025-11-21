@@ -10,7 +10,7 @@ interface PaymentInfo {
   packageName: string;
   amount: number;
   days?: number; // Số ngày mua
-  type: 'post' | 'vehicle' | 'battery' | 'membership';
+  type: 'post' | 'vehicle' | 'battery';
   description: string;
 }
 
@@ -273,7 +273,7 @@ const Payment: React.FC = () => {
                 <span className="font-semibold text-gray-900 capitalize">
                   {paymentInfo.type === 'post' ? 'Đăng tin' : 
                    paymentInfo.type === 'vehicle' ? 'Xe điện' :
-                   paymentInfo.type === 'battery' ? 'Pin' : 'Thành viên'}
+                   paymentInfo.type === 'battery' ? 'Pin' : ''}
                 </span>
               </div>
               

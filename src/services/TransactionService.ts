@@ -13,8 +13,6 @@ export interface TransactionUser {
   identityCard?: string | null;
   address?: string | null;
   createdAt?: string | null;
-  currentMembershipId?: number | null;
-  membershipExpiry?: string | null;
   availableCoupons?: number | null;
 }
 

@@ -43,12 +43,6 @@ export default function Header() {
             Create Post
           </Link>
           <Link 
-            to="/membership" 
-            className="text-black hover:text-gray-600 font-medium transition-colors px-3 py-2 rounded-md hover:bg-gray-50"
-          >
-            Membership
-          </Link>
-          <Link 
             to="/favorited" 
             className="text-black hover:text-gray-600 font-medium transition-colors px-3 py-2 rounded-md hover:bg-gray-50"
           >

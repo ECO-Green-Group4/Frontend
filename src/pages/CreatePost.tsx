@@ -119,7 +119,7 @@ export default function CreatePost() {
       packageName: selectedPackage.name,
       amount: totalAmount,
       days: customDays, // Thêm số ngày vào paymentInfo
-      type: category === "Battery" ? "battery" : "vehicle" as "post" | "vehicle" | "battery" | "membership",
+      type: category === "Battery" ? "battery" : "vehicle" as "post" | "vehicle" | "battery",
       description: `Đăng tin ${category === "Battery" ? "pin" : "xe điện"} - ${data.title} (${customDays} ngày)`
     };
 
