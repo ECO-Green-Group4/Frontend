@@ -89,7 +89,7 @@ export default function BatteryForm({ onSubmit, packageId }: BatteryFormProps) {
       return;
     }
 
-    if (!batteryData.price || Number(batteryData.price) <= 0) {
+    if (!batteryData.price || !batteryData.price.trim() || Number(batteryData.price.trim()) <= 0) {
       showToast("Vui lòng nhập giá pin hợp lệ", "error");
       return;
     }
@@ -109,13 +109,41 @@ export default function BatteryForm({ onSubmit, packageId }: BatteryFormProps) {
       return;
     }
 
-    if (!batteryData.voltage || Number(batteryData.voltage) <= 0) {
+    if (!batteryData.voltage || !batteryData.voltage.trim() || Number(batteryData.voltage.trim()) <= 0) {
       showToast("Vui lòng nhập điện áp pin hợp lệ", "error");
       return;
     }
+
+    if (!batteryData.type || !batteryData.type.trim()) {
+      showToast("Vui lòng chọn loại pin", "error");
+      return;
+    }
+
+    if (!batteryData.manufactureYear || !batteryData.manufactureYear.trim() || Number(batteryData.manufactureYear.trim()) <= 0) {
+      showToast("Vui lòng nhập năm sản xuất hợp lệ", "error");
+      return;
+    }
+
+    if (!batteryData.origin || !batteryData.origin.trim()) {
+      showToast("Vui lòng nhập xuất xứ", "error");
+      return;
+    }
+
+    if (!batteryData.healthPercent || !batteryData.healthPercent.trim() || Number(batteryData.healthPercent.trim()) <= 0 || Number(batteryData.healthPercent.trim()) > 100) {
+      showToast("Vui lòng nhập phần trăm sức khỏe pin hợp lệ (0-100%)", "error");
+      return;
+    }
+
+    if (!batteryData.chargeCycles || !batteryData.chargeCycles.trim() || Number(batteryData.chargeCycles.trim()) < 0) {
+      showToast("Vui lòng nhập số chu kỳ sạc hợp lệ", "error");
+      return;
+    }
     
+    // Check 3: Phải có ảnh (BẮT BUỘC)
     if (images.length === 0) {
-      showToast("Vui lòng chọn ít nhất một ảnh!", "warning");
+      showToast("Vui lòng upload ít nhất một ảnh! Ảnh là bắt buộc để tạo bài đăng.", "error");
+      // Scroll đến phần upload ảnh
+      document.querySelector('[name="title"]')?.scrollIntoView({ behavior: "smooth", block: "center" });
       return;
     }
 
@@ -165,49 +193,58 @@ export default function BatteryForm({ onSubmit, packageId }: BatteryFormProps) {
         className="grid grid-cols-1 md:grid-cols-2 gap-x-8 gap-y-4"
       >
         
-        <h3 className="col-span-2 text-xl font-bold text-gray-700 border-b pb-2 mb-4 mt-2">
+        <div className="col-span-2 bg-blue-50 border border-blue-200 rounded-lg p-3 mb-4 mt-2">
+          <p className="text-sm text-blue-800">
+            <span className="font-bold">Lưu ý:</span> Các trường có dấu <span className="text-red-500 font-bold">*</span> là bắt buộc. Vui lòng điền đầy đủ thông tin trước khi tạo bài đăng.
+          </p>
+        </div>
+
+        <h3 className="col-span-2 text-xl font-bold text-gray-700 border-b pb-2 mb-4">
           Battery Details
         </h3>
 
         {/* Title */}
         <div className="col-span-2">
-          <label className={labelClass}>Title</label>
+          <label className={labelClass}>Title <span className="text-red-500">*</span></label>
           <input
             name="title"
             value={batteryData.title}
             onChange={handleChange}
             className={inputClass}
             placeholder="Pin Tesla Model 3 75kWh"
+            required
           />
         </div>
 
         {/* Location */}
         <div className="col-span-2">
-          <label className={labelClass}>Location</label>
+          <label className={labelClass}>Location <span className="text-red-500">*</span></label>
           <input
             name="location"
             value={batteryData.location}
             onChange={handleChange}
             className={inputClass}
             placeholder="Hồ Chí Minh"
+            required
           />
         </div>
 
         {/* Battery Brand */}
         <div>
-          <label className={labelClass}>Battery Brand</label>
+          <label className={labelClass}>Battery Brand <span className="text-red-500">*</span></label>
           <input
             name="batteryBrand"
             value={batteryData.batteryBrand}
             onChange={handleChange}
             className={inputClass}
             placeholder="Tesla, CATL, LG..."
+            required
           />
         </div>
 
         {/* Manufacture Year */}
         <div>
-          <label className={labelClass}>Manufacture Year</label>
+          <label className={labelClass}>Manufacture Year <span className="text-red-500">*</span></label>
           <input
             type="number"
             name="manufactureYear"
@@ -215,41 +252,46 @@ export default function BatteryForm({ onSubmit, packageId }: BatteryFormProps) {
             onChange={handleChange}
             className={inputClass}
             placeholder="2022"
+            required
+            min="1900"
           />
         </div>
 
         {/* Capacity (Ah / Wh) */}
         <div>
-          <label className={labelClass}>Capacity (Ah / Wh)</label>
+          <label className={labelClass}>Capacity (Ah / Wh) <span className="text-red-500">*</span></label>
           <input
             name="capacity"
             value={batteryData.capacity}
             onChange={handleChange}
             className={inputClass}
             placeholder="32Ah or 2000Wh"
+            required
           />
         </div>
 
         {/* Origin */}
         <div>
-          <label className={labelClass}>Origin</label>
+          <label className={labelClass}>Origin <span className="text-red-500">*</span></label>
           <input
             name="origin"
             value={batteryData.origin}
             onChange={handleChange}
             className={inputClass}
             placeholder="USA, China, Vietnam..."
+            required
           />
         </div>
 
         {/* Battery Type */}
         <div>
-          <label className={labelClass}>Battery Type</label>
+          <label className={labelClass}>Battery Type <span className="text-red-500">*</span></label>
           <select
             name="type"
             value={batteryData.type}
             onChange={handleChange}
             className={inputClass}
+            required
           >
             <option value="">Select Type</option>
             <option value="LFP">LFP</option>
@@ -261,7 +303,7 @@ export default function BatteryForm({ onSubmit, packageId }: BatteryFormProps) {
 
         {/* Voltage (V) */}
         <div>
-          <label className={labelClass}>Voltage (V)</label>
+          <label className={labelClass}>Voltage (V) <span className="text-red-500">*</span></label>
           <input
             type="number"
             name="voltage"
@@ -269,12 +311,14 @@ export default function BatteryForm({ onSubmit, packageId }: BatteryFormProps) {
             onChange={handleChange}
             className={inputClass}
             placeholder="72"
+            required
+            min="1"
           />
         </div>
 
         {/* Health Percent (%) */}
         <div>
-          <label className={labelClass}>Health Percent (%)</label>
+          <label className={labelClass}>Health Percent (%) <span className="text-red-500">*</span></label>
           <input
             type="number"
             name="healthPercent"
@@ -282,12 +326,15 @@ export default function BatteryForm({ onSubmit, packageId }: BatteryFormProps) {
             onChange={handleChange}
             className={inputClass}
             placeholder="85"
+            required
+            min="0"
+            max="100"
           />
         </div>
 
         {/* Charge Cycles */}
         <div>
-          <label className={labelClass}>Charge Cycles</label>
+          <label className={labelClass}>Charge Cycles <span className="text-red-500">*</span></label>
           <input
             type="number"
             name="chargeCycles"
@@ -295,12 +342,14 @@ export default function BatteryForm({ onSubmit, packageId }: BatteryFormProps) {
             onChange={handleChange}
             className={inputClass}
             placeholder="500"
+            required
+            min="0"
           />
         </div>
 
         {/* Price (VND) */}
         <div className="col-span-2">
-          <label className={labelClass}>Price (VND)</label>
+          <label className={labelClass}>Price (VND) <span className="text-red-500">*</span></label>
           <input
             type="number"
             name="price"
@@ -308,12 +357,14 @@ export default function BatteryForm({ onSubmit, packageId }: BatteryFormProps) {
             onChange={handleChange}
             className={inputClass}
             placeholder="50000000"
+            required
+            min="1"
           />
         </div>
 
         {/* Description */}
         <div className="col-span-2">
-          <label className={labelClass}>Description</label>
+          <label className={labelClass}>Description <span className="text-red-500">*</span></label>
           <textarea
             name="description"
             value={batteryData.description}
@@ -321,12 +372,16 @@ export default function BatteryForm({ onSubmit, packageId }: BatteryFormProps) {
             className={inputClass}
             placeholder="Describe battery condition, warranty, etc."
             rows={4}
+            required
           ></textarea>
         </div>
 
         {/* Upload Images */}
         <div className="col-span-2">
-          <label className={labelClass}>Upload Images</label>
+          <label className={labelClass}>
+            Upload Images <span className="text-red-500">*</span>
+            
+          </label>
           <ImageUploader
             images={images}
             onImagesChange={handleImagesChange}

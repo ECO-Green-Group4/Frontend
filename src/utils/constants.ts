@@ -69,7 +69,7 @@ export const MESSAGES = {
 export const VALIDATION_RULES: Record<string, Record<string, ValidationRule>> = {
   EMAIL: {
     REQUIRED: { type: 'required', message: 'Email là bắt buộc' },
-    FORMAT: { type: 'email', message: 'Email không hợp lệ' }
+    FORMAT: { type: 'email', message: 'Email phải có đuôi @gmail.com' }
   },
   PASSWORD: {
     REQUIRED: { type: 'required', message: 'Mật khẩu là bắt buộc' },
@@ -77,6 +77,7 @@ export const VALIDATION_RULES: Record<string, Record<string, ValidationRule>> = 
     FORMAT: { type: 'password', message: 'Mật khẩu phải có chữ hoa, chữ thường, số và ký tự đặc biệt' }
   },
   PHONE: {
-    FORMAT: { type: 'phone', message: 'Số điện thoại không hợp lệ' }
+    REQUIRED: { type: 'required', message: 'Số điện thoại là bắt buộc' },
+    FORMAT: { type: 'phone', message: 'Số điện thoại phải bắt đầu bằng 09 và có 10 số' }
   }
 } as const;

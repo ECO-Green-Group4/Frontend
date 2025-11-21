@@ -27,6 +27,7 @@ export interface AuthContextType {
   loading: boolean;
   login: (email: string, password: string) => Promise<AuthResponse>;
   googleLogin: (idToken: string) => Promise<AuthResponse>;
+  googleRegister: (idToken: string) => Promise<AuthResponse>;
   register: (userData: RegisterData) => Promise<AuthResponse>;
   logout: () => void;
   updateProfile: (userData: Partial<User>) => Promise<User>;

@@ -131,8 +131,8 @@ const Profile: React.FC = () => {
     
     if (!formData.phone.trim()) {
       errors.phone = 'Số điện thoại là bắt buộc';
-    } else if (!/^[0-9]{10,11}$/.test(formData.phone)) {
-      errors.phone = 'Số điện thoại không hợp lệ (10-11 số)';
+    } else if (!/^09\d{8}$/.test(formData.phone.trim().replace(/\s/g, ''))) {
+      errors.phone = 'Số điện thoại phải bắt đầu bằng 09 và có 10 số';
     }
     
     if (!formData.address.trim()) {
@@ -315,8 +315,9 @@ const Profile: React.FC = () => {
                 type="tel"
                 value={formData.phone}
                 onChange={handleChange}
-                placeholder="0123456789"
+                placeholder="0912345678"
                 className={formErrors.phone ? 'border-red-500' : ''}
+                maxLength={10}
                 required
               />
               {formErrors.phone && (
@@ -461,9 +462,9 @@ const Profile: React.FC = () => {
                     return;
                   }
                   
-                  const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+                  const emailRegex = /^[^\s@]+@gmail\.com$/;
                   if (!emailRegex.test(resetPasswordData.email.trim())) {
-                    setResetPasswordErrors({ email: 'Email không hợp lệ' });
+                    setResetPasswordErrors({ email: 'Email phải có đuôi @gmail.com' });
                     return;
                   }
 
@@ -505,7 +506,7 @@ const Profile: React.FC = () => {
                       setResetPasswordErrors(prev => ({ ...prev, general: '' }));
                     }
                   }}
-                  placeholder="Nhập email của bạn"
+                  placeholder="example@gmail.com"
                   className={resetPasswordErrors.email ? 'border-red-500' : ''}
                   required
                 />
@@ -559,9 +560,9 @@ const Profile: React.FC = () => {
                   if (!resetPasswordData.email || !resetPasswordData.email.trim()) {
                     errors.email = 'Email là bắt buộc';
                   } else {
-                    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+                    const emailRegex = /^[^\s@]+@gmail\.com$/;
                     if (!emailRegex.test(resetPasswordData.email.trim())) {
-                      errors.email = 'Email không hợp lệ';
+                      errors.email = 'Email phải có đuôi @gmail.com';
                     }
                   }
                   
