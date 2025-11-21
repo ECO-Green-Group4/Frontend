@@ -80,18 +80,25 @@ const PostManagement: React.FC = () => {
     fetchPosts();
   }, []);
 
-  // Filter posts
-  const filteredPosts = posts.filter(post => {
-    const matchesSearch = post.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
-                         post.content.toLowerCase().includes(searchQuery.toLowerCase()) ||
-                         post.user?.fullName.toLowerCase().includes(searchQuery.toLowerCase()) ||
-                         post.user?.email.toLowerCase().includes(searchQuery.toLowerCase());
-    
-    const matchesStatus = statusFilter === 'all' || post.status === statusFilter;
-    const matchesCategory = categoryFilter === 'all' || post.category === categoryFilter;
-    
-    return matchesSearch && matchesStatus && matchesCategory;
-  });
+  // Filter and sort posts (newest first)
+  const filteredPosts = posts
+    .filter(post => {
+      const matchesSearch = post.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
+                           post.content.toLowerCase().includes(searchQuery.toLowerCase()) ||
+                           post.user?.fullName.toLowerCase().includes(searchQuery.toLowerCase()) ||
+                           post.user?.email.toLowerCase().includes(searchQuery.toLowerCase());
+      
+      const matchesStatus = statusFilter === 'all' || post.status === statusFilter;
+      const matchesCategory = categoryFilter === 'all' || post.category === categoryFilter;
+      
+      return matchesSearch && matchesStatus && matchesCategory;
+    })
+    .sort((a, b) => {
+      // Sort by createdAt descending (newest first)
+      const dateA = a.createdAt ? new Date(a.createdAt).getTime() : 0;
+      const dateB = b.createdAt ? new Date(b.createdAt).getTime() : 0;
+      return dateB - dateA; // Descending order
+    });
 
   // View listing detail
   const handleViewDetail = async (postId: number) => {

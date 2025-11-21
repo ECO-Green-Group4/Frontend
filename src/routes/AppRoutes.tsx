@@ -12,6 +12,7 @@ import CreatePost from '../pages/CreatePost';
 import ViewCart from '../pages/ViewCart';
 import ElectricVehicle from '../pages/ElectricVehicle';
 import Battery from '../pages/Battery';
+import Membership from '../pages/Membership';
 import Favorited from '../pages/Favorited';
 import History from '../pages/History';
 import ContractAddon from '@/pages/ContractAddon';
@@ -90,18 +91,6 @@ const AppRoutes = () => {
         <Route path="/view-cart" element={
           <ProtectedRoute>
             <ViewCart />
-          </ProtectedRoute>
-        } />
-
-        <Route path="/electric-vehicle" element={
-          <ProtectedRoute>
-            <ElectricVehicle />
-          </ProtectedRoute>
-        } />
-
-        <Route path="/battery" element={
-          <ProtectedRoute>
-            <Battery />
           </ProtectedRoute>
         } />
 

@@ -84,9 +84,9 @@ const Favorited = () => {
 
       <main className="flex-1 w-full relative">
         {/* Hero Section */}
-        <div className="relative overflow-hidden bg-gradient-to-br from-red-600 via-pink-600 to-rose-600 mb-16">
+        <div className="relative overflow-hidden bg-gradient-to-br from-green-600 via-emerald-600 to-teal-600 mb-16">
           {/* Animated Gradient Overlay */}
-          <div className="absolute inset-0 bg-gradient-to-r from-red-600/0 via-pink-600/50 to-rose-600/0 animate-pulse"></div>
+          <div className="absolute inset-0 bg-gradient-to-r from-green-600/0 via-emerald-600/50 to-teal-600/0 animate-pulse"></div>
 
           {/* Content */}
           <div className="relative max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-20 md:py-28 lg:py-32">
@@ -103,7 +103,7 @@ const Favorited = () => {
                 </span>
               </h1>
               
-              <p className="text-xl md:text-2xl lg:text-3xl text-red-50/95 mb-10 max-w-2xl mx-auto font-medium leading-relaxed">
+              <p className="text-xl md:text-2xl lg:text-3xl text-green-50/95 mb-10 max-w-2xl mx-auto font-medium leading-relaxed">
                 Xem lại những phương tiện bạn đã lưu vào danh sách yêu thích
               </p>
 
@@ -114,7 +114,7 @@ const Favorited = () => {
                   </div>
                   <div>
                     <div className="text-4xl font-black">{favorites.length}</div>
-                    <div className="text-sm text-red-100 font-bold uppercase tracking-wide">Phương tiện yêu thích</div>
+                    <div className="text-sm text-green-100 font-bold uppercase tracking-wide">Phương tiện yêu thích</div>
                   </div>
                 </div>
               )}
@@ -169,8 +169,8 @@ const Favorited = () => {
             <div className="text-center py-32">
               <div className="inline-flex flex-col items-center gap-6 max-w-md mx-auto">
                 <div className="relative">
-                  <div className="w-32 h-32 rounded-full bg-gradient-to-br from-red-100 to-pink-200 flex items-center justify-center shadow-2xl">
-                    <Heart className="w-16 h-16 text-red-400" />
+                  <div className="w-32 h-32 rounded-full bg-gradient-to-br from-green-100 to-emerald-200 flex items-center justify-center shadow-2xl">
+                    <Heart className="w-16 h-16 text-green-400" />
                   </div>
                   <div className="absolute -top-2 -right-2 w-12 h-12 bg-yellow-400 rounded-full flex items-center justify-center animate-bounce">
                     <Car className="w-6 h-6 text-yellow-800" />
@@ -193,9 +193,9 @@ const Favorited = () => {
             <div className="w-full">
               <div className="flex items-center justify-between mb-4">
                 <div className="flex items-center gap-3">
-                  <Heart className="w-5 h-5 text-red-600 fill-red-600" />
+                  <Heart className="w-5 h-5 text-green-600 fill-green-600" />
                   <p className="text-base lg:text-lg text-gray-700 font-bold">
-                    Tổng cộng <span className="text-2xl lg:text-3xl font-black text-transparent bg-clip-text bg-gradient-to-r from-red-600 to-pink-600">{favorites.length}</span> phương tiện yêu thích
+                    Tổng cộng <span className="text-2xl lg:text-3xl font-black text-transparent bg-clip-text bg-gradient-to-r from-green-600 to-emerald-600">{favorites.length}</span> phương tiện yêu thích
                   </p>
                 </div>
               </div>
