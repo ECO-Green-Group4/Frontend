@@ -47,6 +47,17 @@ export const UserService = {
     }
   },
 
+  // Thay đổi role của user
+  changeUserRole: async (userId: number, newRole: 'admin' | 'user' | 'staff'): Promise<{ success: boolean; message?: string; data?: User }> => {
+    try {
+      const response = await api.put<{ success: boolean; message?: string; data?: User }>(`/admin/users/${userId}/role?role=${newRole}`);
+      return response.data;
+    } catch (error) {
+      console.error('Error changing user role:', error);
+      throw error;
+    }
+  },
+
   // Lấy danh sách staff
   getStaffList: async (): Promise<User[]> => {
     try {

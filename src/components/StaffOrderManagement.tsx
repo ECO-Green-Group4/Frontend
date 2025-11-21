@@ -71,14 +71,27 @@ const StaffOrderManagement: React.FC = () => {
   }, []);
 
   // Filter orders
-  const filteredOrders = orders.filter(order => 
-    order.buyer.fullName.toLowerCase().includes(searchQuery.toLowerCase()) ||
-    order.buyer.email.toLowerCase().includes(searchQuery.toLowerCase()) ||
-    order.seller.fullName.toLowerCase().includes(searchQuery.toLowerCase()) ||
-    order.seller.email.toLowerCase().includes(searchQuery.toLowerCase()) ||
-    order.orderId.toString().includes(searchQuery) ||
-    order.listingId.toString().includes(searchQuery)
-  );
+  const normalizedQuery = searchQuery.trim().toLowerCase();
+  const filteredOrders = normalizedQuery === ''
+    ? orders
+    : orders.filter(order => {
+        const fieldsToSearch = [
+          order.orderId?.toString(),
+          order.listingId?.toString(),
+          order.buyer?.fullName,
+          order.buyer?.email,
+          order.buyer?.username,
+          order.buyer?.phone,
+          order.seller?.fullName,
+          order.seller?.email,
+          order.seller?.username,
+          order.seller?.phone,
+        ]
+          .filter((field): field is string => Boolean(field))
+          .map(field => field.toLowerCase());
+
+        return fieldsToSearch.some(field => field.includes(normalizedQuery));
+      });
 
   // Format date
   const formatDate = (dateString: string | null) => {

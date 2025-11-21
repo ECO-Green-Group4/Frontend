@@ -7,7 +7,6 @@ import {
   FileText, 
   Package, 
   BarChart3, 
-  Settings, 
   Search,
   Bell,
   Settings as SettingsIcon,
@@ -82,13 +81,6 @@ const AdminLayout: React.FC<AdminLayoutProps> = ({ children }) => {
       icon: BarChart3,
       path: '/admin/reports',
       active: location.pathname === '/admin/reports'
-    },
-    {
-      id: 'settings',
-      label: 'Settings',
-      icon: Settings,
-      path: '/admin/settings',
-      active: location.pathname === '/admin/settings'
     },
   ];
 

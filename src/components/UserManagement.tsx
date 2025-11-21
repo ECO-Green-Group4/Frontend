@@ -98,18 +98,22 @@ const UserManagement: React.FC = () => {
   // Filter users based on search and filters
   const filteredUsers = useMemo(() => {
     return users.filter(user => {
-      const matchesSearch = 
-        user.fullName.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        user.email.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        user.username.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        user.phone.includes(searchQuery);
+      // Search filter - case insensitive
+      const matchesSearch = !searchQuery || 
+        user.fullName?.toLowerCase().includes(searchQuery.toLowerCase()) ||
+        user.email?.toLowerCase().includes(searchQuery.toLowerCase()) ||
+        user.username?.toLowerCase().includes(searchQuery.toLowerCase()) ||
+        user.phone?.includes(searchQuery);
 
+      // Status filter
       const matchesStatus = statusFilter === 'all' || 
         (statusFilter === 'null' && user.status === null) ||
-        (statusFilter === 'active' && user.status === 'active') ||
+        (statusFilter === 'active' && (user.status === 'active' || user.status === 'true')) ||
         (statusFilter === 'true' && user.status === 'true');
         
-      const matchesRole = roleFilter === 'all' || user.role === roleFilter;
+      // Role filter - case insensitive
+      const matchesRole = roleFilter === 'all' || 
+        user.role?.toLowerCase() === roleFilter.toLowerCase();
 
       return matchesSearch && matchesStatus && matchesRole;
     });

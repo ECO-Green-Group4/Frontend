@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 // === IMPORT THÊM PostStatus ===
 import { Post, PostService } from '@/services/PostService';
 import { Button } from '@/components/ui/button';
@@ -81,24 +81,70 @@ const PostManagement: React.FC = () => {
   }, []);
 
   // Filter and sort posts (newest first)
-  const filteredPosts = posts
-    .filter(post => {
-      const matchesSearch = post.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
-                           post.content.toLowerCase().includes(searchQuery.toLowerCase()) ||
-                           post.user?.fullName.toLowerCase().includes(searchQuery.toLowerCase()) ||
-                           post.user?.email.toLowerCase().includes(searchQuery.toLowerCase());
-      
-      const matchesStatus = statusFilter === 'all' || post.status === statusFilter;
-      const matchesCategory = categoryFilter === 'all' || post.category === categoryFilter;
-      
-      return matchesSearch && matchesStatus && matchesCategory;
-    })
-    .sort((a, b) => {
-      // Sort by createdAt descending (newest first)
-      const dateA = a.createdAt ? new Date(a.createdAt).getTime() : 0;
-      const dateB = b.createdAt ? new Date(b.createdAt).getTime() : 0;
-      return dateB - dateA; // Descending order
-    });
+  const filteredPosts = useMemo(() => {
+    // Debug: Log first post to check category structure
+    if (posts.length > 0 && categoryFilter !== 'all') {
+      console.log('First post category check:', {
+        category: posts[0].category,
+        itemType: posts[0].itemType,
+        categoryFilter,
+        post: posts[0]
+      });
+    }
+    
+    return posts
+      .filter(post => {
+        const matchesSearch = !searchQuery || 
+          post.title?.toLowerCase().includes(searchQuery.toLowerCase()) ||
+          post.content?.toLowerCase().includes(searchQuery.toLowerCase()) ||
+          post.user?.fullName?.toLowerCase().includes(searchQuery.toLowerCase()) ||
+          post.user?.email?.toLowerCase().includes(searchQuery.toLowerCase()) ||
+          // Search by category (Vietnamese keywords)
+          (searchQuery.toLowerCase().includes('xe điện') && post.category?.toUpperCase() === 'EV') ||
+          (searchQuery.toLowerCase().includes('pin') && post.category?.toUpperCase() === 'BATTERY') ||
+          (searchQuery.toLowerCase() === 'ev' && post.category?.toUpperCase() === 'EV') ||
+          (searchQuery.toLowerCase() === 'battery' && post.category?.toUpperCase() === 'BATTERY') ||
+          // Direct category match
+          post.category?.toLowerCase().includes(searchQuery.toLowerCase());
+        
+        const matchesStatus = statusFilter === 'all' || 
+          (statusFilter === 'APPROVED' && (post.status?.toUpperCase() === 'APPROVED' || post.status?.toUpperCase() === 'ACTIVE')) ||
+          (statusFilter !== 'APPROVED' && post.status?.toUpperCase() === statusFilter.toUpperCase());
+        // Category filter - check both category and itemType
+        const postCategory = post.category || post.itemType;
+        const normalizedPostCategory = postCategory?.toUpperCase();
+        const normalizedFilter = categoryFilter.toUpperCase();
+        
+        // Map itemType to category if needed
+        let categoryMatch = false;
+        if (categoryFilter === 'all') {
+          categoryMatch = true;
+        } else if (normalizedFilter === 'EV') {
+          // Match EV category or vehicle itemType
+          categoryMatch = normalizedPostCategory === 'EV' || 
+                         normalizedPostCategory === 'VEHICLE' ||
+                         post.itemType?.toUpperCase() === 'VEHICLE' ||
+                         post.itemType?.toLowerCase() === 'vehicle';
+        } else if (normalizedFilter === 'BATTERY') {
+          // Match BATTERY category or battery itemType
+          categoryMatch = normalizedPostCategory === 'BATTERY' ||
+                         post.itemType?.toUpperCase() === 'BATTERY' ||
+                         post.itemType?.toLowerCase() === 'battery';
+        } else {
+          categoryMatch = normalizedPostCategory === normalizedFilter;
+        }
+        
+        const matchesCategory = categoryMatch;
+        
+        return matchesSearch && matchesStatus && matchesCategory;
+      })
+      .sort((a, b) => {
+        // Sort by createdAt descending (newest first)
+        const dateA = a.createdAt ? new Date(a.createdAt).getTime() : 0;
+        const dateB = b.createdAt ? new Date(b.createdAt).getTime() : 0;
+        return dateB - dateA; // Descending order
+      });
+  }, [posts, searchQuery, statusFilter, categoryFilter]);
 
   // View listing detail
   const handleViewDetail = async (postId: number) => {
@@ -373,20 +419,6 @@ const PostManagement: React.FC = () => {
         <Card>
           <CardContent className="p-4">
             <div className="flex items-center">
-              <Clock className="w-8 h-8 text-yellow-500" />
-              <div className="ml-3">
-                <p className="text-sm font-medium text-gray-600">Chờ Duyệt</p>
-                <p className="text-2xl font-bold text-gray-900">
-                  {posts.filter(p => p.status === 'PENDING').length}
-                </p>
-              </div>
-            </div>
-          </CardContent>
-        </Card>
-        
-        <Card>
-          <CardContent className="p-4">
-            <div className="flex items-center">
               <FileText className="w-8 h-8 text-blue-500" />
               <div className="ml-3">
                 <p className="text-sm font-medium text-gray-600">Bản Nháp</p>
@@ -441,7 +473,6 @@ const PostManagement: React.FC = () => {
                       <Filter className="w-4 h-4" />
                       {statusFilter === 'all' ? 'Tất cả trạng thái' : 
                        statusFilter === 'DRAFT' ? 'Bản nháp' :
-                       statusFilter === 'PENDING' ? 'Chờ duyệt' :
                        statusFilter === 'APPROVED' ? 'Đã duyệt' :
                        statusFilter === 'REJECTED' ? 'Bị từ chối' : 'Trạng thái'}
                     </div>
@@ -465,20 +496,6 @@ const PostManagement: React.FC = () => {
                     <span className="text-sm">Bản nháp</span>
                   </DropdownMenuItem>
                   <DropdownMenuItem 
-                    onClick={() => setStatusFilter('PENDING')}
-                    className={`px-2 py-2 cursor-pointer flex items-center ${statusFilter === 'PENDING' ? 'bg-accent' : ''}`}
-                  >
-                    <Clock className="w-4 h-4 mr-3 flex-shrink-0" />
-                    <span className="text-sm">Chờ duyệt</span>
-                  </DropdownMenuItem>
-                  <DropdownMenuItem 
-                    onClick={() => setStatusFilter('PENDING_APPROVAL')}
-                    className={`px-2 py-2 cursor-pointer flex items-center ${statusFilter === 'PENDING_APPROVAL' ? 'bg-accent' : ''}`}
-                  >
-                    <Clock className="w-4 h-4 mr-3 flex-shrink-0" />
-                    <span className="text-sm">Chờ duyệt (Đã thanh toán)</span>
-                  </DropdownMenuItem>
-                  <DropdownMenuItem 
                     onClick={() => setStatusFilter('APPROVED')}
                     className={`px-2 py-2 cursor-pointer flex items-center ${statusFilter === 'APPROVED' ? 'bg-accent' : ''}`}
                   >
@@ -491,13 +508,6 @@ const PostManagement: React.FC = () => {
                   >
                     <XCircle className="w-4 h-4 mr-3 flex-shrink-0" />
                     <span className="text-sm">Bị từ chối</span>
-                  </DropdownMenuItem>
-                  <DropdownMenuItem 
-                    onClick={() => setStatusFilter('INACTIVE')}
-                    className={`px-2 py-2 cursor-pointer flex items-center ${statusFilter === 'INACTIVE' ? 'bg-accent' : ''}`}
-                  >
-                    <XCircle className="w-4 h-4 mr-3 flex-shrink-0" />
-                    <span className="text-sm">Vô hiệu hóa</span>
                   </DropdownMenuItem>
                 </DropdownMenuContent>
               </DropdownMenu>
